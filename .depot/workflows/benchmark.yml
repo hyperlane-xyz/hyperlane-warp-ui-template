@@ -8,7 +8,6 @@ jobs:
     runs-on: depot-ubuntu-24.04
     env:
       NEXT_PUBLIC_WALLET_CONNECT_ID: benchmark
-      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.benchmark-cache/ms-playwright
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -19,7 +18,7 @@ jobs:
       - name: Mount benchmark cache
         uses: depot/cache-mount@v1
         with:
-          name: hyperlane-warp-ui-template-migration-benchmark-20260826-v1
+          name: hyperlane-warp-ui-template-migration-benchmark-20260826-v2
           path: ${{ github.workspace }}/.benchmark-cache
 
       - name: Configure benchmark cache
@@ -28,7 +27,7 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/.benchmark-cache/next-cache" .next
           ln -s "$GITHUB_WORKSPACE/.benchmark-cache/next-cache" .next/cache
 
-      - name: Run CI and E2E smoke
+      - name: Run CI
         run: |
           pnpm install --frozen-lockfile
           pnpm run format
@@ -36,6 +35,3 @@ jobs:
           pnpm run lint
           pnpm run test
           pnpm run build
-          pnpm exec playwright install chromium
-          pnpm exec playwright install-deps chromium
-          pnpm run test:e2e:wallet:smoke

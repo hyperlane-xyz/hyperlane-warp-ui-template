@@ -5,12 +5,27 @@ on:
     branches: [pbio/gha-ci-benchmark]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
+  import-secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: depot/setup-action@v1
+      - name: Import repository secrets
+        env:
+          E2E_SLACK_WEBHOOK: ${{ secrets.E2E_SLACK_WEBHOOK }}
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
+        run: |
+          unset DEPOT_TOKEN
+          depot ci secrets add E2E_SLACK_WEBHOOK="$E2E_SLACK_WEBHOOK" NEXT_PUBLIC_WALLET_CONNECT_ID="$NEXT_PUBLIC_WALLET_CONNECT_ID" --repo hyperlane-xyz/hyperlane-warp-ui-template
+
   benchmark:
     runs-on: ubuntu-24.04
     env:
       NEXT_PUBLIC_WALLET_CONNECT_ID: benchmark
-      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.benchmark-cache/ms-playwright
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -22,7 +37,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .benchmark-cache
-          key: wui-depot-migration-20260826-v1
+          key: wui-depot-migration-20260826-v2
 
       - name: Configure benchmark cache
         run: |
@@ -30,7 +45,7 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/.benchmark-cache/next-cache" .next
           ln -s "$GITHUB_WORKSPACE/.benchmark-cache/next-cache" .next/cache
 
-      - name: Run CI and E2E smoke
+      - name: Run CI
         run: |
           pnpm install --frozen-lockfile
           pnpm run format
@@ -38,6 +53,3 @@ jobs:
           pnpm run lint
           pnpm run test
           pnpm run build
-          pnpm exec playwright install chromium
-          pnpm exec playwright install-deps chromium
-          pnpm run test:e2e:wallet:smoke

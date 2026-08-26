@@ -13,7 +13,7 @@ env:
 jobs:
   e2e-smoke:
     timeout-minutes: 10
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -42,7 +42,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-v3-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: Build on cache miss
         if: steps.build-cache.outputs.cache-hit != 'true'

@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -49,7 +49,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-v3-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: build
         run: pnpm run build
@@ -63,13 +63,13 @@ jobs:
     # TypeScript validation runs inside `next build`. Keep this dependent job
     # until the required `typecheck` branch-protection context is removed.
     needs: [build]
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - name: Confirm build typechecked successfully
         run: echo "TypeScript validation completed in the required build job"
 
   format:
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -103,7 +103,7 @@ jobs:
           fi
 
   lint:
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -131,7 +131,7 @@ jobs:
         run: pnpm run lint
 
   test:
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

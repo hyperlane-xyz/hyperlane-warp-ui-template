@@ -14,7 +14,7 @@ env:
 jobs:
   e2e-wallet:
     timeout-minutes: 25
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     strategy:
       fail-fast: false
       matrix:
@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-v3-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: Build on cache miss
         if: steps.build-cache.outputs.cache-hit != 'true'
@@ -94,7 +94,7 @@ jobs:
   notify-failure:
     if: ${{ always() && needs.e2e-wallet.result == 'failure' }}
     needs: [e2e-wallet]
-    runs-on: depot-ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - name: Notify Slack on e2e-wallet failure
         uses: slackapi/slack-github-action@v3

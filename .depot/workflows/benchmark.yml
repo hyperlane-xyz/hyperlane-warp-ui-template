@@ -15,11 +15,11 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: Mount benchmark cache
-        uses: depot/cache-mount@v1
+      - name: Restore benchmark cache
+        uses: actions/cache@v6
         with:
-          name: hyperlane-warp-ui-template-migration-benchmark-20260826-v3
-          path: ${{ github.workspace }}/.benchmark-cache
+          path: .benchmark-cache
+          key: wui-depot-migration-20260826-v5
 
       - name: Configure benchmark cache
         run: |

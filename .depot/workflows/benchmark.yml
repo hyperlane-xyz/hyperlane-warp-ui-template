@@ -18,7 +18,7 @@ jobs:
       - name: Mount benchmark cache
         uses: depot/cache-mount@v1
         with:
-          name: hyperlane-warp-ui-template-migration-benchmark-20260826-v2
+          name: hyperlane-warp-ui-template-migration-benchmark-20260826-v3
           path: ${{ github.workspace }}/.benchmark-cache
 
       - name: Configure benchmark cache

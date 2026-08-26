@@ -3,6 +3,7 @@ name: CI benchmark
 on:
   push:
     branches: [pbio/gha-ci-benchmark]
+  workflow_dispatch:
 
 jobs:
   benchmark:

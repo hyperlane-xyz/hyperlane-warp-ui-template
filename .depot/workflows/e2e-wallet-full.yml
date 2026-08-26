@@ -45,10 +45,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore build cache
+        id: build-cache
         uses: actions/cache/restore@v4
         with:
           path: .next/
           key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+
+      - name: Build on cache miss
+        if: steps.build-cache.outputs.cache-hit != 'true'
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
       - name: Get Playwright version
         id: pw-version

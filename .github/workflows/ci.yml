@@ -20,9 +20,7 @@ jobs:
         env:
           E2E_SLACK_WEBHOOK: ${{ secrets.E2E_SLACK_WEBHOOK }}
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
-        run: |
-          unset DEPOT_TOKEN
-          depot ci secrets add E2E_SLACK_WEBHOOK="$E2E_SLACK_WEBHOOK" NEXT_PUBLIC_WALLET_CONNECT_ID="$NEXT_PUBLIC_WALLET_CONNECT_ID" --repo hyperlane-xyz/hyperlane-warp-ui-template
+        run: depot ci secrets add E2E_SLACK_WEBHOOK="$E2E_SLACK_WEBHOOK" NEXT_PUBLIC_WALLET_CONNECT_ID="$NEXT_PUBLIC_WALLET_CONNECT_ID" --repo hyperlane-xyz/hyperlane-warp-ui-template
 
   benchmark:
     runs-on: ubuntu-24.04
@@ -39,7 +37,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .benchmark-cache
-          key: wui-depot-migration-20260826-v3
+          key: wui-depot-migration-20260826-v4
 
       - name: Configure benchmark cache
         run: |

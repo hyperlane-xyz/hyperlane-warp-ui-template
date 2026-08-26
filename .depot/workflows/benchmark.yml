@@ -19,7 +19,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .benchmark-cache
-          key: wui-depot-migration-20260826-v5
+          key: wui-depot-migration-20260827-v1
 
       - name: Configure benchmark cache
         run: |

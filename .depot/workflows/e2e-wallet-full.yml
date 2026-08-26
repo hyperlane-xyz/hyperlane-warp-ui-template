@@ -11,7 +11,7 @@ on:
 jobs:
   e2e-wallet:
     timeout-minutes: 25
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -84,7 +84,7 @@ jobs:
   notify-failure:
     if: ${{ always() && needs.e2e-wallet.result == 'failure' }}
     needs: [e2e-wallet]
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     steps:
       - name: Notify Slack on e2e-wallet failure
         uses: slackapi/slack-github-action@v3

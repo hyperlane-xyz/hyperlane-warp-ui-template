@@ -1,7 +1,7 @@
 name: e2e-smoke
 
 # Fast subset of the wallet-connected E2E suite. Runs on every PR as a gate.
-# The full wallet E2E matrix runs from .github/workflows/e2e-wallet-full.yml.
+# The full wallet E2E matrix runs from .depot/workflows/e2e-wallet-full.yml.
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ on:
 jobs:
   e2e-smoke:
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

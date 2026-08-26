@@ -4,6 +4,9 @@ on:
   workflow_call:
   workflow_dispatch:
 
+env:
+  NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+
 jobs:
   build:
     # Only build when triggered standalone (workflow_dispatch).
@@ -38,7 +41,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v3-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: build
         if: steps.build-cache.outputs.cache-hit != 'true'
@@ -80,10 +83,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore build cache
+        id: build-cache
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v3-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+
+      - name: Build on cache miss
+        if: steps.build-cache.outputs.cache-hit != 'true'
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
       - name: Get Playwright version
         id: pw-version

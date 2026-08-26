@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: depot/setup-action@v1
+        with:
+          oidc: true
       - name: Import repository secrets
         env:
           E2E_SLACK_WEBHOOK: ${{ secrets.E2E_SLACK_WEBHOOK }}
@@ -37,7 +39,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .benchmark-cache
-          key: wui-depot-migration-20260826-v2
+          key: wui-depot-migration-20260826-v3
 
       - name: Configure benchmark cache
         run: |

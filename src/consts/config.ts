@@ -16,7 +16,7 @@ const explorerApiUrl =
   process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
 const routerApiUrl =
-  process.env.NEXT_PUBLIC_ROUTER_API_URL || 'https://router.services.hyperlane.xyz';
+  process.env.NEXT_PUBLIC_ROUTER_API_URL || 'https://hyperswaps-api.hyperlane.xyz';
 // CCS lives at the `/callCommitments` mount of the shared offchain-lookup
 // service. UI posts engine-emitted calldata to `/calldata` under this mount.
 const ccsUrl =

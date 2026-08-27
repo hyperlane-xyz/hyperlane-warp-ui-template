@@ -97,11 +97,14 @@ jobs:
     if: ${{ always() && needs.e2e-wallet.result == 'failure' }}
     needs: [e2e-wallet]
     runs-on: depot-ubuntu-24.04-4
+    env:
+      E2E_SLACK_WEBHOOK: ${{ secrets.E2E_SLACK_WEBHOOK }}
     steps:
       - name: Notify Slack on e2e-wallet failure
+        if: ${{ env.E2E_SLACK_WEBHOOK != '' }}
         uses: slackapi/slack-github-action@v3
         with:
-          webhook: ${{ secrets.E2E_SLACK_WEBHOOK }}
+          webhook: ${{ env.E2E_SLACK_WEBHOOK }}
           webhook-type: incoming-webhook
           payload: |
             text: ":alert: Warp UI full e2e-wallet matrix failed — see workflow run for details"

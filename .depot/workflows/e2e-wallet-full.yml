@@ -54,7 +54,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
 
       - name: Build on cache miss
         if: steps.build-cache.outputs.cache-hit != 'true'
@@ -100,6 +100,11 @@ jobs:
     env:
       E2E_SLACK_WEBHOOK: ${{ secrets.E2E_SLACK_WEBHOOK }}
     steps:
+      - name: Capture Depot job URL
+        if: ${{ env.E2E_SLACK_WEBHOOK != '' }}
+        id: depot-job
+        run: echo "url=$DEPOT_JOB_URL" >> "$GITHUB_OUTPUT"
+
       - name: Notify Slack on e2e-wallet failure
         if: ${{ env.E2E_SLACK_WEBHOOK != '' }}
         uses: slackapi/slack-github-action@v3
@@ -112,4 +117,4 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: ":alert: *Warp UI e2e-wallet full matrix failed*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run #${{ github.run_number }}> on `${{ github.ref_name }}` @ ${{ github.sha }}"
+                  text: ":alert: *Warp UI e2e-wallet full matrix failed*\n<${{ steps.depot-job.outputs.url }}|View Depot job> on `${{ github.ref_name }}` @ ${{ github.sha }}"

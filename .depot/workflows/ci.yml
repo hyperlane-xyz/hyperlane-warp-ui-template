@@ -51,7 +51,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-
 
       - name: build
         run: pnpm run build

@@ -6,6 +6,8 @@ on:
 
 env:
   NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+  # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
+  WALLET_CONNECT_ID_CACHE_VERSION: v1
 
 jobs:
   build:
@@ -41,7 +43,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: build
         if: steps.build-cache.outputs.cache-hit != 'true'
@@ -87,7 +89,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v3-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: Build on cache miss
         if: steps.build-cache.outputs.cache-hit != 'true'

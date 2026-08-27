@@ -1,4 +1,5 @@
 import { SnapWalletAdapter } from '@drift-labs/snap-wallet-adapter';
+import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { WalletAdapterNetwork, WalletError } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
@@ -10,7 +11,6 @@ import {
   SolflareWalletAdapter,
   TrustWalletAdapter,
   PhantomWalletAdapter,
-  BackpackWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { PropsWithChildren, useCallback, useMemo } from 'react';

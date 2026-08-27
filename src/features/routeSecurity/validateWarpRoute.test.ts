@@ -8,6 +8,8 @@ import { validateWarpRoute } from './validateWarpRoute';
 const NATIVE = '0x0000000000000000000000000000000000000000';
 const ROUTER = '0x1111111111111111111111111111111111111111';
 const COLLATERAL = '0x2222222222222222222222222222222222222222';
+const VAULT = '0xbeef047a543e45807105e51a8bbefcc5950fcfba';
+const UNDERLYING = '0xdac17f958d2ee523a2206206994597c13d831ec7';
 const BAD = '0x3333333333333333333333333333333333333333';
 const DST_ROUTER = '0x4444444444444444444444444444444444444444';
 const DST_COLLATERAL = '0x4545454545454545454545454545454545454545';
@@ -15,9 +17,9 @@ const UNIVERSAL_ROUTER = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
 const ALT_ROUTER = '0x7777777777777777777777777777777777777777';
 const ALT_COLLATERAL = '0x8888888888888888888888888888888888888888';
-const OP_EZETH = '0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2';
-const ARB_EZETH = '0xB26bBfC6d1F469C821Ea25099017862e7368F4E8';
-const EZETH_MAINNET_COLLATERAL = '0x2416092f143378750bb29b79eD961ab195CcEea5';
+const OP_EZETH = '0xaceb607cdf59eb8022cc0699eef3ecf246d149e2';
+const ARB_EZETH = '0xb26bbfc6d1f469c821ea25099017862e7368f4e8';
+const EZETH_MAINNET_COLLATERAL = '0x2416092f143378750bb29b79ed961ab195cceea5';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 
@@ -107,6 +109,51 @@ describe('validateWarpRoute', () => {
     });
   });
 
+  test('accepts vault collateral routes using the resolved underlying token', () => {
+    const route = bridgeRoute({
+      asset: UNDERLYING,
+      router: ROUTER,
+      approval: { token: UNDERLYING, spender: ROUTER, amount: '1', kind: 'erc20' },
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+
+    expect(
+      validateWarpRoute(route, context(vaultCollateralRoutes(), UNDERLYING, DST_ROUTER)),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects vault collateral routes when the underlying token was not resolved', () => {
+    const route = bridgeRoute({
+      asset: UNDERLYING,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+    const routes = vaultCollateralRoutes();
+    delete routes['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom;
+
+    expect(validateWarpRoute(route, context(routes, UNDERLYING, DST_ROUTER))).toMatchObject({
+      valid: false,
+      reason: 'Route spend token unavailable',
+    });
+  });
+
+  test('rejects vault collateral routes that expose the vault as the bridge asset', () => {
+    const route = bridgeRoute({
+      asset: VAULT,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+
+    expect(
+      validateWarpRoute(route, context(vaultCollateralRoutes(), UNDERLYING, DST_ROUTER)),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Bridge asset does not match registry route token',
+    });
+  });
+
   test('accepts routes with multiple registry tokens on the origin and destination chains', () => {
     const route = bridgeRoute({
       asset: ALT_COLLATERAL,
@@ -123,19 +170,27 @@ describe('validateWarpRoute', () => {
     ).toEqual({ valid: true });
   });
 
-  test('accepts non-lockbox XERC20 routes using addressOrDenom for selected token identity', () => {
+  test('accepts non-lockbox XERC20 routes using collateralAddressOrDenom', () => {
     const route = bridgeRoute({
-      asset: OP_EZETH,
+      asset: EZETH_MAINNET_COLLATERAL,
       router: OP_EZETH,
-      approval: { token: OP_EZETH, spender: OP_EZETH, amount: '1', kind: 'erc20' },
+      approval: {
+        token: EZETH_MAINNET_COLLATERAL,
+        spender: OP_EZETH,
+        amount: '1',
+        kind: 'erc20',
+      },
       warpRouteId: 'EZETH/renzo-prod',
       chain: 10,
       destChain: 42161,
     });
 
-    expect(validateWarpRoute(route, context(xerc20Routes(), OP_EZETH, ARB_EZETH))).toEqual({
-      valid: true,
-    });
+    expect(
+      validateWarpRoute(
+        route,
+        context(xerc20Routes(), EZETH_MAINNET_COLLATERAL, EZETH_MAINNET_COLLATERAL),
+      ),
+    ).toEqual({ valid: true });
   });
 
   test.each([['EvmM0Portal'], ['EvmM0PortalLite']])(
@@ -157,7 +212,7 @@ describe('validateWarpRoute', () => {
     },
   );
 
-  test.each([['EvmHypSyntheticRebase'], ['EvmHypXERC20Lockbox'], ['EvmHypVSXERC20Lockbox']])(
+  test.each([['EvmHypSyntheticRebase']])(
     'accepts %s routes using addressOrDenom for spend token',
     (standard) => {
       const route = bridgeRoute({
@@ -172,6 +227,82 @@ describe('validateWarpRoute', () => {
       ).toEqual({ valid: true });
     },
   );
+
+  test.each([['EvmHypXERC20'], ['EvmHypVSXERC20'], ['TronHypXERC20'], ['TronHypVSXERC20']])(
+    'accepts %s routes using collateralAddressOrDenom for spend token',
+    (standard) => {
+      const route = bridgeRoute({
+        asset: COLLATERAL,
+        router: ROUTER,
+        approval: { token: COLLATERAL, spender: ROUTER, amount: '1', kind: 'erc20' },
+        warpRouteId: `${standard}/test`,
+      });
+
+      expect(
+        validateWarpRoute(
+          route,
+          context(collateralLikeRoutes(standard), COLLATERAL, DST_COLLATERAL),
+        ),
+      ).toEqual({ valid: true });
+    },
+  );
+
+  test.each([
+    ['EvmHypXERC20Lockbox'],
+    ['EvmHypVSXERC20Lockbox'],
+    ['TronHypXERC20Lockbox'],
+    ['TronHypVSXERC20Lockbox'],
+  ])('accepts %s routes using the resolved wrapped token', (standard) => {
+    const route = bridgeRoute({
+      asset: UNDERLYING,
+      router: ROUTER,
+      approval: { token: UNDERLYING, spender: ROUTER, amount: '1', kind: 'erc20' },
+      warpRouteId: `${standard}/test`,
+    });
+    const routes = collateralLikeRoutes(standard);
+    for (const token of routes[`${standard}/test`.toLowerCase()].tokens) {
+      token.underlyingAddressOrDenom = UNDERLYING;
+    }
+
+    expect(validateWarpRoute(route, context(routes, UNDERLYING, UNDERLYING))).toEqual({
+      valid: true,
+    });
+  });
+
+  test('rejects XERC20 routes without collateralAddressOrDenom', () => {
+    const route = bridgeRoute({
+      asset: ROUTER,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'EvmHypXERC20/test',
+    });
+    const routes = collateralLikeRoutes('EvmHypXERC20');
+    delete routes['evmhypxerc20/test'].tokens[0].collateralAddressOrDenom;
+
+    expect(validateWarpRoute(route, context(routes, ROUTER, DST_COLLATERAL))).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('rejects XERC20 lockbox routes without a resolved wrapped token', () => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'EvmHypXERC20Lockbox/test',
+    });
+
+    expect(
+      validateWarpRoute(
+        route,
+        context(collateralLikeRoutes('EvmHypXERC20Lockbox'), COLLATERAL, DST_COLLATERAL),
+      ),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Route spend token unavailable',
+    });
+  });
 
   test.each([
     ['SealevelHypSynthetic', 1399811149, 'solanamainnet', 'SolRouter111', 'SolMint111'],
@@ -563,6 +694,24 @@ function collateralRoutes(): RegistryWarpRouteMap {
   };
 }
 
+function vaultCollateralRoutes(): RegistryWarpRouteMap {
+  return {
+    'usdt/ethereum-igra': {
+      id: 'USDT/ethereum-igra',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: ROUTER,
+          collateralAddressOrDenom: VAULT,
+          underlyingAddressOrDenom: UNDERLYING,
+          standard: 'EvmHypOwnerCollateral',
+        },
+        { chainName: 'base', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
 function multiTokenDestinationRoutes(): RegistryWarpRouteMap {
   return {
     'multi/test': {
@@ -724,6 +873,7 @@ function bridgeRoute(args: {
           tokenFee: '0',
           igpToken: NATIVE,
           igpAmount: '0',
+          igpIncludedInAmountIn: false,
           localNativeFee: '0',
         },
       },

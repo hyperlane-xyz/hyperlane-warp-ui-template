@@ -2,8 +2,14 @@
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - "@hyperlane-xyz/*"
+  - "@oxfmt/*"
+  - "@oxlint/*"
   - "@provablehq/*"
+  - oxfmt
+  - oxlint
 overrides:
+  # 1.53+ imports optional x402 peers into browser bundles even when unused.
+  '@coinbase/cdp-sdk': 1.52.0
   tronweb>ethers: ^6.13.5
   "@solana/web3.js": ^1.95.4
   axios: ^1.7.9
@@ -14,7 +20,7 @@ overrides:
   globals: ^14.0.0
   lit-html: 2.8.0
   react-fast-compare: ^3.2
-  viem: ^2.21.41
+  viem: ^2.55.13
   zustand: ^4.4
   sha.js: 2.4.12
   cipher-base: 1.0.5
@@ -28,11 +34,15 @@ overrides:
 patchedDependencies:
   starknetkit@2.6.1: patches/starknetkit@2.6.1.patch
   '@provablehq/sdk@0.11.3': patches/@provablehq__sdk@0.11.3.patch
-  '@provablehq/wasm@0.11.5': patches/@provablehq__wasm@0.11.5.patch
+  '@provablehq/wasm@0.11.6': patches/@provablehq__wasm@0.11.6.patch
 allowBuilds:
+  '@reown/appkit': false
   "@sentry/cli": false
+  '@stellar/stellar-sdk': false
   bigint-buffer: false
+  blake-hash: false
   bufferutil: false
+  cbor-extract: false
   core-js: false
   esbuild: false
   keccak: false
@@ -40,4 +50,5 @@ allowBuilds:
   secp256k1: false
   sharp: false
   tiny-secp256k1: false
+  usb: false
   utf-8-validate: false

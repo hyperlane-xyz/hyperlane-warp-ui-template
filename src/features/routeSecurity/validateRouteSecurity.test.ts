@@ -17,6 +17,9 @@ const BAD = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
 const BRIDGE_ROUTER = '0x7777777777777777777777777777777777777777';
 const DST_ROUTER = '0x8888888888888888888888888888888888888888';
+const VAULT = '0xbeef047a543e45807105e51a8bbefcc5950fcfba';
+const UNDERLYING = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+const ETH_WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
@@ -67,6 +70,138 @@ const chainAddresses = {
 describe('validateRouteSecurity', () => {
   test('accepts a universal router swap and bridge route with matching approval and tx target', () => {
     expect(validateRouteSecurity(universalRouterRoute(), context())).toEqual({ valid: true });
+  });
+
+  test('accepts trusted wrapped native tokens around a native bridge', () => {
+    expect(
+      validateRouteSecurity(
+        wrappedNativeBridgeRoute(),
+        context({ registryWarpRoutes: nativeUniversalRouterRoutes() }),
+      ),
+    ).toEqual({ valid: true });
+  });
+
+  test('accepts the native sentinel directly at native bridge boundaries', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    if (route.steps[2].type !== 'swap') throw new Error('expected destination swap');
+    route.steps[0].tokenOut = NATIVE;
+    route.steps[0].path = [TOKEN, NATIVE];
+    route.steps[2].tokenIn = NATIVE;
+    route.steps[2].path = [NATIVE, DST_TOKEN];
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toEqual({ valid: true });
+  });
+
+  test('does not treat trusted wrapped native as a non-native bridge token', () => {
+    const route = universalRouterRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    route.steps[0].tokenOut = ETH_WETH;
+    route.steps[0].path = [TOKEN, ETH_WETH];
+
+    expect(validateRouteSecurity(route, context())).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('does not treat trusted wrapped native specially between ordinary swaps', () => {
+    const route = sameChainSwapRoute();
+    route.steps = [
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: TOKEN,
+        tokenOut: ETH_WETH,
+        amountIn: '100',
+        amountOut: '95',
+        path: [TOKEN, ETH_WETH],
+        poolCount: 1,
+      },
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: BAD,
+        tokenOut: DST_TOKEN,
+        amountIn: '95',
+        amountOut: '90',
+        path: [BAD, DST_TOKEN],
+        poolCount: 1,
+      },
+    ];
+
+    expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toMatchObject({
+      valid: false,
+      reason: 'Route step tokens are discontinuous',
+    });
+  });
+
+  test('rejects an untrusted wrapped native token before a native bridge', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    route.steps[0].tokenOut = BAD;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('rejects an untrusted wrapped native token after a native bridge', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[2].type !== 'swap') throw new Error('expected destination swap');
+    route.steps[2].tokenIn = BAD;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Destination token does not match registry route',
+    });
+  });
+
+  test('rejects wrapped native bridge boundaries outside universal router execution', () => {
+    const route = wrappedNativeBridgeRoute();
+    route.executionKind = 'warpDirect';
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('keeps native bridge assets restricted to the native sentinel', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[1].type !== 'bridge') throw new Error('expected bridge');
+    route.steps[1].asset = ETH_WETH;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Native bridge asset must be native sentinel',
+    });
+  });
+
+  test('keeps native bridge routers bound to the registry', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[1].type !== 'bridge') throw new Error('expected bridge');
+    route.steps[1].router = BAD;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Bridge router does not match registry route',
+    });
   });
 
   test('accepts a same-chain universal router swap route', () => {
@@ -421,6 +556,46 @@ describe('validateRouteSecurity', () => {
     const route = evmSdkWarpRoute();
 
     expect(validateRouteSecurity(route, evmSdkWarpContext())).toEqual({ valid: true });
+  });
+
+  test('accepts SDK vault routes using the resolved underlying token', () => {
+    const route = evmSdkWarpRoute({
+      approvalToken: UNDERLYING,
+      asset: UNDERLYING,
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+
+    expect(
+      validateRouteSecurity(
+        route,
+        context({
+          registryWarpRoutes: evmSdkVaultWarpRoutes(),
+          srcToken: UNDERLYING,
+        }),
+      ),
+    ).toEqual({ valid: true });
+  });
+
+  test('accepts SDK XERC20 routes that approve the collateral token', () => {
+    const route = evmSdkWarpRoute({ warpRouteId: 'EZETH/renzo-prod' });
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: evmSdkXerc20WarpRoutes() })),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects SDK XERC20 routes that approve the Warp router as the token', () => {
+    const route = evmSdkWarpRoute({
+      approvalToken: BRIDGE_ROUTER,
+      warpRouteId: 'EZETH/renzo-prod',
+    });
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: evmSdkXerc20WarpRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'SDK approval token does not match route input token',
+    });
   });
 
   test('accepts SDK warp routes with revoke and approve txs before the transfer tx', () => {
@@ -788,7 +963,13 @@ function universalRouterRoute(
         amountOut: '90',
         bridgeSymbol: 'TEST',
         warpRouteId: 'TEST/route',
-        fee: { tokenFee: '0', igpToken: NATIVE, igpAmount: '0', localNativeFee: '0' },
+        fee: {
+          tokenFee: '0',
+          igpToken: NATIVE,
+          igpAmount: '0',
+          igpIncludedInAmountIn: false,
+          localNativeFee: '0',
+        },
       },
     ],
     output: '90',
@@ -806,6 +987,65 @@ function universalRouterRoute(
             amount: '100',
             kind: 'erc20',
           },
+  };
+}
+
+function wrappedNativeBridgeRoute(): RouteResponse {
+  return {
+    steps: [
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: TOKEN,
+        tokenOut: ETH_WETH,
+        amountIn: '100',
+        amountOut: '90',
+        path: [TOKEN, ETH_WETH],
+        poolCount: 1,
+      },
+      {
+        type: 'bridge',
+        chain: ETH,
+        destChain: BASE,
+        asset: NATIVE,
+        router: BRIDGE_ROUTER,
+        amountIn: '90',
+        amountOut: '80',
+        bridgeSymbol: 'ETH',
+        warpRouteId: 'ETH/test',
+        fee: {
+          tokenFee: '0',
+          igpToken: NATIVE,
+          igpAmount: '10',
+          igpIncludedInAmountIn: false,
+          localNativeFee: '0',
+        },
+      },
+      {
+        type: 'swap',
+        chain: BASE,
+        dex: 'test',
+        tokenIn: BASE_WETH,
+        tokenOut: DST_TOKEN,
+        amountIn: '80',
+        amountOut: '70',
+        path: [BASE_WETH, DST_TOKEN],
+        poolCount: 1,
+      },
+    ],
+    output: '70',
+    outputMin: '69',
+    executionKind: 'universalRouter',
+    connection: { symbol: 'ETH', warpRouteId: 'ETH/test' },
+    gas: { originGas: '0', destGas: '0' },
+    tx: { to: UNIVERSAL_ROUTER, data: '0x', value: '10' },
+    approval: {
+      token: TOKEN,
+      spender: UNIVERSAL_ROUTER,
+      amount: '100',
+      kind: 'erc20',
+    },
   };
 }
 
@@ -844,15 +1084,17 @@ function evmSdkWarpRoute(
     approvalAmount?: string;
     approvalSpender?: string;
     approvalToken?: string;
+    asset?: string;
     includeRevoke?: boolean;
     omitTransfer?: boolean;
     trailingRevoke?: boolean;
     revokeAmount?: string;
     transferCount?: number;
     unsupportedCategory?: boolean;
+    warpRouteId?: string;
   } = {},
 ): RouteResponse {
-  const warpRouteId = 'TEST/sdk';
+  const warpRouteId = args.warpRouteId ?? 'TEST/sdk';
   const approvalTx = (category: 'approval' | 'revoke', amount: string) => ({
     protocol: ProtocolType.Ethereum,
     type: 'ethers-v5',
@@ -896,13 +1138,19 @@ function evmSdkWarpRoute(
         type: 'bridge',
         chain: ETH,
         destChain: BASE,
-        asset: TOKEN,
+        asset: args.asset ?? TOKEN,
         router: BRIDGE_ROUTER,
         amountIn: '100',
         amountOut: '99',
         bridgeSymbol: 'TEST',
         warpRouteId,
-        fee: { tokenFee: '1', igpToken: NATIVE, igpAmount: '0', localNativeFee: '0' },
+        fee: {
+          tokenFee: '1',
+          igpToken: NATIVE,
+          igpAmount: '0',
+          igpIncludedInAmountIn: false,
+          localNativeFee: '0',
+        },
       },
     ],
     output: '99',
@@ -936,7 +1184,13 @@ function starknetSdkWarpRoute(
         amountOut: '100',
         bridgeSymbol: 'STRK',
         warpRouteId: 'STRK/test',
-        fee: { tokenFee: '0', igpToken: NATIVE, igpAmount: '0', localNativeFee: '0' },
+        fee: {
+          tokenFee: '0',
+          igpToken: NATIVE,
+          igpAmount: '0',
+          igpIncludedInAmountIn: false,
+          localNativeFee: '0',
+        },
       },
     ],
     output: '100',
@@ -980,7 +1234,13 @@ function sealevelUniversalRouterRoute(
         amountOut: '100',
         bridgeSymbol: 'SOL',
         warpRouteId,
-        fee: { tokenFee: '0', igpToken: NATIVE, igpAmount: '0', localNativeFee: '0' },
+        fee: {
+          tokenFee: '0',
+          igpToken: NATIVE,
+          igpAmount: '0',
+          igpIncludedInAmountIn: false,
+          localNativeFee: '0',
+        },
       },
     ],
     output: '100',
@@ -1038,6 +1298,18 @@ function universalRouterRoutes(): RegistryWarpRouteMap {
   };
 }
 
+function nativeUniversalRouterRoutes(): RegistryWarpRouteMap {
+  return {
+    'eth/test': {
+      id: 'ETH/test',
+      tokens: [
+        { chainName: 'ethereum', addressOrDenom: BRIDGE_ROUTER, standard: 'EvmHypNative' },
+        { chainName: 'base', addressOrDenom: DST_ROUTER, standard: 'EvmHypNative' },
+      ],
+    },
+  };
+}
+
 function evmSdkWarpRoutes(): RegistryWarpRouteMap {
   return {
     'test/sdk': {
@@ -1050,6 +1322,47 @@ function evmSdkWarpRoutes(): RegistryWarpRouteMap {
           standard: 'EvmHypCollateral',
         },
         { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function evmSdkVaultWarpRoutes(): RegistryWarpRouteMap {
+  return {
+    'usdt/ethereum-igra': {
+      id: 'USDT/ethereum-igra',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: BRIDGE_ROUTER,
+          collateralAddressOrDenom: VAULT,
+          underlyingAddressOrDenom: UNDERLYING,
+          standard: 'EvmHypOwnerCollateral',
+        },
+        { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function evmSdkXerc20WarpRoutes(): RegistryWarpRouteMap {
+  return {
+    'ezeth/renzo-prod': {
+      id: 'EZETH/renzo-prod',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: BRIDGE_ROUTER,
+          collateralAddressOrDenom: TOKEN,
+          standard: 'EvmHypXERC20',
+        },
+        {
+          chainName: 'base',
+          addressOrDenom: DST_TOKEN,
+          collateralAddressOrDenom: DST_TOKEN,
+          underlyingAddressOrDenom: DST_TOKEN,
+          standard: 'EvmHypXERC20Lockbox',
+        },
       ],
     },
   };

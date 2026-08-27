@@ -1,7 +1,7 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useTimeout } from '@hyperlane-xyz/widgets';
 import {
-  useAccountForChain,
+  useAccountAddressForChain,
   useConnectFns,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
@@ -30,8 +30,8 @@ export function ConnectAwareSubmitButton<FormValues = any>({
   const connectFn = connectFns[protocol];
 
   const multiProvider = useMultiProvider();
-  const account = useAccountForChain(multiProvider, chainName);
-  const isAccountReady = account?.isReady;
+  const accountAddress = useAccountAddressForChain(multiProvider, chainName);
+  const isAccountReady = !!accountAddress;
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();
 

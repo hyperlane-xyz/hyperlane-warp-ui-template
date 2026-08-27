@@ -4,16 +4,21 @@ on:
   workflow_call:
   workflow_dispatch:
 
+env:
+  NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+  # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
+  WALLET_CONNECT_ID_CACHE_VERSION: v1
+
 jobs:
   build:
     # Only build when triggered standalone (workflow_dispatch).
     # When called from ci.yml (workflow_call), the build cache is already populated.
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
 
@@ -23,7 +28,7 @@ jobs:
         run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -35,10 +40,12 @@ jobs:
 
       - name: Cache build output
         id: build-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-
 
       - name: build
         if: steps.build-cache.outputs.cache-hit != 'true'
@@ -50,16 +57,16 @@ jobs:
     timeout-minutes: 20
     needs: [build]
     if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     strategy:
       fail-fast: false
       matrix:
         shardIndex: [1, 2]
         shardTotal: [2]
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
 
@@ -69,7 +76,7 @@ jobs:
         run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -80,10 +87,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore build cache
+        id: build-cache
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
+
+      - name: Build on cache miss
+        if: steps.build-cache.outputs.cache-hit != 'true'
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
       - name: Get Playwright version
         id: pw-version
@@ -91,7 +105,7 @@ jobs:
 
       - name: Cache Playwright browsers
         id: pw-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}
@@ -117,11 +131,11 @@ jobs:
   merge-reports:
     if: ${{ !cancelled() }}
     needs: [e2e]
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
 

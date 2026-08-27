@@ -57,13 +57,10 @@ export async function assembleChainMetadata(
 
   // TODO have the registry do this automatically
   registryChainMetadata = await promiseObjAll(
-    objMap(
-      registryChainMetadata,
-      async (chainName, metadata): Promise<ChainMetadata> => ({
-        ...metadata,
-        logoURI: `${links.imgPath}/chains/${chainName}/logo.svg`,
-      }),
-    ),
+    objMap(registryChainMetadata, async (chainName, metadata): Promise<ChainMetadata> => ({
+      ...metadata,
+      logoURI: `${links.imgPath}/chains/${chainName}/logo.svg`,
+    })),
   );
   const mergedChainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
 

@@ -1,20 +1,25 @@
 name: e2e-smoke
 
 # Fast subset of the wallet-connected E2E suite. Runs on every PR as a gate.
-# The full wallet E2E matrix runs from .github/workflows/e2e-wallet-full.yml.
+# The full wallet E2E matrix runs from .depot/workflows/e2e-wallet-full.yml.
 
 on:
   workflow_call:
   workflow_dispatch:
 
+env:
+  NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+  # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
+  WALLET_CONNECT_ID_CACHE_VERSION: v1
+
 jobs:
   e2e-smoke:
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
 
@@ -24,7 +29,7 @@ jobs:
         run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -35,10 +40,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore build cache
+        id: build-cache
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
+
+      - name: Build on cache miss
+        if: steps.build-cache.outputs.cache-hit != 'true'
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
       - name: Get Playwright version
         id: pw-version
@@ -46,7 +58,7 @@ jobs:
 
       - name: Cache Playwright browsers
         id: pw-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}

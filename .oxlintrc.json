@@ -1,7 +1,6 @@
 {
   "plugins": ["typescript", "import", "react", "nextjs", "jsx-a11y"],
   "rules": {
-    "camelcase": "error",
     "guard-for-in": "error",
     "import/no-cycle": "error",
     "import/no-self-import": "error",

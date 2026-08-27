@@ -8,9 +8,14 @@ on:
   merge_group:
   workflow_dispatch:
 
+env:
+  NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+  # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
+  WALLET_CONNECT_ID_CACHE_VERSION: v1
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -46,7 +51,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-
 
       - name: build
         run: pnpm run build
@@ -60,13 +67,13 @@ jobs:
     # TypeScript validation runs inside `next build`. Keep this dependent job
     # until the required `typecheck` branch-protection context is removed.
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - name: Confirm build typechecked successfully
         run: echo "TypeScript validation completed in the required build job"
 
   format:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -100,7 +107,7 @@ jobs:
           fi
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -128,7 +135,7 @@ jobs:
         run: pnpm run lint
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -162,13 +169,13 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       github.event_name == 'merge_group' ||
       github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/e2e.yml
+    uses: ./.depot/workflows/e2e.yml
     secrets: inherit
 
   # Fast wallet-connected E2E subset, gates every PR.
   e2e-smoke:
     needs: [build]
-    uses: ./.github/workflows/e2e-smoke.yml
+    uses: ./.depot/workflows/e2e-smoke.yml
     secrets: inherit
 
   # Full wallet-connected E2E matrix (chromium/firefox/webkit). Main-only so
@@ -179,5 +186,5 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       github.event_name == 'merge_group' ||
       github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/e2e-wallet-full.yml
+    uses: ./.depot/workflows/e2e-wallet-full.yml
     secrets: inherit

@@ -8,10 +8,15 @@ on:
   workflow_call:
   workflow_dispatch:
 
+env:
+  NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+  # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
+  WALLET_CONNECT_ID_CACHE_VERSION: v1
+
 jobs:
   e2e-wallet:
     timeout-minutes: 25
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     strategy:
       fail-fast: false
       matrix:
@@ -45,10 +50,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore build cache
+        id: build-cache
         uses: actions/cache/restore@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
+
+      - name: Build on cache miss
+        if: steps.build-cache.outputs.cache-hit != 'true'
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
       - name: Get Playwright version
         id: pw-version
@@ -84,12 +96,20 @@ jobs:
   notify-failure:
     if: ${{ always() && needs.e2e-wallet.result == 'failure' }}
     needs: [e2e-wallet]
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
+    env:
+      E2E_SLACK_WEBHOOK: ${{ secrets.E2E_SLACK_WEBHOOK }}
     steps:
+      - name: Capture Depot job URL
+        if: ${{ env.E2E_SLACK_WEBHOOK != '' }}
+        id: depot-job
+        run: echo "url=$DEPOT_JOB_URL" >> "$GITHUB_OUTPUT"
+
       - name: Notify Slack on e2e-wallet failure
+        if: ${{ env.E2E_SLACK_WEBHOOK != '' }}
         uses: slackapi/slack-github-action@v3
         with:
-          webhook: ${{ secrets.E2E_SLACK_WEBHOOK }}
+          webhook: ${{ env.E2E_SLACK_WEBHOOK }}
           webhook-type: incoming-webhook
           payload: |
             text: ":alert: Warp UI full e2e-wallet matrix failed — see workflow run for details"
@@ -97,4 +117,4 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: ":alert: *Warp UI e2e-wallet full matrix failed*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run #${{ github.run_number }}> on `${{ github.ref_name }}` @ ${{ github.sha }}"
+                  text: ":alert: *Warp UI e2e-wallet full matrix failed*\n<${{ steps.depot-job.outputs.url }}|View Depot job> on `${{ github.ref_name }}` @ ${{ github.sha }}"

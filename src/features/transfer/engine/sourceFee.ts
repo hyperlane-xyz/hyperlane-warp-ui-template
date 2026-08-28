@@ -8,6 +8,7 @@ import type { FeeBreakdown } from './types';
 
 const EVM_LIKE_MIN_ROUTE_GAS_UNITS = 600_000n;
 const EVM_LIKE_APPROVAL_GAS_UNITS = 55_000n;
+const ERC20_INSUFFICIENT_BALANCE_SELECTOR = '0xe450d38c';
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 export function sourceFeeRouteKey(route: RouteResponse): string {
@@ -52,7 +53,7 @@ export async function estimateRouteSourceFee({
   chainName: string;
   sender: string;
   senderPubKey?: Promise<HexString | undefined> | HexString;
-  sourceTokenStandard?: string;
+  sourceTokenStandard?: TokenStandard;
   route: RouteResponse;
   approvalTransactionCount: number;
 }): Promise<bigint> {
@@ -117,14 +118,31 @@ export async function estimateRouteSourceFee({
   }
 }
 
-function shouldUseQuotedGasFallback(error: unknown, sourceTokenStandard?: string): boolean {
+function shouldUseQuotedGasFallback(error: unknown, sourceTokenStandard?: TokenStandard): boolean {
   const message = formatError(error).toLowerCase();
+  const isSyntheticStandard =
+    sourceTokenStandard === TokenStandard.EvmHypSynthetic ||
+    sourceTokenStandard === TokenStandard.EvmHypSyntheticRebase;
+  const isInsufficientBurnBalance =
+    message.includes('burn amount exceeds balance') ||
+    errorContainsText(error, ERC20_INSUFFICIENT_BALANCE_SELECTOR);
   return (
     message.includes('too many arguments, want at most 2') ||
-    // A native balance override cannot fund a synthetic token burn. Balance
-    // validation reports the actual token deficit after this fee fallback.
-    (sourceTokenStandard === TokenStandard.EvmHypSynthetic &&
-      message.includes('burn amount exceeds balance'))
+    // A native balance override cannot fund synthetic token storage. Match
+    // both OpenZeppelin v4's revert string and v5's custom error selector.
+    (isSyntheticStandard && isInsufficientBurnBalance)
+  );
+}
+
+function errorContainsText(error: unknown, text: string, depth = 0): boolean {
+  if (typeof error === 'string') return error.toLowerCase().includes(text);
+  if (depth >= 6 || typeof error !== 'object' || error === null) return false;
+
+  const message = Reflect.get(error, 'message');
+  if (typeof message === 'string' && message.toLowerCase().includes(text)) return true;
+
+  return ['error', 'cause', 'data'].some((field) =>
+    errorContainsText(Reflect.get(error, field), text, depth + 1),
   );
 }
 

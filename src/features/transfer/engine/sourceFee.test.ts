@@ -284,6 +284,48 @@ describe('estimateRouteSourceFee', () => {
       }),
     ).rejects.toThrow('insufficient funds');
   });
+
+  test('falls back to the route gas budget when an EVM-like estimate reverts', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const estimateTransactionFee = vi.fn().mockRejectedValue({
+      code: 'UNPREDICTABLE_GAS_LIMIT',
+      reason: 'execution reverted: ERC20: burn amount exceeds balance',
+    });
+    const revertRoute = route();
+    revertRoute.gas.originGas = '700000';
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          maxFeePerGas: 2n,
+        }),
+        chainName: 'ethereum',
+        sender: '0xsender',
+        route: revertRoute,
+        approvalTransactionCount: 0,
+      }),
+    ).resolves.toBe(1_400_000n);
+
+    expect(estimateTransactionFee).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not fall back on non-EVM estimation reverts', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.SolanaWeb3));
+    const estimateTransactionFee = vi.fn().mockRejectedValue({
+      code: 'CALL_EXCEPTION',
+      reason: 'execution reverted',
+    });
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Sealevel, estimateTransactionFee),
+        chainName: 'solanamainnet',
+        sender: 'sender',
+        route: route(),
+        approvalTransactionCount: 0,
+      }),
+    ).rejects.toMatchObject({ code: 'CALL_EXCEPTION' });
+  });
 });
 
 describe('withEstimatedSourceFee', () => {

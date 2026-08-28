@@ -75,13 +75,11 @@ export async function estimateRouteSourceFee({
     embeddedApprovalTransactionCount(routeTxs),
   );
   if (isEVMLike(protocol) && approvalCount > 0) {
-    const routeGasUnits = BigInt(route.gas.originGas);
-    const gasUnits =
-      (routeGasUnits > EVM_LIKE_MIN_ROUTE_GAS_UNITS
-        ? routeGasUnits
-        : EVM_LIKE_MIN_ROUTE_GAS_UNITS) +
-      BigInt(approvalCount) * EVM_LIKE_APPROVAL_GAS_UNITS;
-    return estimateEvmLikeFeeForGasUnits(multiProvider, chainName, gasUnits);
+    return estimateEvmLikeFeeForGasUnits(
+      multiProvider,
+      chainName,
+      evmLikeRouteGasUnits(route, approvalCount),
+    );
   }
 
   const transactions = await prepareSourceTransactions({
@@ -108,8 +106,25 @@ export async function estimateRouteSourceFee({
     );
     return estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
   } catch (error) {
-    if (isEVMLike(protocol) && isUnsupportedStateOverrideError(error)) {
+    if (!isEVMLike(protocol)) throw error;
+    // KiiChain-style RPCs reject the balance state-override argument, so fall
+    // back to the quote's raw origin gas budget for the whole estimate.
+    if (isUnsupportedStateOverrideError(error)) {
       return estimateEvmLikeFeeForGasUnits(multiProvider, chainName, BigInt(route.gas.originGas));
+    }
+    // A synthetic/collateral transferRemote reverts in estimateGas when the
+    // sender does not yet hold the token to burn or transfer. The balance
+    // override only funds native gas, not the ERC20 balance, so on EVM-like
+    // chains fall back to the quote's origin gas budget instead of surfacing a
+    // fee-estimate error for an otherwise valid quote. Separate transfer
+    // validation still blocks the send. Non-revert errors keep propagating so
+    // real estimation failures stay visible.
+    if (isExecutionRevertError(error)) {
+      return estimateEvmLikeFeeForGasUnits(
+        multiProvider,
+        chainName,
+        evmLikeRouteGasUnits(route, approvalCount),
+      );
     }
     throw error;
   }
@@ -117,6 +132,40 @@ export async function estimateRouteSourceFee({
 
 function isUnsupportedStateOverrideError(error: unknown): boolean {
   return formatError(error).toLowerCase().includes('too many arguments, want at most 2');
+}
+
+function evmLikeRouteGasUnits(route: RouteResponse, approvalCount: number): bigint {
+  const routeGasUnits = BigInt(route.gas.originGas);
+  return (
+    (routeGasUnits > EVM_LIKE_MIN_ROUTE_GAS_UNITS ? routeGasUnits : EVM_LIKE_MIN_ROUTE_GAS_UNITS) +
+    BigInt(approvalCount) * EVM_LIKE_APPROVAL_GAS_UNITS
+  );
+}
+
+function isExecutionRevertError(error: unknown): boolean {
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+  while (current && typeof current === 'object' && !seen.has(current)) {
+    seen.add(current);
+    const record = current as Record<string, unknown>;
+    const code = record.code;
+    if (
+      code === 'UNPREDICTABLE_GAS_LIMIT' ||
+      code === 'CALL_EXCEPTION' ||
+      code === 3 ||
+      code === '3'
+    ) {
+      return true;
+    }
+    for (const key of ['message', 'reason', 'body'] as const) {
+      const value = record[key];
+      if (typeof value === 'string' && value.toLowerCase().includes('execution reverted')) {
+        return true;
+      }
+    }
+    current = record.error ?? record.cause;
+  }
+  return false;
 }
 
 async function estimateEvmLikeFeeForGasUnits(

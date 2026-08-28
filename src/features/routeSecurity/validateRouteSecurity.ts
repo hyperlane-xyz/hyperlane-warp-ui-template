@@ -198,6 +198,7 @@ function validateTxTargets(
 
   const srcProtocol = protocolForChain(srcChain);
   if (!srcProtocol) return { valid: false, reason: 'Route source protocol unavailable' };
+  const nativeTokenAddress = context.chainMetadata[srcChain.chainName]?.nativeToken?.denom;
 
   if (route.executionKind === 'sdkWarp') {
     const txOrderValidation = validateSdkTxOrder(txs, srcProtocol);
@@ -207,7 +208,7 @@ function validateTxTargets(
   for (const tx of txs) {
     const validation = isChainRouteTx(tx)
       ? validateChainRouteTx(route, tx, srcChain, srcProtocol, context)
-      : validateSdkRouteTx(route, tx, srcProtocol);
+      : validateSdkRouteTx(route, tx, srcProtocol, nativeTokenAddress);
     if (!validation.valid) return validation;
   }
 

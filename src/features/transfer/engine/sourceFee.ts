@@ -1,5 +1,5 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
+import { formatError, type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getRouteTxs } from '../../api/routeTx';
 import type { RouteResponse } from '../../api/types';
@@ -92,20 +92,31 @@ export async function estimateRouteSourceFee({
     routeTxs,
   });
   const publicKey = (await senderPubKey)?.replace(/^0x/, '');
-  const estimates = await Promise.all(
-    transactions.map((transaction) =>
-      multiProvider.estimateTransactionFee({
-        chainNameOrId: chainName,
-        transaction,
-        sender,
-        senderPubKey: publicKey,
-        // Fee estimation must succeed even when validation is about to prove
-        // that the sender cannot afford the transaction.
-        ignoreSenderBalance: true,
-      }),
-    ),
-  );
-  return estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
+  try {
+    const estimates = await Promise.all(
+      transactions.map((transaction) =>
+        multiProvider.estimateTransactionFee({
+          chainNameOrId: chainName,
+          transaction,
+          sender,
+          senderPubKey: publicKey,
+          // Fee estimation must succeed even when validation is about to prove
+          // that the sender cannot afford the transaction.
+          ignoreSenderBalance: true,
+        }),
+      ),
+    );
+    return estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
+  } catch (error) {
+    if (isEVMLike(protocol) && isUnsupportedStateOverrideError(error)) {
+      return estimateEvmLikeFeeForGasUnits(multiProvider, chainName, BigInt(route.gas.originGas));
+    }
+    throw error;
+  }
+}
+
+function isUnsupportedStateOverrideError(error: unknown): boolean {
+  return formatError(error).toLowerCase().includes('too many arguments, want at most 2');
 }
 
 async function estimateEvmLikeFeeForGasUnits(

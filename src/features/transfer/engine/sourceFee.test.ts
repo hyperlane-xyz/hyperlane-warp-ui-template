@@ -164,6 +164,30 @@ describe('estimateRouteSourceFee', () => {
     ).resolves.toBe(0n);
   });
 
+  test('uses quoted gas when an EVM RPC rejects the balance override argument', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const rpcError = new Error('too many arguments, want at most 2');
+    const estimateTransactionFee = vi
+      .fn()
+      .mockRejectedValue(new Error('All providers failed', { cause: rpcError }));
+    const fallbackRoute = route();
+    fallbackRoute.gas.originGas = '250000';
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          gasPrice: 2n,
+        }),
+        chainName: 'kiichain',
+        sender: '0xsender',
+        route: fallbackRoute,
+        approvalTransactionCount: 0,
+      }),
+    ).resolves.toBe(500_000n);
+
+    expect(estimateTransactionFee).toHaveBeenCalledOnce();
+  });
+
   test('adds revoke and approval gas after the full EVM-like route budget', async () => {
     const estimateTransactionFee = vi.fn();
     const multiProvider = provider(ProtocolType.Ethereum, estimateTransactionFee, {

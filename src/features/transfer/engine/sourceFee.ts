@@ -1,4 +1,4 @@
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { type MultiProtocolProvider, TokenStandard } from '@hyperlane-xyz/sdk';
 import { formatError, type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getRouteTxs } from '../../api/routeTx';
@@ -8,6 +8,7 @@ import type { FeeBreakdown } from './types';
 
 const EVM_LIKE_MIN_ROUTE_GAS_UNITS = 600_000n;
 const EVM_LIKE_APPROVAL_GAS_UNITS = 55_000n;
+const ERC20_INSUFFICIENT_BALANCE_SELECTOR = '0xe450d38c';
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 export function sourceFeeRouteKey(route: RouteResponse): string {
@@ -44,6 +45,7 @@ export async function estimateRouteSourceFee({
   chainName,
   sender,
   senderPubKey,
+  sourceTokenStandard,
   route,
   approvalTransactionCount,
 }: {
@@ -51,6 +53,7 @@ export async function estimateRouteSourceFee({
   chainName: string;
   sender: string;
   senderPubKey?: Promise<HexString | undefined> | HexString;
+  sourceTokenStandard?: TokenStandard;
   route: RouteResponse;
   approvalTransactionCount: number;
 }): Promise<bigint> {
@@ -108,15 +111,39 @@ export async function estimateRouteSourceFee({
     );
     return estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
   } catch (error) {
-    if (isEVMLike(protocol) && isUnsupportedStateOverrideError(error)) {
+    if (isEVMLike(protocol) && shouldUseQuotedGasFallback(error, sourceTokenStandard)) {
       return estimateEvmLikeFeeForGasUnits(multiProvider, chainName, BigInt(route.gas.originGas));
     }
     throw error;
   }
 }
 
-function isUnsupportedStateOverrideError(error: unknown): boolean {
-  return formatError(error).toLowerCase().includes('too many arguments, want at most 2');
+function shouldUseQuotedGasFallback(error: unknown, sourceTokenStandard?: TokenStandard): boolean {
+  const message = formatError(error).toLowerCase();
+  const isSyntheticStandard =
+    sourceTokenStandard === TokenStandard.EvmHypSynthetic ||
+    sourceTokenStandard === TokenStandard.EvmHypSyntheticRebase;
+  const isInsufficientBurnBalance =
+    message.includes('burn amount exceeds balance') ||
+    errorContainsText(error, ERC20_INSUFFICIENT_BALANCE_SELECTOR);
+  return (
+    message.includes('too many arguments, want at most 2') ||
+    // A native balance override cannot fund synthetic token storage. Match
+    // both OpenZeppelin v4's revert string and v5's custom error selector.
+    (isSyntheticStandard && isInsufficientBurnBalance)
+  );
+}
+
+function errorContainsText(error: unknown, text: string, depth = 0): boolean {
+  if (typeof error === 'string') return error.toLowerCase().includes(text);
+  if (depth >= 6 || typeof error !== 'object' || error === null) return false;
+
+  const message = Reflect.get(error, 'message');
+  if (typeof message === 'string' && message.toLowerCase().includes(text)) return true;
+
+  return ['error', 'cause', 'data'].some((field) =>
+    errorContainsText(Reflect.get(error, field), text, depth + 1),
+  );
 }
 
 async function estimateEvmLikeFeeForGasUnits(

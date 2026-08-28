@@ -23,6 +23,7 @@ const ETH_WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
+const STARKNET_FEE_TOKEN = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
 const SOL_UNIVERSAL_ROUTER_PROGRAM = '2CttnaLkYbNHbaFDFnQ8PMCnzUwTGrKnskBxPM4TRWGp';
 const SOL_ROUTER = 'SolRouter1111111111111111111111111111111111';
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -550,6 +551,39 @@ describe('validateRouteSecurity', () => {
     const route = starknetSdkWarpRoute({ transaction: { manifest: 'opaque' } });
 
     expect(validateRouteSecurity(route, starknetContext())).toEqual({ valid: true });
+  });
+
+  test('accepts a Starknet sdk warp route with bridge-asset and gas-fee approvals', () => {
+    expect(validateRouteSecurity(starknetApprovalRoute(), starknetContext())).toEqual({
+      valid: true,
+    });
+  });
+
+  test('rejects a Starknet approval whose spender is not the bridge router', () => {
+    const route = starknetApprovalRoute({ assetSpender: STARKNET_TOKEN });
+
+    expect(validateRouteSecurity(route, starknetContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK approval spender does not match bridge router',
+    });
+  });
+
+  test('rejects a Starknet bridge-asset approval that does not match the input amount', () => {
+    const route = starknetApprovalRoute({ assetAmount: 999n });
+
+    expect(validateRouteSecurity(route, starknetContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK approval amount does not match route input amount',
+    });
+  });
+
+  test('rejects a Starknet gas-fee approval that does not match the quoted fee', () => {
+    const route = starknetApprovalRoute({ feeAmount: 1n });
+
+    expect(validateRouteSecurity(route, starknetContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK approval amount does not match route fee amount',
+    });
   });
 
   test('accepts SDK warp routes with an SDK approval tx before the transfer tx', () => {
@@ -1209,6 +1243,92 @@ function starknetSdkWarpRoute(
       },
       metadata: { warpRouteId: args.warpRouteId ?? 'STRK/test' },
     },
+    approval: null,
+  };
+}
+
+function starknetApprove(
+  token: string,
+  spender: string,
+  amount: bigint,
+  warpRouteId: string,
+): RouteTx {
+  return {
+    protocol: ProtocolType.Starknet,
+    type: 'starknet',
+    category: 'approval',
+    transaction: {
+      contractAddress: token,
+      entrypoint: 'approve',
+      calldata: [spender, (amount & ((1n << 128n) - 1n)).toString(), (amount >> 128n).toString()],
+    },
+    metadata: { warpRouteId },
+  };
+}
+
+function starknetApprovalRoute(
+  args: {
+    assetAmount?: bigint;
+    assetSpender?: string;
+    feeAmount?: bigint;
+  } = {},
+): RouteResponse {
+  const warpRouteId = 'STRK/test';
+  const igpAmount = '5000';
+  const txs: NonNullable<RouteResponse['txs']> = [
+    starknetApprove(
+      STARKNET_TOKEN,
+      args.assetSpender ?? STARKNET_ROUTER,
+      args.assetAmount ?? 100n,
+      warpRouteId,
+    ),
+    starknetApprove(
+      STARKNET_FEE_TOKEN,
+      STARKNET_ROUTER,
+      args.feeAmount ?? BigInt(igpAmount),
+      warpRouteId,
+    ),
+    {
+      protocol: ProtocolType.Starknet,
+      type: 'starknet',
+      category: 'transfer',
+      transaction: {
+        contractAddress: STARKNET_ROUTER,
+        entrypoint: 'transfer_remote',
+        calldata: [],
+      },
+      metadata: { warpRouteId },
+    },
+  ];
+
+  return {
+    steps: [
+      {
+        type: 'bridge',
+        chain: STARKNET,
+        destChain: ETH,
+        asset: STARKNET_TOKEN,
+        router: STARKNET_ROUTER,
+        amountIn: '100',
+        amountOut: '100',
+        bridgeSymbol: 'STRK',
+        warpRouteId,
+        fee: {
+          tokenFee: '0',
+          igpToken: NATIVE,
+          igpAmount,
+          igpIncludedInAmountIn: false,
+          localNativeFee: '0',
+        },
+      },
+    ],
+    output: '100',
+    outputMin: '100',
+    executionKind: 'sdkWarp',
+    connection: { symbol: 'STRK', warpRouteId },
+    gas: { originGas: '0', destGas: '0' },
+    tx: txs[0],
+    txs,
     approval: null,
   };
 }

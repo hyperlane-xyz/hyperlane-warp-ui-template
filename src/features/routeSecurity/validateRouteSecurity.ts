@@ -193,16 +193,16 @@ function validateTxTargets(
   const txs = getRouteTxs(route);
   if (txs.length === 0) return { valid: false, reason: 'Route has no transactions' };
 
-  if (route.executionKind === 'sdkWarp') {
-    const txOrderValidation = validateSdkTxOrder(txs);
-    if (!txOrderValidation.valid) return txOrderValidation;
-  }
-
   const srcChain = chainForId(context.chains, context.srcChain);
   if (!srcChain) return { valid: false, reason: 'Route source chain unavailable' };
 
   const srcProtocol = protocolForChain(srcChain);
   if (!srcProtocol) return { valid: false, reason: 'Route source protocol unavailable' };
+
+  if (route.executionKind === 'sdkWarp') {
+    const txOrderValidation = validateSdkTxOrder(txs, srcProtocol);
+    if (!txOrderValidation.valid) return txOrderValidation;
+  }
 
   for (const tx of txs) {
     const validation = isChainRouteTx(tx)
@@ -214,7 +214,10 @@ function validateTxTargets(
   return { valid: true };
 }
 
-function validateSdkTxOrder(txs: RouteTx[]): RouteSecurityValidationResult {
+function validateSdkTxOrder(
+  txs: RouteTx[],
+  srcProtocol: ProtocolType,
+): RouteSecurityValidationResult {
   const categories = txs.map((tx) => (isChainRouteTx(tx) ? 'chain' : tx.category));
   const transferIndexes = categories.flatMap((category, index) =>
     category === 'transfer' ? [index] : [],
@@ -238,7 +241,10 @@ function validateSdkTxOrder(txs: RouteTx[]): RouteSecurityValidationResult {
   if (preTransfer.filter((category) => category === 'revoke').length > 1) {
     return { valid: false, reason: 'SDK route has multiple revoke transactions' };
   }
-  if (preTransfer.filter((category) => category === 'approval').length > 1) {
+  // Starknet routes add a second approval for the IGP gas-fee token alongside
+  // the bridged-token approval; each is bound to the router by validateSdkRouteTx.
+  const maxApprovals = srcProtocol === ProtocolType.Starknet ? 2 : 1;
+  if (preTransfer.filter((category) => category === 'approval').length > maxApprovals) {
     return { valid: false, reason: 'SDK route has multiple approval transactions' };
   }
   if (revokeIndex >= 0 && approvalIndex >= 0 && revokeIndex > approvalIndex) {

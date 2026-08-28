@@ -23,6 +23,7 @@ const ETH_WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
+const STARKNET_FEE_TOKEN = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
 const SOL_UNIVERSAL_ROUTER_PROGRAM = '2CttnaLkYbNHbaFDFnQ8PMCnzUwTGrKnskBxPM4TRWGp';
 const SOL_ROUTER = 'SolRouter1111111111111111111111111111111111';
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -38,7 +39,11 @@ const chainMetadata = {
   ethereum: { chainId: ETH, domainId: ETH },
   base: { chainId: BASE, domainId: BASE },
   solanamainnet: { chainId: SOL, domainId: SOL },
-  starknet: { chainId: STARKNET, domainId: STARKNET },
+  starknet: {
+    chainId: STARKNET,
+    domainId: STARKNET,
+    nativeToken: { denom: STARKNET_FEE_TOKEN },
+  },
 } as unknown as ChainMap<ChainMetadata>;
 
 const chains = [
@@ -552,6 +557,65 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(route, starknetContext())).toEqual({ valid: true });
   });
 
+  test.each([{}, { feeToken: STARKNET_TOKEN, igpToken: STARKNET_TOKEN }])(
+    'accepts a Starknet sdk warp route with bridge-asset and gas-fee approvals',
+    (args) => {
+      expect(validateRouteSecurity(starknetApprovalRoute(args), starknetContext())).toEqual({
+        valid: true,
+      });
+    },
+  );
+
+  test('accepts a Starknet native-origin approval using the chain native token contract', () => {
+    expect(
+      validateRouteSecurity(
+        starknetApprovalRoute({ asset: NATIVE, assetToken: STARKNET_FEE_TOKEN }),
+        starknetContext({ registryWarpRoutes: starknetNativeRoutes(), srcToken: NATIVE }),
+      ),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects a Starknet fee approval for an unrelated token', () => {
+    const route = starknetApprovalRoute({ feeToken: BAD });
+    if (route.steps[0].type !== 'bridge') throw new Error('expected bridge step');
+    route.steps[0].fee.igpToken = BAD;
+
+    expect(validateRouteSecurity(route, starknetContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK approval token does not match route token',
+    });
+  });
+
+  test('rejects a Starknet revoke for an unrelated token', () => {
+    const route = starknetApprovalRoute({ assetAmount: 0n, assetToken: BAD });
+    if (!route.txs || !('category' in route.txs[0])) throw new Error('expected SDK tx');
+    route.txs[0].category = 'revoke';
+
+    expect(validateRouteSecurity(route, starknetContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK approval token does not match route token',
+    });
+  });
+
+  test('rejects a Starknet approval whose spender is not the bridge router', () => {
+    const route = starknetApprovalRoute({ assetSpender: STARKNET_TOKEN });
+
+    expect(validateRouteSecurity(route, starknetContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK approval spender does not match bridge router',
+    });
+  });
+
+  test.each([{ assetAmount: 999n }, { feeAmount: 1n }])(
+    'rejects a Starknet approval with a mismatched amount',
+    (args) => {
+      expect(validateRouteSecurity(starknetApprovalRoute(args), starknetContext())).toMatchObject({
+        valid: false,
+        reason: 'SDK approval amount does not match route amount',
+      });
+    },
+  );
+
   test('accepts SDK warp routes with an SDK approval tx before the transfer tx', () => {
     const route = evmSdkWarpRoute();
 
@@ -904,13 +968,14 @@ function context(routeOverrides: Partial<RouteSecurityTestContext> = {}) {
   };
 }
 
-function starknetContext() {
+function starknetContext(overrides: Partial<RouteSecurityTestContext> = {}) {
   return context({
     registryWarpRoutes: starknetRoutes(),
     srcChain: STARKNET,
     dstChain: ETH,
     srcToken: STARKNET_TOKEN,
     dstToken: DST_ROUTER,
+    ...overrides,
   });
 }
 
@@ -1213,6 +1278,65 @@ function starknetSdkWarpRoute(
   };
 }
 
+function starknetApprove(
+  token: string,
+  spender: string,
+  amount: bigint,
+  warpRouteId: string,
+): RouteTx {
+  return {
+    protocol: ProtocolType.Starknet,
+    type: 'starknet',
+    category: 'approval',
+    transaction: {
+      contractAddress: token,
+      entrypoint: 'approve',
+      calldata: [spender, (amount & ((1n << 128n) - 1n)).toString(), (amount >> 128n).toString()],
+    },
+    metadata: { warpRouteId },
+  };
+}
+
+function starknetApprovalRoute(
+  args: {
+    asset?: string;
+    assetAmount?: bigint;
+    assetSpender?: string;
+    assetToken?: string;
+    feeAmount?: bigint;
+    feeToken?: string;
+    igpToken?: string;
+  } = {},
+): RouteResponse {
+  const route = starknetSdkWarpRoute();
+  const bridge = route.steps[0];
+  if (bridge.type !== 'bridge' || !route.tx) throw new Error('expected Starknet transfer');
+
+  const warpRouteId = 'STRK/test';
+  const igpAmount = '5000';
+  bridge.asset = args.asset ?? STARKNET_TOKEN;
+  bridge.fee.igpAmount = igpAmount;
+  bridge.fee.igpToken = args.igpToken ?? NATIVE;
+  const txs: NonNullable<RouteResponse['txs']> = [
+    starknetApprove(
+      args.assetToken ?? STARKNET_TOKEN,
+      args.assetSpender ?? STARKNET_ROUTER,
+      args.assetAmount ?? 100n,
+      warpRouteId,
+    ),
+    starknetApprove(
+      args.feeToken ?? STARKNET_FEE_TOKEN,
+      STARKNET_ROUTER,
+      args.feeAmount ?? BigInt(igpAmount),
+      warpRouteId,
+    ),
+    route.tx,
+  ];
+  route.tx = txs[0];
+  route.txs = txs;
+  return route;
+}
+
 function sealevelUniversalRouterRoute(
   args: {
     accounts?: Array<{ pubkey: string; isSigner?: boolean; isWritable?: boolean }>;
@@ -1279,6 +1403,16 @@ function starknetRoutes(): RegistryWarpRouteMap {
       ],
     },
   };
+}
+
+function starknetNativeRoutes(): RegistryWarpRouteMap {
+  const routes = starknetRoutes();
+  routes['strk/test'].tokens[0] = {
+    chainName: 'starknet',
+    addressOrDenom: STARKNET_ROUTER,
+    standard: 'StarknetHypNative',
+  };
+  return routes;
 }
 
 function universalRouterRoutes(): RegistryWarpRouteMap {

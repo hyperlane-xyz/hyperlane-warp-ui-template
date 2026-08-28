@@ -3,7 +3,7 @@ import { decodeFunctionData, erc20Abi, type Hex } from 'viem';
 
 import type { QuoteBridgeStep, RouteResponse, RouteTx } from '../api/types';
 import type { RouteSecurityValidationResult } from './types';
-import { firstBridge, sameTokenAddress } from './utils';
+import { firstBridge, isEngineNativeToken, sameTokenAddress } from './utils';
 
 const SDK_APPROVAL_CATEGORY = 'approval';
 const SDK_REVOKE_CATEGORY = 'revoke';
@@ -13,6 +13,7 @@ export function validateSdkRouteTx(
   route: RouteResponse,
   tx: Extract<RouteTx, { protocol: string }>,
   srcProtocol: ProtocolType,
+  nativeTokenAddress?: string,
 ): RouteSecurityValidationResult {
   if (route.executionKind !== 'sdkWarp') {
     return { valid: false, reason: 'SDK transaction shape is only supported for sdkWarp routes' };
@@ -33,7 +34,7 @@ export function validateSdkRouteTx(
   }
 
   if (tx.category === SDK_APPROVAL_CATEGORY || tx.category === SDK_REVOKE_CATEGORY) {
-    return validateSdkApprovalTx(route, tx, srcProtocol);
+    return validateSdkApprovalTx(route, tx, srcProtocol, nativeTokenAddress);
   }
 
   if (tx.category !== SDK_TRANSFER_CATEGORY) {
@@ -55,12 +56,13 @@ function validateSdkApprovalTx(
   route: RouteResponse,
   tx: Extract<RouteTx, { protocol: string }>,
   srcProtocol: ProtocolType,
+  nativeTokenAddress?: string,
 ): RouteSecurityValidationResult {
   const bridge = firstBridge(route);
   if (!bridge) return { valid: false, reason: 'SDK approval transaction missing bridge step' };
 
   if (srcProtocol === ProtocolType.Starknet) {
-    return validateStarknetApprovalTx(bridge, tx);
+    return validateStarknetApprovalTx(bridge, tx, nativeTokenAddress);
   }
 
   const approval = decodeEvmApproval(tx.transaction);
@@ -90,13 +92,11 @@ function validateSdkApprovalTx(
   return { valid: true };
 }
 
-// Starknet routes emit two approvals: the bridged token (spent by the router)
-// and the IGP gas-fee token (also pulled by the router). Both target the same
-// warp router as spender. The engine encodes them as native Starknet calls
-// (`contractAddress`/`entrypoint`/`calldata`), not EVM `to`/`data`.
+// Starknet uses native calls and separately approves the bridge asset and native IGP token.
 function validateStarknetApprovalTx(
   bridge: QuoteBridgeStep,
   tx: Extract<RouteTx, { protocol: string }>,
+  nativeTokenAddress?: string,
 ): RouteSecurityValidationResult {
   const approval = decodeStarknetApproval(tx.transaction);
   if (!approval) return { valid: false, reason: 'SDK approval transaction is not supported' };
@@ -105,25 +105,31 @@ function validateStarknetApprovalTx(
     return { valid: false, reason: 'SDK approval spender does not match bridge router' };
   }
 
+  const assetToken = isEngineNativeToken(bridge.asset) ? nativeTokenAddress : bridge.asset;
+  const resolvedFeeToken = isEngineNativeToken(bridge.fee.igpToken)
+    ? nativeTokenAddress
+    : bridge.fee.igpToken;
+  const feeToken = [assetToken, nativeTokenAddress].find(
+    (token) => token && resolvedFeeToken && sameFelt(token, resolvedFeeToken),
+  );
+  const expectedApprovals: Array<[string | undefined, string]> = [
+    [assetToken, bridge.amountIn],
+    [feeToken, bridge.fee.igpAmount],
+  ];
+  const allowedAmounts = expectedApprovals.flatMap(([token, amount]) =>
+    token && sameFelt(approval.token, token) ? [parseAmount(amount)] : [],
+  );
+  if (!allowedAmounts.length) {
+    return { valid: false, reason: 'SDK approval token does not match route token' };
+  }
+
   if (tx.category === SDK_REVOKE_CATEGORY) {
     if (approval.amount !== 0n) return { valid: false, reason: 'SDK revoke amount must be zero' };
     return { valid: true };
   }
 
-  if (sameFelt(approval.token, bridge.asset)) {
-    const amountIn = parseAmount(bridge.amountIn);
-    if (amountIn == null || approval.amount !== amountIn) {
-      return { valid: false, reason: 'SDK approval amount does not match route input amount' };
-    }
-    return { valid: true };
-  }
-
-  const igpAmount = parseAmount(bridge.fee.igpAmount);
-  if (igpAmount == null || igpAmount === 0n) {
-    return { valid: false, reason: 'SDK approval token does not match route input token' };
-  }
-  if (approval.amount !== igpAmount) {
-    return { valid: false, reason: 'SDK approval amount does not match route fee amount' };
+  if (!allowedAmounts.includes(approval.amount)) {
+    return { valid: false, reason: 'SDK approval amount does not match route amount' };
   }
   return { valid: true };
 }

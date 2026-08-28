@@ -1,4 +1,4 @@
-import { ProviderType } from '@hyperlane-xyz/sdk';
+import { ProviderType, TokenStandard } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -186,6 +186,106 @@ describe('estimateRouteSourceFee', () => {
     ).resolves.toBe(500_000n);
 
     expect(estimateTransactionFee).toHaveBeenCalledOnce();
+  });
+
+  test.each([TokenStandard.EvmHypSynthetic, TokenStandard.EvmHypSyntheticRebase])(
+    'uses quoted gas when a %s token burn exceeds the sender balance',
+    async (sourceTokenStandard) => {
+      prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+      const rpcError = new Error('execution reverted: ERC20: burn amount exceeds balance');
+      const estimateTransactionFee = vi
+        .fn()
+        .mockRejectedValue(new Error('All providers failed', { cause: rpcError }));
+      const syntheticRoute = route();
+      syntheticRoute.gas.originGas = '250000';
+
+      await expect(
+        estimateRouteSourceFee({
+          multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+            gasPrice: 2n,
+          }),
+          chainName: 'ethereum',
+          sender: '0xsender',
+          sourceTokenStandard,
+          route: syntheticRoute,
+          approvalTransactionCount: 0,
+        }),
+      ).resolves.toBe(500_000n);
+
+      expect(estimateTransactionFee).toHaveBeenCalledOnce();
+    },
+  );
+
+  test('uses quoted gas for the OpenZeppelin v5 insufficient-balance custom error', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const rpcError = Object.assign(new Error('execution reverted'), {
+      data: '0xe450d38c00000000',
+    });
+    const estimateTransactionFee = vi
+      .fn()
+      .mockRejectedValue(new Error('All providers failed', { cause: rpcError }));
+    const syntheticRoute = route();
+    syntheticRoute.gas.originGas = '250000';
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          gasPrice: 2n,
+        }),
+        chainName: 'ethereum',
+        sender: '0xsender',
+        sourceTokenStandard: TokenStandard.EvmHypSynthetic,
+        route: syntheticRoute,
+        approvalTransactionCount: 0,
+      }),
+    ).resolves.toBe(500_000n);
+
+    expect(estimateTransactionFee).toHaveBeenCalledOnce();
+  });
+
+  test('does not hide unrelated nested errors for synthetic sources', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const rpcError = new Error('execution reverted: route is paused');
+    const estimationError = new Error('All providers failed', { cause: rpcError });
+    const estimateTransactionFee = vi.fn().mockRejectedValue(estimationError);
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          gasPrice: 2n,
+        }),
+        chainName: 'ethereum',
+        sender: '0xsender',
+        sourceTokenStandard: TokenStandard.EvmHypSynthetic,
+        route: route(),
+        approvalTransactionCount: 0,
+      }),
+    ).rejects.toBe(estimationError);
+  });
+
+  test.each([
+    TokenStandard.EvmHypXERC20,
+    TokenStandard.EvmHypCollateral,
+    TokenStandard.EvmHypNative,
+    TokenStandard.EvmHypOwnerCollateral,
+  ])('does not hide burn failures for %s sources', async (sourceTokenStandard) => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const estimateTransactionFee = vi
+      .fn()
+      .mockRejectedValue(new Error('execution reverted: ERC20: burn amount exceeds balance'));
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          gasPrice: 2n,
+        }),
+        chainName: 'ethereum',
+        sender: '0xsender',
+        sourceTokenStandard,
+        route: route(),
+        approvalTransactionCount: 0,
+      }),
+    ).rejects.toThrow('burn amount exceeds balance');
   });
 
   test('adds revoke and approval gas after the full EVM-like route budget', async () => {

@@ -1,3 +1,4 @@
+import { TokenStandard } from '@hyperlane-xyz/sdk';
 import { eqAddress, isValidAddressEvm, objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
@@ -131,6 +132,12 @@ function TransferFormContent() {
       : undefined;
   const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
+  const sourceTokenStandard =
+    srcToken?.standard === TokenStandard.EvmHypSynthetic
+      ? TokenStandard.EvmHypSynthetic
+      : srcToken?.standard === TokenStandard.EvmHypSyntheticRebase
+        ? TokenStandard.EvmHypSyntheticRebase
+        : undefined;
   const { data: srcBalance } = useTokenBalance(srcToken, sender);
 
   const [isReview, setIsReview] = useState(false);
@@ -212,6 +219,7 @@ function TransferFormContent() {
       'source-fee',
       srcChainName ?? null,
       sender ?? null,
+      srcToken?.standard ?? null,
       sourceFeeKey,
       approvalTransactionCount,
     ],
@@ -224,6 +232,7 @@ function TransferFormContent() {
         chainName: srcChainName,
         sender,
         senderPubKey,
+        sourceTokenStandard,
         route: bestRoute.raw,
         approvalTransactionCount,
       });
@@ -362,6 +371,7 @@ function TransferFormContent() {
             chainName: srcChainName,
             sender,
             senderPubKey,
+            sourceTokenStandard,
             route: bestRoute.raw,
             approvalTransactionCount: approvalCount,
           });
@@ -405,6 +415,7 @@ function TransferFormContent() {
       srcChainInfo?.protocol,
       srcChainName,
       srcToken,
+      sourceTokenStandard,
       starknetAccount,
       values,
     ],

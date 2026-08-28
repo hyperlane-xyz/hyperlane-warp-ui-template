@@ -108,15 +108,21 @@ export async function estimateRouteSourceFee({
     );
     return estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
   } catch (error) {
-    if (isEVMLike(protocol) && isUnsupportedStateOverrideError(error)) {
+    if (isEVMLike(protocol) && shouldUseQuotedGasFallback(error)) {
       return estimateEvmLikeFeeForGasUnits(multiProvider, chainName, BigInt(route.gas.originGas));
     }
     throw error;
   }
 }
 
-function isUnsupportedStateOverrideError(error: unknown): boolean {
-  return formatError(error).toLowerCase().includes('too many arguments, want at most 2');
+function shouldUseQuotedGasFallback(error: unknown): boolean {
+  const message = formatError(error).toLowerCase();
+  return (
+    message.includes('too many arguments, want at most 2') ||
+    // A native balance override cannot fund a synthetic token burn. Balance
+    // validation reports the actual token deficit after this fee fallback.
+    message.includes('burn amount exceeds balance')
+  );
 }
 
 async function estimateEvmLikeFeeForGasUnits(

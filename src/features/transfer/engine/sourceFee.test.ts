@@ -1,4 +1,4 @@
-import { ProviderType } from '@hyperlane-xyz/sdk';
+import { ProviderType, TokenStandard } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -204,12 +204,39 @@ describe('estimateRouteSourceFee', () => {
         }),
         chainName: 'ethereum',
         sender: '0xsender',
+        sourceTokenStandard: TokenStandard.EvmHypSynthetic,
         route: syntheticRoute,
         approvalTransactionCount: 0,
       }),
     ).resolves.toBe(500_000n);
 
     expect(estimateTransactionFee).toHaveBeenCalledOnce();
+  });
+
+  test.each([
+    TokenStandard.EvmHypXERC20,
+    TokenStandard.EvmHypCollateral,
+    TokenStandard.EvmHypNative,
+    TokenStandard.EvmHypOwnerCollateral,
+    TokenStandard.EvmHypSyntheticRebase,
+  ])('does not hide burn failures for %s sources', async (sourceTokenStandard) => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const estimateTransactionFee = vi
+      .fn()
+      .mockRejectedValue(new Error('execution reverted: ERC20: burn amount exceeds balance'));
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          gasPrice: 2n,
+        }),
+        chainName: 'ethereum',
+        sender: '0xsender',
+        sourceTokenStandard,
+        route: route(),
+        approvalTransactionCount: 0,
+      }),
+    ).rejects.toThrow('burn amount exceeds balance');
   });
 
   test('adds revoke and approval gas after the full EVM-like route budget', async () => {

@@ -212,6 +212,7 @@ function TransferFormContent() {
       'source-fee',
       srcChainName ?? null,
       sender ?? null,
+      srcToken?.standard ?? null,
       sourceFeeKey,
       approvalTransactionCount,
     ],
@@ -224,6 +225,7 @@ function TransferFormContent() {
         chainName: srcChainName,
         sender,
         senderPubKey,
+        sourceTokenStandard: srcToken?.standard,
         route: bestRoute.raw,
         approvalTransactionCount,
       });
@@ -362,6 +364,7 @@ function TransferFormContent() {
             chainName: srcChainName,
             sender,
             senderPubKey,
+            sourceTokenStandard: srcToken?.standard,
             route: bestRoute.raw,
             approvalTransactionCount: approvalCount,
           });

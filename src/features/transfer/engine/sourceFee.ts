@@ -1,4 +1,4 @@
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { type MultiProtocolProvider, TokenStandard } from '@hyperlane-xyz/sdk';
 import { formatError, type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getRouteTxs } from '../../api/routeTx';
@@ -44,6 +44,7 @@ export async function estimateRouteSourceFee({
   chainName,
   sender,
   senderPubKey,
+  sourceTokenStandard,
   route,
   approvalTransactionCount,
 }: {
@@ -51,6 +52,7 @@ export async function estimateRouteSourceFee({
   chainName: string;
   sender: string;
   senderPubKey?: Promise<HexString | undefined> | HexString;
+  sourceTokenStandard?: string;
   route: RouteResponse;
   approvalTransactionCount: number;
 }): Promise<bigint> {
@@ -108,20 +110,21 @@ export async function estimateRouteSourceFee({
     );
     return estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
   } catch (error) {
-    if (isEVMLike(protocol) && shouldUseQuotedGasFallback(error)) {
+    if (isEVMLike(protocol) && shouldUseQuotedGasFallback(error, sourceTokenStandard)) {
       return estimateEvmLikeFeeForGasUnits(multiProvider, chainName, BigInt(route.gas.originGas));
     }
     throw error;
   }
 }
 
-function shouldUseQuotedGasFallback(error: unknown): boolean {
+function shouldUseQuotedGasFallback(error: unknown, sourceTokenStandard?: string): boolean {
   const message = formatError(error).toLowerCase();
   return (
     message.includes('too many arguments, want at most 2') ||
     // A native balance override cannot fund a synthetic token burn. Balance
     // validation reports the actual token deficit after this fee fallback.
-    message.includes('burn amount exceeds balance')
+    (sourceTokenStandard === TokenStandard.EvmHypSynthetic &&
+      message.includes('burn amount exceeds balance'))
   );
 }
 

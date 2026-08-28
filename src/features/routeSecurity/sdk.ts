@@ -1,7 +1,7 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { decodeFunctionData, erc20Abi, type Hex } from 'viem';
 
-import type { RouteResponse, RouteTx } from '../api/types';
+import type { QuoteBridgeStep, RouteResponse, RouteTx } from '../api/types';
 import type { RouteSecurityValidationResult } from './types';
 import { firstBridge, sameTokenAddress } from './utils';
 
@@ -33,7 +33,7 @@ export function validateSdkRouteTx(
   }
 
   if (tx.category === SDK_APPROVAL_CATEGORY || tx.category === SDK_REVOKE_CATEGORY) {
-    return validateSdkApprovalTx(route, tx);
+    return validateSdkApprovalTx(route, tx, srcProtocol);
   }
 
   if (tx.category !== SDK_TRANSFER_CATEGORY) {
@@ -54,9 +54,14 @@ export function validateSdkRouteTx(
 function validateSdkApprovalTx(
   route: RouteResponse,
   tx: Extract<RouteTx, { protocol: string }>,
+  srcProtocol: ProtocolType,
 ): RouteSecurityValidationResult {
   const bridge = firstBridge(route);
   if (!bridge) return { valid: false, reason: 'SDK approval transaction missing bridge step' };
+
+  if (srcProtocol === ProtocolType.Starknet) {
+    return validateStarknetApprovalTx(bridge, tx);
+  }
 
   const approval = decodeEvmApproval(tx.transaction);
   if (!approval) return { valid: false, reason: 'SDK approval transaction is not supported' };
@@ -83,6 +88,78 @@ function validateSdkApprovalTx(
   }
 
   return { valid: true };
+}
+
+// Starknet routes emit two approvals: the bridged token (spent by the router)
+// and the IGP gas-fee token (also pulled by the router). Both target the same
+// warp router as spender. The engine encodes them as native Starknet calls
+// (`contractAddress`/`entrypoint`/`calldata`), not EVM `to`/`data`.
+function validateStarknetApprovalTx(
+  bridge: QuoteBridgeStep,
+  tx: Extract<RouteTx, { protocol: string }>,
+): RouteSecurityValidationResult {
+  const approval = decodeStarknetApproval(tx.transaction);
+  if (!approval) return { valid: false, reason: 'SDK approval transaction is not supported' };
+
+  if (!sameFelt(approval.spender, bridge.router)) {
+    return { valid: false, reason: 'SDK approval spender does not match bridge router' };
+  }
+
+  if (tx.category === SDK_REVOKE_CATEGORY) {
+    if (approval.amount !== 0n) return { valid: false, reason: 'SDK revoke amount must be zero' };
+    return { valid: true };
+  }
+
+  if (sameFelt(approval.token, bridge.asset)) {
+    const amountIn = parseAmount(bridge.amountIn);
+    if (amountIn == null || approval.amount !== amountIn) {
+      return { valid: false, reason: 'SDK approval amount does not match route input amount' };
+    }
+    return { valid: true };
+  }
+
+  const igpAmount = parseAmount(bridge.fee.igpAmount);
+  if (igpAmount == null || igpAmount === 0n) {
+    return { valid: false, reason: 'SDK approval token does not match route input token' };
+  }
+  if (approval.amount !== igpAmount) {
+    return { valid: false, reason: 'SDK approval amount does not match route fee amount' };
+  }
+  return { valid: true };
+}
+
+function decodeStarknetApproval(
+  transaction: unknown,
+): { token: string; spender: string; amount: bigint } | undefined {
+  if (!isRecord(transaction)) return undefined;
+  const { contractAddress, entrypoint, calldata } = transaction;
+  if (typeof contractAddress !== 'string' || entrypoint !== 'approve') return undefined;
+  if (!Array.isArray(calldata) || calldata.length < 3) return undefined;
+  const [spender, amountLow, amountHigh] = calldata;
+  if (
+    typeof spender !== 'string' ||
+    typeof amountLow !== 'string' ||
+    typeof amountHigh !== 'string'
+  ) {
+    return undefined;
+  }
+  let amount: bigint;
+  try {
+    amount = BigInt(amountLow) + (BigInt(amountHigh) << 128n);
+  } catch {
+    return undefined;
+  }
+  return { token: contractAddress, spender, amount };
+}
+
+// Starknet felts compare by numeric value, independent of hex/decimal encoding
+// or leading-zero padding.
+function sameFelt(left: string, right: string): boolean {
+  try {
+    return BigInt(left) === BigInt(right);
+  } catch {
+    return false;
+  }
 }
 
 function decodeEvmApproval(

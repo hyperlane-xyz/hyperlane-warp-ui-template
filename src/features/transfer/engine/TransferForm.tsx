@@ -1,5 +1,11 @@
 import { TokenStandard } from '@hyperlane-xyz/sdk';
-import { eqAddress, isValidAddressEvm, objLength, ProtocolType } from '@hyperlane-xyz/utils';
+import {
+  eqAddress,
+  isNullish,
+  isValidAddressEvm,
+  objLength,
+  ProtocolType,
+} from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
@@ -61,7 +67,11 @@ import {
 } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
-import { isPriceImpactTooHigh, PRICE_IMPACT_BLOCK_MESSAGE } from './priceImpact';
+import {
+  getPriceImpactBlockMessage,
+  getRouteOutputAmounts,
+  isPriceImpactTooHigh,
+} from './priceImpact';
 import { emptyRouteMessageForRejections } from './rejections';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
@@ -207,23 +217,45 @@ function TransferFormContent() {
 
   // Cached prices remain display-only; fresh prices enforce the loss limit below.
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
-  const [outputAmount, minimumOutputAmount] = useMemo<[string, string]>(() => {
-    if (!bestRoute || !dstToken) return ['', ''];
-    try {
-      return [
-        formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals),
-        formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals),
-      ];
-    } catch {
-      return ['', ''];
-    }
-  }, [bestRoute, dstToken]);
+  const [outputAmount, minimumOutputAmount] = useMemo(
+    () => getRouteOutputAmounts(bestRoute?.raw, dstToken?.decimals),
+    [bestRoute, dstToken],
+  );
   const outputUsd = useTokenUsdValue(dstToken, outputAmount);
   const priceImpactPct = getPriceImpactPercentage(amountUsd, outputUsd);
   const freshAmountUsd = useFreshTokenUsdValue(srcToken, values.amount);
   const freshMinimumOutputUsd = useFreshTokenUsdValue(dstToken, minimumOutputAmount);
   const minimumPriceImpactPct = getPriceImpactPercentage(freshAmountUsd, freshMinimumOutputUsd);
   const hasExcessivePriceImpact = isPriceImpactTooHigh(minimumPriceImpactPct);
+  const priceImpactBlockMessage = getPriceImpactBlockMessage(minimumPriceImpactPct);
+
+  useEffect(() => {
+    if (!isReview || !hasExcessivePriceImpact) return;
+    const validationResult = { form: `Price moved — ${priceImpactBlockMessage}.` };
+    trackTransferValidationFailed({
+      errors: validationResult,
+      values,
+      srcToken,
+      dstToken,
+      sender,
+      recipient: effectiveRecipient,
+    });
+    // Return to edit mode so route and slippage controls are available.
+    // Form-level errors are rendered by WarningBanners.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setErrors(validationResult as any);
+    setIsReview(false);
+  }, [
+    dstToken,
+    effectiveRecipient,
+    hasExcessivePriceImpact,
+    isReview,
+    priceImpactBlockMessage,
+    sender,
+    setErrors,
+    srcToken,
+    values,
+  ]);
 
   const approvalArgs = useMemo(
     () => ({
@@ -810,6 +842,7 @@ function TransferFormContent() {
           quoteLoading={quoteLoading}
           outputUsd={outputUsd}
           priceImpactPct={priceImpactPct}
+          minimumPriceImpactPct={minimumPriceImpactPct}
           hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
@@ -888,6 +921,7 @@ function TransferFormContent() {
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         hasExcessivePriceImpact={hasExcessivePriceImpact}
+        priceImpactBlockMessage={priceImpactBlockMessage}
         onSendTransactions={onSendTransactions}
         sendPending={isActiveTransferInFlight}
         recipientConfirmed={addressConfirmed}
@@ -1110,6 +1144,7 @@ function DestinationTokenCard({
   quoteLoading,
   outputUsd,
   priceImpactPct,
+  minimumPriceImpactPct,
   hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
@@ -1120,6 +1155,7 @@ function DestinationTokenCard({
   quoteLoading: boolean;
   outputUsd: number | null;
   priceImpactPct: number | null;
+  minimumPriceImpactPct: number | null;
   hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
@@ -1167,7 +1203,11 @@ function DestinationTokenCard({
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
           <span>
-            {!outputUsd ? '$0.00' : formatUsd(outputUsd)}
+            {!bestRoute
+              ? '$0.00'
+              : isNullish(outputUsd)
+                ? 'Price unavailable'
+                : formatUsd(outputUsd)}
             {priceImpactPct != null && (
               <span
                 className={`ml-1 ${
@@ -1180,6 +1220,17 @@ function DestinationTokenCard({
               >
                 ({priceImpactPct >= 0 ? '+' : ''}
                 {priceImpactPct.toLocaleString('en-US', PCT_FORMAT_OPTIONS)}%)
+              </span>
+            )}
+            {bestRoute && !bestRoute.hasFixedOutput && (
+              <span className="ml-1">
+                · Minimum:{' '}
+                {isNullish(minimumPriceImpactPct)
+                  ? 'unavailable'
+                  : `${minimumPriceImpactPct >= 0 ? '+' : ''}${minimumPriceImpactPct.toLocaleString(
+                      'en-US',
+                      PCT_FORMAT_OPTIONS,
+                    )}%`}
               </span>
             )}
           </span>
@@ -1392,6 +1443,7 @@ function ButtonSection({
   isQuoteSettled,
   isValidating,
   hasExcessivePriceImpact,
+  priceImpactBlockMessage,
   onSendTransactions,
   sendPending,
   recipientConfirmed,
@@ -1412,6 +1464,7 @@ function ButtonSection({
   isQuoteSettled: boolean;
   isValidating: boolean;
   hasExcessivePriceImpact: boolean;
+  priceImpactBlockMessage: string;
   onSendTransactions: () => Promise<void>;
   sendPending: boolean;
   recipientConfirmed: boolean;
@@ -1445,7 +1498,7 @@ function ButtonSection({
       text = 'Fetching quote…';
       disabled = true;
     } else if (hasExcessivePriceImpact) {
-      text = PRICE_IMPACT_BLOCK_MESSAGE;
+      text = priceImpactBlockMessage;
       disabled = true;
     } else if (!isApprovalReady) {
       text = 'Fetching quote…';
@@ -1476,6 +1529,10 @@ function ButtonSection({
     );
   }
 
+  let sendText = `Send to ${dstDisplay}`;
+  if (sendPending) sendText = 'Sending…';
+  if (hasExcessivePriceImpact) sendText = priceImpactBlockMessage;
+
   return (
     <div className="mb-4 mt-4 flex items-center justify-between space-x-4">
       <SolidButton
@@ -1494,11 +1551,7 @@ function ButtonSection({
         disabled={sendPending || !recipientConfirmed || hasExcessivePriceImpact}
         className="flex-1 px-3 py-1.5 font-secondary text-white"
       >
-        {hasExcessivePriceImpact
-          ? PRICE_IMPACT_BLOCK_MESSAGE
-          : sendPending
-            ? 'Sending…'
-            : `Send to ${dstDisplay}`}
+        {sendText}
       </SolidButton>
     </div>
   );

@@ -4,23 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useReducer } from 'react';
 
 import { logger } from '../../utils/logger';
-import { useStore } from '../store';
+import { type TokenPriceCache, type TokenPriceCacheEntry, useStore } from '../store';
 import type { UiToken } from './types';
 
-interface PriceCacheEntry {
-  usd?: number;
-  fetchedAt?: number;
-  failedAt?: number;
-}
-
-type PriceCache = Record<string, PriceCacheEntry>;
 type MergeFn = (
   succeededIds: string[],
   fetched: Record<string, number>,
   failedIds: string[],
 ) => void;
 
-const PRICE_CACHE_MS = 15 * 60_000;
+export const PRICE_CACHE_MS = 15 * 60_000;
 const FAILED_BACKOFF_MS = 90_000;
 const COINGECKO_BATCH = 100;
 const CHUNK_DELAY_MS = 200;
@@ -70,7 +63,11 @@ async function fetchPricesBatched(ids: string[]): Promise<BatchedFetchResult> {
   return { requestedIds, prices };
 }
 
-async function fetchTokenPrices(ids: string[], cache: PriceCache, merge: MergeFn): Promise<null> {
+async function fetchTokenPrices(
+  ids: string[],
+  cache: TokenPriceCache,
+  merge: MergeFn,
+): Promise<null> {
   const now = Date.now();
   const idsToFetch = ids.filter((id) => {
     const entry = cache[id];
@@ -162,12 +159,20 @@ export function useFreshTokenUsdValue(token: UiToken | undefined, amount: string
 function getTokenUsdValue(price: number | undefined, amount: string): number | null {
   // Strip grouping separators — parseFloat("1,234.56") returns 1 otherwise.
   const parsedAmount = parseFloat(String(amount ?? '').replace(/,/g, ''));
-  if (!price || !Number.isFinite(parsedAmount)) return null;
+  if (
+    isNullish(price) ||
+    !Number.isFinite(price) ||
+    price <= 0 ||
+    !Number.isFinite(parsedAmount) ||
+    parsedAmount < 0
+  ) {
+    return null;
+  }
   return parsedAmount * price;
 }
 
 export function getFreshTokenUsdValue(
-  entry: PriceCacheEntry | undefined,
+  entry: TokenPriceCacheEntry | undefined,
   amount: string,
   now = Date.now(),
 ): number | null {

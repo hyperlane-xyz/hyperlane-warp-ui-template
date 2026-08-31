@@ -1,13 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { useStore } from '../store';
-import { getFreshTokenUsdValue, schedulePriceExpiry } from './useTokenPrice';
+import { getFreshTokenUsdValue, PRICE_CACHE_MS, schedulePriceExpiry } from './useTokenPrice';
 
 const NOW = 2_000_000_000_000;
-const initialTokenPrices = useStore.getState().tokenPrices;
 
 afterEach(() => {
-  useStore.setState({ tokenPrices: initialTokenPrices });
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
@@ -17,21 +14,32 @@ describe('getFreshTokenUsdValue', () => {
     expect(getFreshTokenUsdValue({ usd: 2, fetchedAt: NOW - 1_000 }, '3', NOW)).toBe(6);
   });
 
-  test('returns null for a stale price', () => {
-    expect(getFreshTokenUsdValue({ usd: 2, fetchedAt: NOW - 16 * 60_000 }, '3', NOW)).toBeNull();
+  test('expires exactly at the freshness boundary', () => {
+    expect(getFreshTokenUsdValue({ usd: 2, fetchedAt: NOW - PRICE_CACHE_MS + 1 }, '3', NOW)).toBe(
+      6,
+    );
+    expect(getFreshTokenUsdValue({ usd: 2, fetchedAt: NOW - PRICE_CACHE_MS }, '3', NOW)).toBeNull();
   });
 
-  test('returns null after a failed refresh retains the cached price', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(NOW);
-    useStore.setState({
-      tokenPrices: { ethereum: { usd: 2, fetchedAt: NOW - 1_000 } },
-    });
+  test('rejects a failed refresh and allows a later successful refresh', () => {
+    expect(
+      getFreshTokenUsdValue({ usd: 2, fetchedAt: NOW - 1_000, failedAt: NOW - 1_000 }, '3', NOW),
+    ).toBeNull();
+    expect(
+      getFreshTokenUsdValue({ usd: 2, fetchedAt: NOW - 1_000, failedAt: NOW - 90_000 }, '3', NOW),
+    ).toBe(6);
+  });
 
-    useStore.getState().mergeTokenPrices([], {}, ['ethereum']);
+  test('returns null when the price entry or price is unavailable', () => {
+    expect(getFreshTokenUsdValue(undefined, '3', NOW)).toBeNull();
+    expect(getFreshTokenUsdValue({ fetchedAt: NOW - 1_000 }, '3', NOW)).toBeNull();
+    expect(getFreshTokenUsdValue({ usd: 0, fetchedAt: NOW - 1_000 }, '3', NOW)).toBeNull();
+  });
 
-    const entry = useStore.getState().tokenPrices.ethereum;
-    expect(entry).toEqual({ usd: 2, fetchedAt: NOW - 1_000, failedAt: NOW });
-    expect(getFreshTokenUsdValue(entry, '3', NOW)).toBeNull();
+  test('prices amounts containing grouping separators', () => {
+    expect(getFreshTokenUsdValue({ usd: 2, fetchedAt: NOW - 1_000 }, '1,234.56', NOW)).toBe(
+      2_469.12,
+    );
   });
 
   test('expires a fresh value without a price-entry mutation', () => {
@@ -43,7 +51,7 @@ describe('getFreshTokenUsdValue', () => {
     schedulePriceExpiry(entry.fetchedAt, () => {
       value = getFreshTokenUsdValue(entry, '3');
     });
-    vi.advanceTimersByTime(15 * 60_000 - 1);
+    vi.advanceTimersByTime(PRICE_CACHE_MS - 1);
     expect(value).toBe(6);
 
     vi.advanceTimersByTime(1);

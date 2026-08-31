@@ -65,8 +65,9 @@ export function getFeePercentage(totalFeesUsd: number, transferUsd: number): str
   return `${pct.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 }
 
-// Signed value change from source to destination. Negative means value lost
-// to fees, swap slippage, or spread. Missing prices stay unknown.
+// Signed percentage change from source to destination. Negative means value
+// lost to fees, swap slippage, or spread. Returns null when either value is
+// missing, non-finite, or outside the domain of a meaningful percentage.
 export function getPriceImpactPercentage(
   inputUsd: number | null,
   outputUsd: number | null,

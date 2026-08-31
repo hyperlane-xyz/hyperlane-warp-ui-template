@@ -122,7 +122,7 @@ describe('getTotalFeeUsd', () => {
 });
 
 describe('getPriceImpactPercentage', () => {
-  test('returns the signed USD value change', () => {
+  test('returns the signed USD percentage change', () => {
     expect(getPriceImpactPercentage(100, 90)).toBeCloseTo(-10);
     expect(getPriceImpactPercentage(100, 105)).toBeCloseTo(5);
   });
@@ -136,5 +136,11 @@ describe('getPriceImpactPercentage', () => {
     expect(getPriceImpactPercentage(100, null)).toBeNull();
     expect(getPriceImpactPercentage(0, 0)).toBeNull();
     expect(getPriceImpactPercentage(Number.POSITIVE_INFINITY, 90)).toBeNull();
+  });
+
+  test('returns null for non-finite or negative output', () => {
+    expect(getPriceImpactPercentage(100, Number.POSITIVE_INFINITY)).toBeNull();
+    expect(getPriceImpactPercentage(100, Number.NaN)).toBeNull();
+    expect(getPriceImpactPercentage(100, -50)).toBeNull();
   });
 });

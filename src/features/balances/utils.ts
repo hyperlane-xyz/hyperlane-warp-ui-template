@@ -65,6 +65,25 @@ export function getFeePercentage(totalFeesUsd: number, transferUsd: number): str
   return `${pct.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 }
 
+// Signed value change from source to destination. Negative means value lost
+// to fees, swap slippage, or spread. Missing prices stay unknown.
+export function getPriceImpactPercentage(
+  inputUsd: number | null,
+  outputUsd: number | null,
+): number | null {
+  if (
+    inputUsd == null ||
+    outputUsd == null ||
+    !Number.isFinite(inputUsd) ||
+    !Number.isFinite(outputUsd) ||
+    inputUsd <= 0 ||
+    outputUsd < 0
+  ) {
+    return null;
+  }
+  return ((outputUsd - inputUsd) / inputUsd) * 100;
+}
+
 export function getNativeTokenDenom(
   multiProvider: MultiProtocolProvider,
   chainName: string | undefined,

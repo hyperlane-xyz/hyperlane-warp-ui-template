@@ -30,7 +30,12 @@ import { useChains } from '../../api/hooks';
 import type { RouteTx } from '../../api/types';
 import { useTokenBalance } from '../../balances/hooks';
 import { readBalance } from '../../balances/read';
-import { formatDisplayAmount, formatFeeAmount, formatUsd } from '../../balances/utils';
+import {
+  formatDisplayAmount,
+  formatFeeAmount,
+  formatUsd,
+  getPriceImpactPercentage,
+} from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
@@ -52,6 +57,7 @@ import {
 } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
+import { isPriceImpactTooHigh, PRICE_IMPACT_BLOCK_MESSAGE } from './priceImpact';
 import { emptyRouteMessageForRejections } from './rejections';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
@@ -197,6 +203,17 @@ function TransferFormContent() {
 
   // Input USD — used by the fee % calculation in FeeSectionButton.
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
+  const outputAmount = useMemo(() => {
+    if (!bestRoute || !dstToken) return '';
+    try {
+      return formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals);
+    } catch {
+      return '';
+    }
+  }, [bestRoute, dstToken]);
+  const outputUsd = useTokenUsdValue(dstToken, outputAmount);
+  const priceImpactPct = getPriceImpactPercentage(amountUsd, outputUsd);
+  const hasExcessivePriceImpact = isPriceImpactTooHigh(priceImpactPct);
 
   const approvalArgs = useMemo(
     () => ({
@@ -422,7 +439,9 @@ function TransferFormContent() {
   );
 
   const onContinue = useCallback(async () => {
-    if (isAmountDebouncing || !isApprovalReady || !isSourceFeeReady) return;
+    if (isAmountDebouncing || !isApprovalReady || !isSourceFeeReady || hasExcessivePriceImpact) {
+      return;
+    }
     const snapshot = values;
     setIsValidating(true);
     try {
@@ -476,6 +495,7 @@ function TransferFormContent() {
     isAmountDebouncing,
     isApprovalReady,
     isSourceFeeReady,
+    hasExcessivePriceImpact,
     approvalTransactionCount,
     sourceFeeQuery.data,
     validateCurrentForm,
@@ -534,6 +554,10 @@ function TransferFormContent() {
 
   const onSendTransactions = useCallback(async () => {
     if (!sender || !srcToken || !dstToken || !bestRoute || !values.srcChain || !values.dstChain) {
+      return;
+    }
+    if (hasExcessivePriceImpact) {
+      setIsReview(false);
       return;
     }
 
@@ -680,6 +704,7 @@ function TransferFormContent() {
     srcToken,
     dstToken,
     bestRoute,
+    hasExcessivePriceImpact,
     values,
     effectiveRecipient,
     validateCurrentForm,
@@ -773,7 +798,8 @@ function TransferFormContent() {
           recipient={effectiveRecipient}
           bestRoute={bestRoute}
           quoteLoading={quoteLoading}
-          inputUsd={amountUsd}
+          outputUsd={outputUsd}
+          priceImpactPct={priceImpactPct}
           hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
@@ -851,6 +877,7 @@ function TransferFormContent() {
         isApprovalReady={isApprovalReady && isSourceFeeReady}
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
+        hasExcessivePriceImpact={hasExcessivePriceImpact}
         onSendTransactions={onSendTransactions}
         sendPending={isActiveTransferInFlight}
         recipientConfirmed={addressConfirmed}
@@ -1071,7 +1098,8 @@ function DestinationTokenCard({
   recipient,
   bestRoute,
   quoteLoading,
-  inputUsd,
+  outputUsd,
+  priceImpactPct,
   hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
@@ -1080,20 +1108,13 @@ function DestinationTokenCard({
   recipient: string;
   bestRoute: AugmentedRoute | undefined;
   quoteLoading: boolean;
-  inputUsd: number | null;
+  outputUsd: number | null;
+  priceImpactPct: number | null;
   hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { data: balance } = useTokenBalance(dstToken, recipient);
 
-  const outputExact = useMemo(() => {
-    if (!bestRoute || !dstToken) return '';
-    try {
-      return formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals);
-    } catch {
-      return '';
-    }
-  }, [bestRoute, dstToken]);
   const outputDisplay = useMemo(() => {
     if (!bestRoute || !dstToken) return '';
     try {
@@ -1102,14 +1123,6 @@ function DestinationTokenCard({
       return '';
     }
   }, [bestRoute, dstToken]);
-  const outputUsd = useTokenUsdValue(dstToken, outputExact);
-  // Price impact = how much value the transfer loses to fees + slippage + spread.
-  // Only meaningful when both sides have USD prices.
-  const priceImpactPct = useMemo(() => {
-    if (!inputUsd || !outputUsd) return null;
-    return ((outputUsd - inputUsd) / inputUsd) * 100;
-  }, [inputUsd, outputUsd]);
-
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
@@ -1368,6 +1381,7 @@ function ButtonSection({
   isApprovalReady,
   isQuoteSettled,
   isValidating,
+  hasExcessivePriceImpact,
   onSendTransactions,
   sendPending,
   recipientConfirmed,
@@ -1387,6 +1401,7 @@ function ButtonSection({
   isApprovalReady: boolean;
   isQuoteSettled: boolean;
   isValidating: boolean;
+  hasExcessivePriceImpact: boolean;
   onSendTransactions: () => Promise<void>;
   sendPending: boolean;
   recipientConfirmed: boolean;
@@ -1418,6 +1433,9 @@ function ButtonSection({
       disabled = true;
     } else if (isAmountDebouncing) {
       text = 'Fetching quote…';
+      disabled = true;
+    } else if (hasExcessivePriceImpact) {
+      text = PRICE_IMPACT_BLOCK_MESSAGE;
       disabled = true;
     } else if (!isApprovalReady) {
       text = 'Fetching quote…';
@@ -1463,10 +1481,14 @@ function ButtonSection({
         type="button"
         color="accent"
         onClick={onSendTransactions}
-        disabled={sendPending || !recipientConfirmed}
+        disabled={sendPending || !recipientConfirmed || hasExcessivePriceImpact}
         className="flex-1 px-3 py-1.5 font-secondary text-white"
       >
-        {sendPending ? 'Sending…' : `Send to ${dstDisplay}`}
+        {hasExcessivePriceImpact
+          ? PRICE_IMPACT_BLOCK_MESSAGE
+          : sendPending
+            ? 'Sending…'
+            : `Send to ${dstDisplay}`}
       </SolidButton>
     </div>
   );

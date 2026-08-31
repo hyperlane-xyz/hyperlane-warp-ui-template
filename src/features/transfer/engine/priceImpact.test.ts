@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import { getPriceImpactPercentage } from '../../balances/utils';
 import { isPriceImpactTooHigh } from './priceImpact';
 
 describe('isPriceImpactTooHigh', () => {
@@ -15,5 +16,13 @@ describe('isPriceImpactTooHigh', () => {
 
   test('allows transfers when price impact is unavailable', () => {
     expect(isPriceImpactTooHigh(null)).toBe(false);
+  });
+
+  test('blocks when the executable minimum crosses the threshold', () => {
+    const expectedImpact = getPriceImpactPercentage(100, 91);
+    const minimumImpact = getPriceImpactPercentage(100, 88.27);
+
+    expect(isPriceImpactTooHigh(expectedImpact)).toBe(false);
+    expect(isPriceImpactTooHigh(minimumImpact)).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import { isNullish } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -6,7 +7,13 @@ import { logger } from '../../utils/logger';
 import { useStore } from '../store';
 import type { UiToken } from './types';
 
-type PriceCache = Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;
+interface PriceCacheEntry {
+  usd?: number;
+  fetchedAt?: number;
+  failedAt?: number;
+}
+
+type PriceCache = Record<string, PriceCacheEntry>;
 type MergeFn = (
   succeededIds: string[],
   fetched: Record<string, number>,
@@ -134,10 +141,30 @@ export function useTokenPrices(): { prices: Record<string, number>; isLoading: b
 export function useTokenUsdValue(token: UiToken | undefined, amount: string): number | null {
   const id = token?.coinGeckoId;
   const price = useStore((s) => (id ? s.tokenPrices[id]?.usd : undefined));
-  return useMemo(() => {
-    // Strip grouping separators — parseFloat("1,234.56") returns 1 otherwise.
-    const a = parseFloat(String(amount ?? '').replace(/,/g, ''));
-    if (!price || !Number.isFinite(a)) return null;
-    return a * price;
-  }, [amount, price]);
+  return useMemo(() => getTokenUsdValue(price, amount), [amount, price]);
+}
+
+// Enforcement must fail open when the cached price is stale or its latest
+// refresh failed. Display-only callers can continue using useTokenUsdValue.
+export function useFreshTokenUsdValue(token: UiToken | undefined, amount: string): number | null {
+  const id = token?.coinGeckoId;
+  const entry = useStore((s) => (id ? s.tokenPrices[id] : undefined));
+  return useMemo(() => getFreshTokenUsdValue(entry, amount), [amount, entry]);
+}
+
+function getTokenUsdValue(price: number | undefined, amount: string): number | null {
+  // Strip grouping separators — parseFloat("1,234.56") returns 1 otherwise.
+  const parsedAmount = parseFloat(String(amount ?? '').replace(/,/g, ''));
+  if (!price || !Number.isFinite(parsedAmount)) return null;
+  return parsedAmount * price;
+}
+
+export function getFreshTokenUsdValue(
+  entry: PriceCacheEntry | undefined,
+  amount: string,
+  now = Date.now(),
+): number | null {
+  if (isNullish(entry?.fetchedAt) || now - entry.fetchedAt >= PRICE_CACHE_MS) return null;
+  if (!isNullish(entry.failedAt) && entry.failedAt >= entry.fetchedAt) return null;
+  return getTokenUsdValue(entry.usd, amount);
 }

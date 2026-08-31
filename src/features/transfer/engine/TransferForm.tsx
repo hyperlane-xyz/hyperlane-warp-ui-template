@@ -41,7 +41,11 @@ import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import { TokenSelectField } from '../../tokens/TokenSelectField';
 import type { UiToken } from '../../tokens/types';
-import { useTokenPrices, useTokenUsdValue } from '../../tokens/useTokenPrice';
+import {
+  useFreshTokenUsdValue,
+  useTokenPrices,
+  useTokenUsdValue,
+} from '../../tokens/useTokenPrice';
 import { tokenKey } from '../../tokens/utils';
 import { RecipientConfirmationModal } from '../../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
@@ -201,19 +205,25 @@ function TransferFormContent() {
     [approval],
   );
 
-  // Input USD — used by the fee % calculation in FeeSectionButton.
+  // Cached prices remain display-only; fresh prices enforce the loss limit below.
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
-  const outputAmount = useMemo(() => {
-    if (!bestRoute || !dstToken) return '';
+  const [outputAmount, minimumOutputAmount] = useMemo<[string, string]>(() => {
+    if (!bestRoute || !dstToken) return ['', ''];
     try {
-      return formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals);
+      return [
+        formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals),
+        formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals),
+      ];
     } catch {
-      return '';
+      return ['', ''];
     }
   }, [bestRoute, dstToken]);
   const outputUsd = useTokenUsdValue(dstToken, outputAmount);
   const priceImpactPct = getPriceImpactPercentage(amountUsd, outputUsd);
-  const hasExcessivePriceImpact = isPriceImpactTooHigh(priceImpactPct);
+  const freshAmountUsd = useFreshTokenUsdValue(srcToken, values.amount);
+  const freshMinimumOutputUsd = useFreshTokenUsdValue(dstToken, minimumOutputAmount);
+  const minimumPriceImpactPct = getPriceImpactPercentage(freshAmountUsd, freshMinimumOutputUsd);
+  const hasExcessivePriceImpact = isPriceImpactTooHigh(minimumPriceImpactPct);
 
   const approvalArgs = useMemo(
     () => ({

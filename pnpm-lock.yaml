@@ -87,8 +87,8 @@ importers:
         specifier: ^2.2.10
         version: 2.2.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@hyperlane-xyz/registry':
-        specifier: 25.5.0
-        version: 25.5.0
+        specifier: 25.6.0
+        version: 25.6.0
       '@hyperlane-xyz/sdk':
         specifier: 42.0.0
         version: 42.0.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.86.0(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@3.7.6(@aws-sdk/credential-provider-web-identity@3.972.69)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(fastestsmallesttextencoderdecoder@1.0.22)(supports-color@8.1.1)(typescript@7.0.2)(utf-8-validate@6.0.6)
@@ -1351,8 +1351,8 @@ packages:
     resolution: {integrity: sha512-LkMxVYj30aoWDs8wLTV1KItBAiwhhlfJ6EYemh5WsQrFrI9Eo4g0Z0qKVMSBlt26Fq2uPRFpK2+2xdpTNSSQ0g==}
     engines: {node: '>=24'}
 
-  '@hyperlane-xyz/registry@25.5.0':
-    resolution: {integrity: sha512-U6C8jW548XjdYhAT301gAkl3g8nSY6psFMrZ45sjcNDXG+xkFtiOjuRqd0rjld5K0OSNYs5vUB+kP5BoKuzKUA==}
+  '@hyperlane-xyz/registry@25.6.0':
+    resolution: {integrity: sha512-QP2ocK3hvlGj8WpM4oaDFG7uo8j7TobC/UhQcgoF6LsW4GgvHD/VAw3Ze13XEjy44y3k8DS+2J+rC6fmHyuh6A==}
     engines: {node: '>=24'}
 
   '@hyperlane-xyz/sdk@42.0.0':
@@ -11453,7 +11453,7 @@ snapshots:
       yaml: 2.4.5
       zod: 3.25.76
 
-  '@hyperlane-xyz/registry@25.5.0':
+  '@hyperlane-xyz/registry@25.6.0':
     dependencies:
       jszip: 3.10.1
       pino: 8.21.0

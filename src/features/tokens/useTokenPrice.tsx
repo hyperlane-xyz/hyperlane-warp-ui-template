@@ -1,7 +1,7 @@
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 
 import { logger } from '../../utils/logger';
 import { useStore } from '../store';
@@ -149,7 +149,14 @@ export function useTokenUsdValue(token: UiToken | undefined, amount: string): nu
 export function useFreshTokenUsdValue(token: UiToken | undefined, amount: string): number | null {
   const id = token?.coinGeckoId;
   const entry = useStore((s) => (id ? s.tokenPrices[id] : undefined));
-  return useMemo(() => getFreshTokenUsdValue(entry, amount), [amount, entry]);
+  const [, invalidateFreshness] = useReducer((version: number) => version + 1, 0);
+
+  useEffect(
+    () => schedulePriceExpiry(entry?.fetchedAt, invalidateFreshness),
+    [entry?.fetchedAt, invalidateFreshness],
+  );
+
+  return getFreshTokenUsdValue(entry, amount);
 }
 
 function getTokenUsdValue(price: number | undefined, amount: string): number | null {
@@ -167,4 +174,16 @@ export function getFreshTokenUsdValue(
   if (isNullish(entry?.fetchedAt) || now - entry.fetchedAt >= PRICE_CACHE_MS) return null;
   if (!isNullish(entry.failedAt) && entry.failedAt >= entry.fetchedAt) return null;
   return getTokenUsdValue(entry.usd, amount);
+}
+
+export function schedulePriceExpiry(
+  fetchedAt: number | undefined,
+  onExpire: () => void,
+  now = Date.now(),
+): (() => void) | undefined {
+  if (isNullish(fetchedAt)) return undefined;
+  const delay = fetchedAt + PRICE_CACHE_MS - now;
+  if (delay <= 0) return undefined;
+  const timeoutId = setTimeout(onExpire, delay);
+  return () => clearTimeout(timeoutId);
 }

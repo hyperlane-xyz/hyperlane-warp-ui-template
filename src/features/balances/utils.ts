@@ -1,5 +1,5 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { fromWei, fromWeiRounded } from '@hyperlane-xyz/utils';
+import { fromWei, fromWeiRounded, isNullish } from '@hyperlane-xyz/utils';
 
 import type { BalanceToken } from './types';
 import { balanceTokenKey, getBalanceTokenKey } from './types';
@@ -72,8 +72,8 @@ export function getPriceImpactPercentage(
   outputUsd: number | null,
 ): number | null {
   if (
-    inputUsd == null ||
-    outputUsd == null ||
+    isNullish(inputUsd) ||
+    isNullish(outputUsd) ||
     !Number.isFinite(inputUsd) ||
     !Number.isFinite(outputUsd) ||
     inputUsd <= 0 ||

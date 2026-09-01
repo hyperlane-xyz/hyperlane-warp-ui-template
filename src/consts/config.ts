@@ -84,7 +84,7 @@ export const config: Config = Object.freeze({
     ProtocolType.Tron,
     ProtocolType.Aleo,
   ],
-  warpRouteDenylist: [],
+  warpRouteDenylist: ['NES/bsc'],
   shouldDisableChains: true,
   rpcOverrides,
   enableTrackingEvents: true,

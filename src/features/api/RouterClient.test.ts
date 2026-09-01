@@ -155,6 +155,34 @@ describe('RouterClient.maxQuote', () => {
       }),
     );
   });
+
+  test('hides denied max-quote routes', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          amount: '900',
+          routes: [
+            {
+              ...baseRoute,
+              connection: { symbol: 'NES', warpRouteId: 'NES/bsc' },
+              sourceTransactionFee: { amount: '1', gasUnits: '1' },
+            },
+          ],
+          expiresAt: 1,
+        }),
+      ),
+    );
+
+    await expect(
+      new RouterClient('https://router.test', ['NES/bsc']).maxQuote({
+        srcChain: 56,
+        dstChain: 41444,
+        srcToken: baseToken.address,
+        dstToken: baseToken.address,
+        sender: '0x1111111111111111111111111111111111111111',
+      }),
+    ).resolves.toEqual({ amount: '900', routes: [], expiresAt: 1 });
+  });
 });
 
 describe('RouterClient.tokens', () => {

@@ -16,6 +16,31 @@ const baseChain = {
   supportsNative: true,
 };
 
+const baseToken = {
+  chainId: 56,
+  address: '0x2222222222222222222222222222222222222222',
+  symbol: 'TEST',
+  decimals: 18,
+  isNative: false,
+  isBridgeToken: true,
+  isPoolToken: false,
+  canBridge: true,
+  canSwap: false,
+  bridgeSymbols: ['TEST'],
+  warpRouteIds: ['TEST/route'],
+};
+
+const baseRoute = {
+  steps: [],
+  output: '100',
+  outputMin: '99',
+  executionKind: 'warpDirect',
+  connection: { symbol: 'TEST', warpRouteId: 'TEST/route' },
+  gas: { originGas: '1', destGas: '1' },
+  tx: null,
+  approval: null,
+};
+
 describe('RouterClient.availableRoutes', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -153,6 +178,89 @@ describe('RouterClient.tokens', () => {
       'https://router.test/v1/tokens?chain=ethereum',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
+  });
+
+  test('hides tokens available only through denied routes', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          baseToken,
+          { ...baseToken, symbol: 'HIDDEN', warpRouteIds: ['NES/bsc'] },
+          { ...baseToken, symbol: 'SHARED', warpRouteIds: ['NES/bsc', 'TEST/route'] },
+        ]),
+      ),
+    );
+
+    await expect(new RouterClient('https://router.test', ['NES/bsc']).tokens()).resolves.toEqual({
+      tokens: [
+        baseToken,
+        { ...baseToken, symbol: 'SHARED', warpRouteIds: ['NES/bsc', 'TEST/route'] },
+      ],
+    });
+  });
+});
+
+describe('RouterClient route denylist', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('hides denied available-route tokens', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          direction: 'fromSource',
+          tokens: [baseToken, { ...baseToken, symbol: 'HIDDEN', warpRouteIds: ['NES/bsc'] }],
+        }),
+      ),
+    );
+
+    await expect(
+      new RouterClient('https://router.test', ['NES/bsc']).availableRoutes({
+        srcChain: 56,
+        srcToken: baseToken.address,
+      }),
+    ).resolves.toEqual({ direction: 'fromSource', tokens: [baseToken] });
+  });
+
+  test('hides denied quote routes and their rejections', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          routes: [
+            baseRoute,
+            {
+              ...baseRoute,
+              connection: { symbol: 'NES', warpRouteId: 'NES/bsc' },
+            },
+          ],
+          expiresAt: 1,
+          rejections: [
+            {
+              code: 'NO_ROUTE',
+              message: 'hidden',
+              srcChain: 56,
+              dstChain: 41444,
+              srcToken: baseToken.address,
+              dstToken: baseToken.address,
+              amount: '1',
+              warpRouteId: 'NES/bsc',
+            },
+          ],
+        }),
+      ),
+    );
+
+    await expect(
+      new RouterClient('https://router.test', ['NES/bsc']).quote({
+        srcChain: 56,
+        dstChain: 41444,
+        srcToken: baseToken.address,
+        dstToken: baseToken.address,
+        amount: 1n,
+        sender: '0x1111111111111111111111111111111111111111',
+      }),
+    ).resolves.toEqual({ routes: [baseRoute], expiresAt: 1, rejections: [] });
   });
 });
 

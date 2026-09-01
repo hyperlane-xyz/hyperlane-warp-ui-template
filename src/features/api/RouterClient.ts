@@ -14,6 +14,7 @@ import {
   type MaxQuoteResponse,
   type QuoteResponse,
   type ReadinessResponse,
+  type RouteResponse,
   type TokensQuery,
   type TokensResponse,
 } from './types';
@@ -51,7 +52,10 @@ const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_QUOTE_TIMEOUT_MS = 30_000;
 
 export class RouterClient {
-  constructor(private baseUrl: string) {}
+  constructor(
+    private baseUrl: string,
+    private warpRouteDenylist: readonly string[] = [],
+  ) {}
 
   async health(options: RequestOptions = {}): Promise<boolean> {
     try {
@@ -78,7 +82,7 @@ export class RouterClient {
   //   { search }      → cross-chain search
   //   { ids }         → explicit lookups (repeated &ids=, max 5)
   // ?ids is mutually exclusive with chain/search.
-  tokens(query: TokensQuery = {}, options: RequestOptions = {}): Promise<TokensResponse> {
+  async tokens(query: TokensQuery = {}, options: RequestOptions = {}): Promise<TokensResponse> {
     const params = new URLSearchParams();
     if (query.ids?.length) {
       for (const id of query.ids) params.append('ids', id);
@@ -87,7 +91,12 @@ export class RouterClient {
       if (query.search) params.set('search', query.search);
     }
     const qs = params.toString();
-    return this.get(`/v1/tokens${qs ? `?${qs}` : ''}`, TokensResponseSchema, options);
+    const response = await this.get(
+      `/v1/tokens${qs ? `?${qs}` : ''}`,
+      TokensResponseSchema,
+      options,
+    );
+    return { ...response, tokens: response.tokens.filter((token) => !this.isDeniedToken(token)) };
   }
 
   availableRoutes(
@@ -126,11 +135,14 @@ export class RouterClient {
       `/v1/available-routes?${search.toString()}`,
       AvailableRoutesResponseSchema,
       options,
-    );
+    ).then((response) => ({
+      ...response,
+      tokens: response.tokens.filter((token) => !this.isDeniedToken(token)),
+    }));
   }
 
   async quote(params: QuoteParams, options: RequestOptions = {}): Promise<QuoteResponse> {
-    return this.request(
+    const response = await this.request(
       '/v1/quote',
       QuoteResponseSchema,
       {
@@ -150,10 +162,11 @@ export class RouterClient {
       },
       options,
     );
+    return this.filterQuoteResponse(response);
   }
 
   async maxQuote(params: MaxQuoteParams, options: RequestOptions = {}): Promise<MaxQuoteResponse> {
-    return this.request(
+    const response = await this.request(
       '/v1/quote/max',
       MaxQuoteResponseSchema,
       {
@@ -172,6 +185,37 @@ export class RouterClient {
         }),
       },
       { ...options, timeoutMs: options.timeoutMs ?? MAX_QUOTE_TIMEOUT_MS },
+    );
+    return this.filterQuoteResponse(response);
+  }
+
+  private isDeniedRoute(routeId: string | undefined): boolean {
+    return !!routeId && this.warpRouteDenylist.includes(routeId);
+  }
+
+  private isDeniedToken(token: { warpRouteIds: string[] }): boolean {
+    return (
+      token.warpRouteIds.length > 0 &&
+      token.warpRouteIds.every((routeId) => this.isDeniedRoute(routeId))
+    );
+  }
+
+  private filterQuoteResponse<T extends QuoteResponse | MaxQuoteResponse>(response: T): T {
+    return {
+      ...response,
+      routes: response.routes.filter((route) => !this.isDeniedQuoteRoute(route)),
+      ...(response.rejections && {
+        rejections: response.rejections.filter(
+          (rejection) => !this.isDeniedRoute(rejection.warpRouteId),
+        ),
+      }),
+    };
+  }
+
+  private isDeniedQuoteRoute(route: RouteResponse): boolean {
+    if (this.isDeniedRoute(route.connection?.warpRouteId)) return true;
+    return route.steps.some(
+      (step) => step.type === 'bridge' && this.isDeniedRoute(step.warpRouteId),
     );
   }
 
@@ -213,4 +257,4 @@ export class RouterClient {
 }
 
 // Singleton — keep the same client across hooks/queries.
-export const routerClient = new RouterClient(config.routerApiUrl);
+export const routerClient = new RouterClient(config.routerApiUrl, config.warpRouteDenylist);

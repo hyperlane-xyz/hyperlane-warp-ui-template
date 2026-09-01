@@ -262,6 +262,51 @@ describe('RouterClient route denylist', () => {
       }),
     ).resolves.toEqual({ routes: [baseRoute], expiresAt: 1, rejections: [] });
   });
+
+  test('cannot bypass the denylist with a missing route connection', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          routes: [
+            {
+              ...baseRoute,
+              connection: null,
+              steps: [
+                {
+                  type: 'bridge',
+                  chain: 56,
+                  destChain: 41444,
+                  asset: baseToken.address,
+                  router: baseToken.address,
+                  amountIn: '1',
+                  amountOut: '1',
+                  warpRouteId: 'NES/bsc',
+                  fee: {
+                    tokenFee: '0',
+                    igpToken: baseToken.address,
+                    igpAmount: '0',
+                    localNativeFee: '0',
+                  },
+                },
+              ],
+            },
+          ],
+          expiresAt: 1,
+        }),
+      ),
+    );
+
+    await expect(
+      new RouterClient('https://router.test', ['NES/bsc']).quote({
+        srcChain: 56,
+        dstChain: 41444,
+        srcToken: baseToken.address,
+        dstToken: baseToken.address,
+        amount: 1n,
+        sender: '0x1111111111111111111111111111111111111111',
+      }),
+    ).resolves.toEqual({ routes: [], expiresAt: 1 });
+  });
 });
 
 describe('ChainsResponseSchema', () => {

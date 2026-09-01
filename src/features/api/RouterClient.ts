@@ -14,6 +14,7 @@ import {
   type MaxQuoteResponse,
   type QuoteResponse,
   type ReadinessResponse,
+  type RouteResponse,
   type TokensQuery,
   type TokensResponse,
 } from './types';
@@ -202,13 +203,20 @@ export class RouterClient {
   private filterQuoteResponse<T extends QuoteResponse | MaxQuoteResponse>(response: T): T {
     return {
       ...response,
-      routes: response.routes.filter((route) => !this.isDeniedRoute(route.connection?.warpRouteId)),
+      routes: response.routes.filter((route) => !this.isDeniedQuoteRoute(route)),
       ...(response.rejections && {
         rejections: response.rejections.filter(
           (rejection) => !this.isDeniedRoute(rejection.warpRouteId),
         ),
       }),
     };
+  }
+
+  private isDeniedQuoteRoute(route: RouteResponse): boolean {
+    if (this.isDeniedRoute(route.connection?.warpRouteId)) return true;
+    return route.steps.some(
+      (step) => step.type === 'bridge' && this.isDeniedRoute(step.warpRouteId),
+    );
   }
 
   private async get<T>(

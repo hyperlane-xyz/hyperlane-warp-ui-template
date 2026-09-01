@@ -1,7 +1,7 @@
 import { GithubRegistry, PartialRegistry } from '@hyperlane-xyz/registry';
 import type { ChainAddresses, IRegistry } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { objFilter } from '@hyperlane-xyz/utils';
+import { isNullish, objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -72,6 +72,37 @@ interface AppContext {
   registryWarpRoutes: RegistryWarpRouteMap;
   multiProvider: MultiProtocolProvider;
 }
+
+export interface TokenPriceCacheEntry {
+  usd?: number;
+  fetchedAt?: number;
+  failedAt?: number;
+}
+
+export type TokenPriceCache = Record<string, TokenPriceCacheEntry>;
+
+export function mergeTokenPriceCache(
+  cache: TokenPriceCache,
+  succeededIds: string[],
+  fetched: Record<string, number>,
+  failedIds: string[],
+  now = Date.now(),
+): TokenPriceCache {
+  const next = { ...cache };
+  for (const id of succeededIds) {
+    const price = fetched[id];
+    if (isNullish(price) || !Number.isFinite(price) || price <= 0) {
+      next[id] = { ...next[id], failedAt: now };
+    } else {
+      next[id] = { usd: price, fetchedAt: now };
+    }
+  }
+  for (const id of failedIds) {
+    next[id] = { ...next[id], failedAt: now };
+  }
+  return next;
+}
+
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 export interface AppState {
@@ -133,7 +164,7 @@ export interface AppState {
   setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
   // Session-scoped USD price cache, keyed by coinGeckoId. `failedAt`
   // backs off retries after rate-limit / network failures.
-  tokenPrices: Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;
+  tokenPrices: TokenPriceCache;
   mergeTokenPrices: (
     succeededIds: string[],
     fetched: Record<string, number>,
@@ -255,17 +286,9 @@ export const useStore = create<AppState>()(
 
       tokenPrices: {},
       mergeTokenPrices: (succeededIds, fetched, failedIds) => {
-        set((state) => {
-          const now = Date.now();
-          const next = { ...state.tokenPrices };
-          for (const id of succeededIds) {
-            next[id] = { usd: fetched[id], fetchedAt: now };
-          }
-          for (const id of failedIds) {
-            next[id] = { ...next[id], failedAt: now };
-          }
-          return { tokenPrices: next };
-        });
+        set((state) => ({
+          tokenPrices: mergeTokenPriceCache(state.tokenPrices, succeededIds, fetched, failedIds),
+        }));
       },
 
       // Shared component state

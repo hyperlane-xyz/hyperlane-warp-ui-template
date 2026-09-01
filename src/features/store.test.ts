@@ -4,6 +4,7 @@ import type { RouteResponse } from './api/types';
 import {
   mergeMigrationChainMetadata,
   mergeKnownTokens,
+  mergeTokenPriceCache,
   mergeTransferTransactionUpdate,
   migratePersistedAppState,
   removeFinalTransferRoute,
@@ -116,6 +117,32 @@ describe('removeFinalTransferRoute', () => {
     expect(next).not.toBe(routes);
     expect(next.has('tx-1')).toBe(false);
     expect(next.has('tx-2')).toBe(true);
+  });
+});
+
+describe('mergeTokenPriceCache', () => {
+  test('retains the cached price and records a failed refresh', () => {
+    const cache = { ethereum: { usd: 2, fetchedAt: 1_000 } };
+
+    expect(mergeTokenPriceCache(cache, [], {}, ['ethereum'], 2_000)).toEqual({
+      ethereum: { usd: 2, fetchedAt: 1_000, failedAt: 2_000 },
+    });
+  });
+
+  test('replaces a failed entry after a successful refresh', () => {
+    const cache = { ethereum: { usd: 2, fetchedAt: 1_000, failedAt: 2_000 } };
+
+    expect(mergeTokenPriceCache(cache, ['ethereum'], { ethereum: 3 }, [], 3_000)).toEqual({
+      ethereum: { usd: 3, fetchedAt: 3_000 },
+    });
+  });
+
+  test('treats a successful response with no price as a failed refresh', () => {
+    const cache = { ethereum: { usd: 2, fetchedAt: 1_000 } };
+
+    expect(mergeTokenPriceCache(cache, ['ethereum'], {}, [], 2_000)).toEqual({
+      ethereum: { usd: 2, fetchedAt: 1_000, failedAt: 2_000 },
+    });
   });
 });
 

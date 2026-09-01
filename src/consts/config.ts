@@ -84,12 +84,8 @@ export const config: Config = Object.freeze({
     ProtocolType.Tron,
     ProtocolType.Aleo,
   ],
-<<<<<<< HEAD
-  shouldDisableChains: true,
-=======
   warpRouteDenylist: [],
-  shouldDisableChains: false,
->>>>>>> origin/main
+  shouldDisableChains: true,
   rpcOverrides,
   enableTrackingEvents: true,
   routerApiUrl,

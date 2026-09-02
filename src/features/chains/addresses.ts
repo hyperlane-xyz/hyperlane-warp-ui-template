@@ -12,7 +12,7 @@ export async function assembleChainAddresses(
   chainsInTokens: ChainName[],
   registry: IRegistry,
 ): Promise<ChainMap<ChainAddresses>> {
-  const result = z.record(ChainAddressesSchema).safeParse({
+  const result = z.record(z.string(), ChainAddressesSchema).safeParse({
     ...ChainAddressesYaml,
     ...ChainAddressesTS,
   });

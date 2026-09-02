@@ -45,6 +45,7 @@ interface Config {
   version: string; // App release version shown in metadata/analytics
   walletConnectProjectId: string; // Project ID provided by walletconnect
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
+  warpRouteDenylist: string[]; // Route IDs hidden from this UI only; the router API and contracts remain public
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
   featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
@@ -83,6 +84,7 @@ export const config: Config = Object.freeze({
     ProtocolType.Tron,
     ProtocolType.Aleo,
   ],
+  warpRouteDenylist: [],
   shouldDisableChains: false,
   rpcOverrides,
   enableTrackingEvents: false,

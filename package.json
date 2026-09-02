@@ -124,7 +124,8 @@
     "yaml-loader": "^0.9.0"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=24",
+    "pnpm": "^12.3.0"
   },
-  "packageManager": "pnpm@12.1.0"
+  "packageManager": "pnpm@12.3.0+sha512.d7bd39a488131de200aeec1dbc9ca58b890437f09b1f925b1bf820fdc463df01a329e3699c3d8a7bb186d5cf3f75cb68ce820c69d6b2c983525bc0821de4c529"
 }

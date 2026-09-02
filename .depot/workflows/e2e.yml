@@ -7,7 +7,7 @@ on:
 env:
   NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
   # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
-  WALLET_CONNECT_ID_CACHE_VERSION: v1
+  WALLET_CONNECT_ID_CACHE_VERSION: v2
 
 jobs:
   build:

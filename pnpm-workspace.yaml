@@ -12,7 +12,6 @@ minimumReleaseAgeExclude:
 overrides:
   # 1.53+ imports optional x402 peers into browser bundles even when unused.
   '@coinbase/cdp-sdk': 1.52.0
-  '@hyperlane-xyz/tron-sdk>@hyperlane-xyz/registry': 26.1.0
   tronweb>ethers: ^6.13.5
   "@solana/web3.js": ^1.95.4
   axios: ^1.7.9

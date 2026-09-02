@@ -21,7 +21,7 @@ export async function assembleChainMetadata(
   storeMetadataOverrides?: ChainMap<Partial<ChainMetadata | undefined>>,
 ) {
   // Chains must include a cosmos chain or CosmosKit throws errors
-  const result = z.record(ChainMetadataSchema).safeParse({
+  const result = z.record(z.string(), ChainMetadataSchema).safeParse({
     ...ChainsYaml,
     ...ChainsTS,
   });
@@ -66,7 +66,7 @@ export async function assembleChainMetadata(
 
   const parsedRpcOverridesResult = tryParseJsonOrYaml(config.rpcOverrides);
   const rpcOverrides = z
-    .record(RpcUrlSchema)
+    .record(z.string(), RpcUrlSchema)
     .safeParse(parsedRpcOverridesResult.success && parsedRpcOverridesResult.data);
   if (config.rpcOverrides && !rpcOverrides.success) {
     logger.warn('Invalid RPC overrides config', rpcOverrides.error);

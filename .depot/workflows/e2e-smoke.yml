@@ -32,9 +32,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-12-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-11-store-
+            ${{ runner.os }}-pnpm-12-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

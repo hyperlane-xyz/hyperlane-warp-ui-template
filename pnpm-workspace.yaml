@@ -7,6 +7,8 @@ minimumReleaseAgeExclude:
   - "@provablehq/*"
   - oxfmt
   - oxlint
+  # Required by @hyperlane-xyz/registry@26 and sdk@44.
+  - zod@4.5.4
 overrides:
   # 1.53+ imports optional x402 peers into browser bundles even when unused.
   '@coinbase/cdp-sdk': 1.52.0
@@ -32,7 +34,6 @@ overrides:
   # WalletConnect QR modal (cuer calls encodeQR with border:0).
   qr: 0.5.5
 patchedDependencies:
-  starknetkit@2.6.1: patches/starknetkit@2.6.1.patch
   '@provablehq/sdk@0.11.3': patches/@provablehq__sdk@0.11.3.patch
   '@provablehq/wasm@0.11.6': patches/@provablehq__wasm@0.11.6.patch
 allowBuilds:

@@ -1,0 +1,190 @@
+name: ci
+
+on:
+  push:
+    branches: [main, nautilus, nexus, injective, trump, ousdt]
+  pull_request:
+    branches: [main, nautilus, nexus, injective, trump, ousdt]
+  merge_group:
+  workflow_dispatch:
+
+env:
+  NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+  # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
+  WALLET_CONNECT_ID_CACHE_VERSION: v2
+
+jobs:
+  build:
+    runs-on: depot-ubuntu-24.04-4
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-12-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-12-store-
+
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          CHANGES=$(git status -s)
+          if [[ ! -z $CHANGES ]]; then
+            echo "Changes found: $CHANGES"
+            git diff
+            exit 1
+          fi
+
+      - name: Cache build output
+        id: build-cache
+        uses: actions/cache@v6
+        with:
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-build-v4-${{ env.NEXT_PUBLIC_ROUTER_API_URL }}-${{ env.WALLET_CONNECT_ID_CACHE_VERSION }}-
+
+      - name: build
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
+
+      - name: Check bundle size
+        run: pnpm check:bundle
+
+  typecheck:
+    # TypeScript validation runs inside `next build`. Keep this dependent job
+    # until the required `typecheck` branch-protection context is removed.
+    needs: [build]
+    runs-on: depot-ubuntu-24.04-4
+    steps:
+      - name: Confirm build typechecked successfully
+        run: echo "TypeScript validation completed in the required build job"
+
+  format:
+    runs-on: depot-ubuntu-24.04-4
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-12-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-12-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: format
+        run: |
+          pnpm run format
+          CHANGES=$(git status -s)
+          if [[ ! -z $CHANGES ]]; then
+            echo "Changes found: $CHANGES"
+            exit 1
+          fi
+
+  lint:
+    runs-on: depot-ubuntu-24.04-4
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-12-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-12-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: lint
+        run: pnpm run lint
+
+  test:
+    runs-on: depot-ubuntu-24.04-4
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-12-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-12-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: test
+        run: pnpm run test
+
+  e2e:
+    needs: [build]
+    if: >-
+      github.base_ref == 'main' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'merge_group' ||
+      github.event_name == 'workflow_dispatch'
+    uses: ./.depot/workflows/e2e.yml
+    secrets: inherit
+
+  # Fast wallet-connected E2E subset, gates every PR.
+  e2e-smoke:
+    needs: [build]
+    uses: ./.depot/workflows/e2e-smoke.yml
+    secrets: inherit
+
+  # Full wallet-connected E2E matrix (chromium/firefox/webkit). Main-only so
+  # PRs stay fast; merge_group runs it as a final gate before landing.
+  e2e-wallet-full:
+    needs: [build]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'merge_group' ||
+      github.event_name == 'workflow_dispatch'
+    uses: ./.depot/workflows/e2e-wallet-full.yml
+    secrets: inherit

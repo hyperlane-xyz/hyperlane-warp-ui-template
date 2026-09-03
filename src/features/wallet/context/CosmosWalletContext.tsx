@@ -49,6 +49,9 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
         chains={chains}
         assetLists={assets}
         wallets={walletsList}
+        // Parent-provided wallets are unsupported; opt out of cosmos-kit's
+        // default Cosmiframe integration.
+        allowedIframeParentOrigins={[]}
         throwErrors={false}
         walletConnectOptions={{
           signClient: {

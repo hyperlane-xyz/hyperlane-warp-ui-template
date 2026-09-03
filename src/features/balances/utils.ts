@@ -1,5 +1,5 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { fromWei, fromWeiRounded } from '@hyperlane-xyz/utils';
+import { fromWei, fromWeiRounded, isNullish } from '@hyperlane-xyz/utils';
 
 import type { BalanceToken } from './types';
 import { balanceTokenKey, getBalanceTokenKey } from './types';
@@ -63,6 +63,26 @@ export function getFeePercentage(totalFeesUsd: number, transferUsd: number): str
   if (pct < 0.01) return '<0.01%';
   if (pct >= 100) return '>=100%';
   return `${pct.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+}
+
+// Signed percentage change from source to destination. Negative means value
+// lost to fees, swap slippage, or spread. Returns null when either value is
+// missing, non-finite, or outside the domain of a meaningful percentage.
+export function getPriceImpactPercentage(
+  inputUsd: number | null,
+  outputUsd: number | null,
+): number | null {
+  if (
+    isNullish(inputUsd) ||
+    isNullish(outputUsd) ||
+    !Number.isFinite(inputUsd) ||
+    !Number.isFinite(outputUsd) ||
+    inputUsd <= 0 ||
+    outputUsd < 0
+  ) {
+    return null;
+  }
+  return ((outputUsd - inputUsd) / inputUsd) * 100;
 }
 
 export function getNativeTokenDenom(

@@ -7,7 +7,7 @@ on:
 env:
   NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
   # Bump when NEXT_PUBLIC_WALLET_CONNECT_ID changes.
-  WALLET_CONNECT_ID_CACHE_VERSION: v1
+  WALLET_CONNECT_ID_CACHE_VERSION: v2
 
 jobs:
   build:
@@ -31,9 +31,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-12-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-11-store-
+            ${{ runner.os }}-pnpm-12-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -79,9 +79,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-12-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-11-store-
+            ${{ runner.os }}-pnpm-12-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

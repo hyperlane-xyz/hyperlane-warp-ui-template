@@ -8,7 +8,6 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 import {
   LedgerWalletAdapter,
   SalmonWalletAdapter,
-  SolflareWalletAdapter,
   TrustWalletAdapter,
   PhantomWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
@@ -28,10 +27,11 @@ export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   const e2e = isE2EMode();
   const wallets = useMemo(
     () => {
+      // WalletProvider discovers Wallet Standard wallets automatically; avoid
+      // legacy hosted-iframe adapters here.
       const real = [
         new PhantomWalletAdapter(),
         new BackpackWalletAdapter(),
-        new SolflareWalletAdapter(),
         new SalmonWalletAdapter(),
         new SnapWalletAdapter(),
         new TrustWalletAdapter(),

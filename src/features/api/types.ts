@@ -223,7 +223,7 @@ export const SdkRouteTxSchema = z.object({
   type: z.string().min(1),
   category: z.string().min(1),
   transaction: z.unknown(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const RouteTxSchema = z.union([ChainRouteTxSchema, SdkRouteTxSchema]);

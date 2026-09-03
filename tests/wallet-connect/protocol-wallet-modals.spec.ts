@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+
 import { selectOriginTokenOnChain } from '../e2e-wallet/helpers/formFlow';
 
 test.describe('Wallet Connect - Protocol Modals', () => {
@@ -16,18 +17,10 @@ test.describe('Wallet Connect - Protocol Modals', () => {
 
     const dialog = page.getByRole('dialog', { name: 'Connect a Wallet' });
     await expect(dialog).toBeVisible();
-    await expect(
-      dialog.getByRole('heading', { name: 'Connect a Wallet' }),
-    ).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: 'MetaMask' }),
-    ).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: 'WalletConnect' }),
-    ).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: 'Coinbase Wallet' }),
-    ).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Connect a Wallet' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'MetaMask' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'WalletConnect' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Coinbase Wallet' })).toBeVisible();
 
     // Close
     await dialog.getByRole('button', { name: 'Close' }).click();
@@ -45,12 +38,8 @@ test.describe('Wallet Connect - Protocol Modals', () => {
     // Solana wallet modal
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
-    await expect(
-      dialog.getByText('Connect a wallet on Solana to continue'),
-    ).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: 'Solflare' }),
-    ).toBeVisible();
+    await expect(dialog.getByText('Connect a wallet on Solana to continue')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Phantom' })).toBeVisible();
 
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();

@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify';
+
 import { useMultiProvider } from '../../features/chains/hooks';
 
 export function toastTxSuccess(msg: string, txHash: string, chain: ChainName) {

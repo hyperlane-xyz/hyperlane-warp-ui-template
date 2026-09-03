@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import type { BalanceToken } from './types';
-import { getTotalFeeUsd, resolveCoinGeckoId } from './utils';
+import { getPriceImpactPercentage, getTotalFeeUsd, resolveCoinGeckoId } from './utils';
 
 const TOKEN_ADDRESS = '0x1234567890123456789012345678901234567890';
 const OTHER_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
@@ -118,5 +118,29 @@ describe('getTotalFeeUsd', () => {
     });
 
     expect(total).toBeCloseTo(2469135.7802469134);
+  });
+});
+
+describe('getPriceImpactPercentage', () => {
+  test('returns the signed USD percentage change', () => {
+    expect(getPriceImpactPercentage(100, 90)).toBeCloseTo(-10);
+    expect(getPriceImpactPercentage(100, 105)).toBeCloseTo(5);
+  });
+
+  test('treats zero output as a complete loss', () => {
+    expect(getPriceImpactPercentage(100, 0)).toBe(-100);
+  });
+
+  test('returns null when price impact is unavailable', () => {
+    expect(getPriceImpactPercentage(null, 90)).toBeNull();
+    expect(getPriceImpactPercentage(100, null)).toBeNull();
+    expect(getPriceImpactPercentage(0, 0)).toBeNull();
+    expect(getPriceImpactPercentage(Number.POSITIVE_INFINITY, 90)).toBeNull();
+  });
+
+  test('returns null for non-finite or negative output', () => {
+    expect(getPriceImpactPercentage(100, Number.POSITIVE_INFINITY)).toBeNull();
+    expect(getPriceImpactPercentage(100, Number.NaN)).toBeNull();
+    expect(getPriceImpactPercentage(100, -50)).toBeNull();
   });
 });

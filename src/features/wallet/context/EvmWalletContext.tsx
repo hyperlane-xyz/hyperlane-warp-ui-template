@@ -28,6 +28,7 @@ import { isE2EMode } from '../_e2e/isE2E';
 function initWagmi(multiProvider: MultiProtocolProvider, e2e: boolean) {
   const chains = getWagmiChainConfigs(multiProvider);
 
+<<<<<<< HEAD
   const baseConnectors = connectorsForWallets(
     [
       {
@@ -42,9 +43,23 @@ function initWagmi(multiProvider: MultiProtocolProvider, e2e: boolean) {
     { appName: APP_NAME, projectId: config.walletConnectProjectId },
   );
 
+=======
+>>>>>>> origin/main
   const connectors = e2e
     ? [mock({ accounts: [MOCK_EVM_ADDRESS], features: { reconnect: true } })]
-    : baseConnectors;
+    : connectorsForWallets(
+        [
+          {
+            groupName: 'Recommended',
+            wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, ledgerWallet],
+          },
+          {
+            groupName: 'More',
+            wallets: [binanceWallet, coinbaseWallet, rainbowWallet, trustWallet, argentWallet],
+          },
+        ],
+        { appName: APP_NAME, projectId: config.walletConnectProjectId },
+      );
 
   const wagmiConfig = createConfig({
     // Splice to make annoying wagmi type happy

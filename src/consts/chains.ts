@@ -2,6 +2,7 @@ import {
   botanix,
   eclipsemainnet,
   eclipsemainnetAddresses,
+  igra,
   solanamainnet,
   solanamainnetAddresses,
   solaxy,
@@ -66,6 +67,13 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // },
   botanix: {
     ...botanix,
+    availability: {
+      status: ChainStatus.Disabled,
+      reasons: [ChainDisabledReason.Unavailable],
+    },
+  },
+  igra: {
+    ...igra,
     availability: {
       status: ChainStatus.Disabled,
       reasons: [ChainDisabledReason.Unavailable],

@@ -71,6 +71,7 @@ import {
   getPriceImpactBlockMessage,
   getRouteOutputAmounts,
   isPriceImpactTooHigh,
+  routeContainsSwap,
 } from './priceImpact';
 import { emptyRouteMessageForRejections } from './rejections';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
@@ -226,7 +227,11 @@ function TransferFormContent() {
   const freshAmountUsd = useFreshTokenUsdValue(srcToken, values.amount);
   const freshMinimumOutputUsd = useFreshTokenUsdValue(dstToken, minimumOutputAmount);
   const minimumPriceImpactPct = getPriceImpactPercentage(freshAmountUsd, freshMinimumOutputUsd);
-  const hasExcessivePriceImpact = isPriceImpactTooHigh(minimumPriceImpactPct);
+  // Only swap (hyperswap) routes are subject to the price-impact block. Direct
+  // bridge routes are 1:1 and their fixed interchain fees are enforced by the
+  // bridge fee-coverage rejection, not this guard.
+  const isSwapRoute = routeContainsSwap(bestRoute?.raw);
+  const hasExcessivePriceImpact = isSwapRoute && isPriceImpactTooHigh(minimumPriceImpactPct);
   const priceImpactBlockMessage = getPriceImpactBlockMessage(minimumPriceImpactPct);
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import {
   getPriceImpactBlockMessage,
   getRouteOutputAmounts,
   isPriceImpactTooHigh,
+  routeContainsSwap,
 } from './priceImpact';
 
 describe('isPriceImpactTooHigh', () => {
@@ -32,12 +33,26 @@ describe('isPriceImpactTooHigh', () => {
 
     expect(isPriceImpactTooHigh(expectedImpact)).toBe(false);
     expect(isPriceImpactTooHigh(minimumImpact)).toBe(true);
-    expect(getPriceImpactBlockMessage(minimumImpact)).toBe(
-      'Minimum received is 11.73% below input value',
-    );
+    expect(getPriceImpactBlockMessage(minimumImpact)).toBe('Swap price impact too high (11.73%)');
   });
 
   test('fails loudly for malformed route output amounts', () => {
     expect(() => getRouteOutputAmounts({ output: '9100', outputMin: 'invalid' }, 2)).toThrow();
+  });
+});
+
+describe('routeContainsSwap', () => {
+  test('detects swap steps', () => {
+    expect(routeContainsSwap({ steps: [{ type: 'swap' }] })).toBe(true);
+    expect(routeContainsSwap({ steps: [{ type: 'bridge' }, { type: 'swap' }] })).toBe(true);
+  });
+
+  test('returns false for bridge-only routes', () => {
+    expect(routeContainsSwap({ steps: [{ type: 'bridge' }] })).toBe(false);
+    expect(routeContainsSwap({ steps: [] })).toBe(false);
+  });
+
+  test('returns false when route is undefined', () => {
+    expect(routeContainsSwap(undefined)).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 // spec: specs/plan.md
 // seed: tests/page-load/transfer-form-visible.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 import { getOriginTokenButton, getDestinationTokenButton } from '../helpers/locators';
 
 test.describe('Page Load - Query Param Token Override', () => {

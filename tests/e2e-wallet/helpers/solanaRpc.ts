@@ -52,23 +52,23 @@ export async function installSolanaRpcMock(
 
   await page.route('**/*', async (route: Route) => {
     const req = route.request();
-    if (req.method() !== 'POST') return route.continue();
+    if (req.method() !== 'POST') return route.fallback();
     const url = req.url();
     let body: unknown;
     try {
       body = req.postDataJSON();
     } catch {
-      return route.continue();
+      return route.fallback();
     }
-    if (!body || typeof body !== 'object') return route.continue();
+    if (!body || typeof body !== 'object') return route.fallback();
     const isBatch = Array.isArray(body);
     const items = isBatch ? (body as unknown[]) : [body];
     const first = items[0] as { jsonrpc?: string; method?: string };
-    if (urlMatch && !urlMatch.test(url)) return route.continue();
-    if (first?.jsonrpc !== '2.0') return route.continue();
+    if (urlMatch && !urlMatch.test(url)) return route.fallback();
+    if (first?.jsonrpc !== '2.0') return route.fallback();
     // Only claim Solana JSON-RPC methods; everything else (eth_*, cosmos REST)
     // stays on the wire or is handled by another matcher.
-    if (!isSolanaMethod(first.method)) return route.continue();
+    if (!isSolanaMethod(first.method)) return route.fallback();
 
     const responses = items.map((item) =>
       handleOne(item, { balancesByMint, token2022, nativeLamports }),

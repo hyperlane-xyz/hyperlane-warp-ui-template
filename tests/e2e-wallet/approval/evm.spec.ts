@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../../fixtures';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
 import { installEvmRpcMock } from '../helpers/evmRpc';
 import { enterAmount, selectDestinationToken, selectOriginToken } from '../helpers/formFlow';

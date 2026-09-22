@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../../fixtures';
 import { openE2EApp } from '../helpers/page-setup';
 
 // MOCK_TRON_ADDRESS from src/features/wallet/_e2e/MockTronAdapter.ts. Not a

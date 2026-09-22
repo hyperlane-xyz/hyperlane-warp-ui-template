@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('Transfer Form - Connect Wallet Prompt', () => {
   test('should show connect wallet button when not connected', async ({ page }) => {

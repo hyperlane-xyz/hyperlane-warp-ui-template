@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 import { config } from '../../src/consts/config';
 import { getOriginTokenButton, getDestinationTokenButton } from '../helpers/locators';
 import { splitTokenId } from '../helpers/constants';

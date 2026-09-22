@@ -64,18 +64,18 @@ export async function installEvmRpcMock(
 
   await page.route('**/*', async (route: Route) => {
     const req = route.request();
-    if (req.method() !== 'POST') return route.continue();
+    if (req.method() !== 'POST') return route.fallback();
     let body: unknown;
     try {
       body = req.postDataJSON();
     } catch {
-      return route.continue();
+      return route.fallback();
     }
-    if (!body || typeof body !== 'object') return route.continue();
+    if (!body || typeof body !== 'object') return route.fallback();
     const isBatch = Array.isArray(body);
     const items = isBatch ? (body as unknown[]) : [body];
     const firstItem = items[0] as { jsonrpc?: string; method?: string };
-    if (!firstItem?.jsonrpc) return route.continue();
+    if (!firstItem?.jsonrpc) return route.fallback();
     // Only handle EVM-shaped JSON-RPC. Solana RPC also uses JSON-RPC over
     // POST (getBalance/getTokenAccountsByOwner/…), so without this guard
     // we'd return eth_* shaped responses to Solana calls.
@@ -85,7 +85,7 @@ export async function installEvmRpcMock(
       method.startsWith('net_') ||
       method.startsWith('wallet_') ||
       method.startsWith('web3_');
-    if (!isEvmMethod) return route.continue();
+    if (!isEvmMethod) return route.fallback();
 
     const url = req.url();
     const chainId = resolveChainId(url);

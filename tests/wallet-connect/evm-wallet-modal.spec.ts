@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('Wallet Connect - EVM', () => {
   test('should show RainbowKit modal when connecting wallet for EVM chain', async ({ page }) => {

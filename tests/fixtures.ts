@@ -1,8 +1,11 @@
 import { test as base } from '@playwright/test';
 
-import engineResponses from './fixtures/engine-api.json';
+import routes from './fixtures/available-routes.json';
+import chains from './fixtures/chains.json';
+import readiness from './fixtures/readiness.json';
+import tokens from './fixtures/tokens.json';
 
-const responses: Record<string, unknown> = engineResponses;
+const responses: Record<string, unknown> = { ...chains, ...tokens, ...routes, ...readiness };
 
 export { expect } from '@playwright/test';
 export type { Page } from '@playwright/test';

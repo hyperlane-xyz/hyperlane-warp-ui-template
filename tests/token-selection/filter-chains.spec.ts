@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 import { getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Token Selection - Filter Chains', () => {

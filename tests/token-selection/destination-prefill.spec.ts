@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from '../fixtures';
 
 import { getDestinationTokenButton, getOriginTokenButton } from '../helpers/locators';
 import { installRouterApiMock, routerApiTokens } from '../helpers/routerApi';

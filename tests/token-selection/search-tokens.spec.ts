@@ -10,10 +10,20 @@ test.describe('Token Selection - Search Tokens', () => {
     await getOriginTokenButton(page).click();
     await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
 
-    // Type in token search
-    await page.getByPlaceholder('Search Name, Symbol, or Contract Address').fill('ETH');
+    const searchResponse = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return (
+        url.pathname === '/v1/tokens' &&
+        url.searchParams.get('search') === 'ETH' &&
+        response.status() === 200
+      );
+    });
 
-    // Should show ETH tokens in the list
-    await expect(page.getByText('ETH').first()).toBeVisible();
+    // Type in token search and wait for the debounced API request.
+    await page.getByPlaceholder('Search Name, Symbol, or Contract Address').fill('ETH');
+    await searchResponse;
+
+    // stETH comes from the search response, not the initial token list.
+    await expect(page.locator('.token-picker-row').filter({ hasText: 'stETH' })).toBeVisible();
   });
 });

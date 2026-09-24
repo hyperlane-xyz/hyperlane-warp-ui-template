@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('Basic Rendering', () => {
   test('should render transfer form with Send and Receive sections', async ({ page }) => {

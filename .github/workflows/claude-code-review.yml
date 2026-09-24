@@ -9,8 +9,7 @@ on:
     types: [created]
 
 env:
-  CLAUDE_OPUS_MODEL: claude-opus-4-8
-  CLAUDE_SONNET_MODEL: claude-sonnet-4-6
+  CLAUDE_OPUS_MODEL: claude-opus-5-5
 
 concurrency:
   group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
@@ -198,4 +197,4 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           use_sticky_comment: false
-          claude_args: "--model ${{ env.CLAUDE_SONNET_MODEL }}"
+          claude_args: "--model ${{ env.CLAUDE_OPUS_MODEL }}"

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('Transfer Form - Enter Amount', () => {
   test('should enter transfer amount', async ({ page }) => {

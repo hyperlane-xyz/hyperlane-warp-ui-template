@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../../fixtures';
 import { installEvmRpcMock } from '../helpers/evmRpc';
 import { getCapturedEvmTxs } from '../helpers/captured';
 import { openE2EApp } from '../helpers/page-setup';

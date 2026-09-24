@@ -67,10 +67,8 @@ export function FeeSectionButton({ feeBreakdown, isLoading, inputUsd }: Props) {
     <>
       <button
         type="button"
-        className={`fee-section-btn flex w-fit items-center font-secondary text-xxs text-gray-700 dark:text-foreground-secondary [&_path]:fill-gray-700 dark:[&_path]:fill-current ${
-          isClickable
-            ? 'hover:text-gray-900 dark:hover:text-foreground-primary [&_path]:hover:fill-gray-900 dark:hover:[&_path]:fill-current'
-            : 'pointer-events-none cursor-default'
+        className={`transfer-meta-button flex w-fit items-center font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary [&_path]:fill-current ${
+          !isClickable ? 'pointer-events-none cursor-default' : ''
         }`}
         onClick={isClickable ? open : undefined}
         disabled={!isClickable}

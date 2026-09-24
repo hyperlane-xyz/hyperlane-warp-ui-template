@@ -1,7 +1,7 @@
 // spec: No Chrome
 // seed: tests/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('No Chrome', () => {
   test('should not show header navigation on embed page', async ({ page }) => {

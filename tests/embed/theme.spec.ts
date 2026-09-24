@@ -1,7 +1,7 @@
 // spec: Theme Tests
 // seed: tests/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('Theme Tests', () => {
   test('should apply default light theme CSS variables', async ({ page }) => {

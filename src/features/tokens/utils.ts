@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   IToken,
   MultiProtocolProvider,
@@ -8,19 +9,17 @@ import {
 import { eqAddress, isNullish, normalizeAddress } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
 import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
+=======
+import type { UiToken } from './types';
 
-// Map of token symbols and token chain map
-// Symbols are not duplicated to avoid the same symbol from being shown
-// TokenChainMap: An object containing token information and a map
-// chain names with its metadata and the related token
-export function assembleTokensBySymbolChainMap(
-  tokens: Token[],
-  multiProvider: MultiProtocolProvider,
-): Record<string, TokenChainMap> {
-  const multiChainTokens = tokens.filter((t) => t.isMultiChainToken());
-  return multiChainTokens.reduce<Record<string, TokenChainMap>>((acc, token) => {
-    if (!token.connections || !token.connections.length) return acc;
+export type TokenRouteKind = 'bridge' | 'swap';
+>>>>>>> origin/main
 
+export function getTokenKey(token: UiToken): string {
+  return tokenKey(token.chainId, token.address);
+}
+
+<<<<<<< HEAD
     if (!acc[token.symbol]) {
       acc[token.symbol] = {
         chains: {},
@@ -36,9 +35,49 @@ export function assembleTokensBySymbolChainMap(
 
       acc[token.symbol].chains[token.chainName] = { token, metadata: chainMetadata };
     }
+=======
+export function tokenKey(chainId: number, address: string): string {
+  const normalizedAddress = /^0x[a-fA-F0-9]{40}$/.test(address) ? address.toLowerCase() : address;
+  return `${chainId}-${normalizedAddress}`;
+}
+>>>>>>> origin/main
 
-    return acc;
-  }, {});
+export function mergeRouteTokensFirst(routeTokens: UiToken[], tokens: UiToken[]): UiToken[] {
+  if (!routeTokens.length) return tokens;
+  const seen = new Set<string>();
+  const out: UiToken[] = [];
+  for (const token of [...routeTokens, ...tokens]) {
+    const key = getTokenKey(token);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(token);
+  }
+  return out;
+}
+
+export function getTokenRouteKind(
+  token: UiToken,
+  directRouteTokenKeys: Set<string>,
+  counterpartToken?: UiToken,
+): TokenRouteKind | undefined {
+  if (directRouteTokenKeys.has(getTokenKey(token))) return 'bridge';
+  if (token.canSwap && counterpartToken?.canSwap) return 'swap';
+  return undefined;
+}
+
+export function getRoutePrefillToken(
+  routeTokens: UiToken[],
+  currentToken?: UiToken,
+): UiToken | undefined {
+  if (!routeTokens.length) return undefined;
+  if (!currentToken) return routeTokens[0];
+
+  const currentKey = getTokenKey(currentToken);
+  // Origin changes prefer a direct bridge destination over preserving a
+  // swap-only destination, so the user lands on the safest known route.
+  return routeTokens.some((token) => getTokenKey(token) === currentKey)
+    ? undefined
+    : routeTokens[0];
 }
 
 export function isValidMultiCollateralToken(

@@ -4,7 +4,8 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 export enum WARP_QUERY_PARAMS {
   ORIGIN = 'origin',
   DESTINATION = 'destination',
-  TOKEN = 'token',
+  ORIGIN_TOKEN = 'originToken',
+  DESTINATION_TOKEN = 'destinationToken',
 }
 
 export enum CHAIN_NAMES {

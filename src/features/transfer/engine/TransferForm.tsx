@@ -1118,7 +1118,7 @@ function OriginTokenCard({
             step="any"
             min="0"
             disabled={isReview}
-            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary dark:disabled:bg-transparent"
             onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === '-' || e.key === 'e') e.preventDefault();

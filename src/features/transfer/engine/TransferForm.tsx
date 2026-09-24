@@ -864,7 +864,7 @@ function TransferFormContent() {
               <button
                 type="button"
                 onClick={openRouteModal}
-                className="flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary dark:hover:text-foreground-primary"
+                className="transfer-meta-button flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary [&_path]:fill-current"
               >
                 <RouteIcon />
                 {routes.length > 1
@@ -1118,7 +1118,7 @@ function OriginTokenCard({
             step="any"
             min="0"
             disabled={isReview}
-            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary dark:disabled:bg-transparent"
             onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === '-' || e.key === 'e') e.preventDefault();

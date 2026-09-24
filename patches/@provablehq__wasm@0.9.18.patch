@@ -1,0 +1,36 @@
+diff --git a/dist/mainnet/index.js b/dist/mainnet/index.js
+index 1988ed1acaabfdd5238dd9729678033d1978aacd..3ff88a8fc24bcae8425ce764dc44814497e5734c 100644
+--- a/dist/mainnet/index.js
++++ b/dist/mainnet/index.js
+@@ -14222,8 +14222,11 @@ async function __wbg_init(module_or_path, memory) {
+ }
+ 
+ const module$1 = new URL("aleo_wasm.wasm", import.meta.url);
+-                
+-                    await __wbg_init({ module_or_path: module$1 });
++const shouldAutoInit = (typeof window !== "undefined" && typeof document !== "undefined") || (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope);
++
++if (shouldAutoInit) {
++    await __wbg_init({ module_or_path: module$1 });
++}
+ 
+ async function initThreadPool(threads) {
+     if (threads == null) {
+diff --git a/dist/testnet/index.js b/dist/testnet/index.js
+index 180e9b86e0c8c2b579504bac26fa57e04e93275a..a3fc1b0dbb13a31872810cf2fa1d6bbfdc5881ac 100644
+--- a/dist/testnet/index.js
++++ b/dist/testnet/index.js
+@@ -14222,8 +14222,11 @@ async function __wbg_init(module_or_path, memory) {
+ }
+ 
+ const module$1 = new URL("aleo_wasm.wasm", import.meta.url);
+-                
+-                    await __wbg_init({ module_or_path: module$1 });
++const shouldAutoInit = (typeof window !== "undefined" && typeof document !== "undefined") || (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope);
++
++if (shouldAutoInit) {
++    await __wbg_init({ module_or_path: module$1 });
++}
+ 
+ async function initThreadPool(threads) {
+     if (threads == null) {

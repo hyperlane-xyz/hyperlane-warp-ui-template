@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('Page Load - Header and Footer', () => {
   test('should display header and footer', async ({ page }) => {

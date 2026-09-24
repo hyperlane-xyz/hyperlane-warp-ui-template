@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 import { getOriginTokenButton, getDestinationTokenButton } from '../helpers/locators';
 
 test.describe('Transfer Form - Flip Tokens', () => {

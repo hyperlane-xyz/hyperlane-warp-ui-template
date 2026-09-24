@@ -1,7 +1,7 @@
 // spec: CSP and Security Headers
 // seed: tests/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('CSP and Security Headers', () => {
   test('embed route should not have X-Frame-Options header', async ({ page }) => {

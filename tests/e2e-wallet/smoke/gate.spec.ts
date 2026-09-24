@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../../fixtures';
 import { getE2EState } from '../helpers/captured';
 import { openE2EApp } from '../helpers/page-setup';
 

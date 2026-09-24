@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from '../../fixtures';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
 import { installEvmRpcMock, ROUTER_COLLATERAL_SEED } from '../helpers/evmRpc';
 import {

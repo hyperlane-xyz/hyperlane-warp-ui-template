@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 
 test.describe('Sidebar', () => {
   test('should show sidebar with wallet and history sections', async ({ page }) => {

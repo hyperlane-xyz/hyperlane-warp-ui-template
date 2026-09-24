@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../../fixtures';
 import { openE2EApp } from '../helpers/page-setup';
 
 // MOCK_RADIX_ADDRESS from src/features/wallet/_e2e/E2EAutoConnectRadix.tsx.

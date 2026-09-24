@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures';
 import { resolveTestTokenParams } from '../helpers/constants';
 
 const { origin, originToken, destination, destinationToken, skip } = resolveTestTokenParams();

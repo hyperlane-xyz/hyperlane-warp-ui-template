@@ -864,7 +864,7 @@ function TransferFormContent() {
               <button
                 type="button"
                 onClick={openRouteModal}
-                className="flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary dark:hover:text-foreground-primary"
+                className="transfer-meta-button flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary [&_path]:fill-current"
               >
                 <RouteIcon />
                 {routes.length > 1

@@ -1,7 +1,6 @@
 import { ChevronIcon, GearIcon } from '@hyperlane-xyz/widgets';
 import { useEffect, useRef, useState } from 'react';
 
-import { Color } from '../../../styles/Color';
 import { useClickOutside } from '../../../utils/useClickOutside';
 
 interface Props {
@@ -36,7 +35,7 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className="flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary dark:hover:text-foreground-primary [&_path]:fill-gray-700 dark:[&_path]:fill-current"
+        className="transfer-meta-button flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary [&_path]:fill-current"
       >
         <GearIcon width={12} height={12} />
         Slippage: {pct}%
@@ -44,7 +43,6 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
           direction={isOpen ? 'n' : 's'}
           width="0.6rem"
           height="0.6rem"
-          color={Color.gray['500']}
         />
       </button>
       {isOpen && (

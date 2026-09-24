@@ -518,7 +518,7 @@ html[data-theme-mode='dark'] .transfer-form .text-gray-500 {
   color: var(--dark-text-secondary) !important;
 }
 
-html[data-theme-mode='dark'] .transfer-form .fee-section-btn.text-gray-700:hover {
+html[data-theme-mode='dark'] .transfer-form .transfer-meta-button:hover {
   color: var(--dark-text-primary) !important;
 }
 

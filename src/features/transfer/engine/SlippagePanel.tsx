@@ -39,11 +39,7 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
       >
         <GearIcon width={12} height={12} />
         Slippage: {pct}%
-        <ChevronIcon
-          direction={isOpen ? 'n' : 's'}
-          width="0.6rem"
-          height="0.6rem"
-        />
+        <ChevronIcon direction={isOpen ? 'n' : 's'} width="0.6rem" height="0.6rem" />
       </button>
       {isOpen && (
         <div className="absolute right-0 top-full z-20 mt-1 w-fit rounded-lg border border-gray-200 bg-white p-2 text-xs shadow-md dark:border-primary-300/35 dark:bg-surface">

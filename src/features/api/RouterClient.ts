@@ -190,7 +190,10 @@ export class RouterClient {
   }
 
   private isDeniedRoute(routeId: string | undefined): boolean {
-    return !!routeId && this.warpRouteDenylist.includes(routeId);
+    return (
+      !!routeId &&
+      this.warpRouteDenylist.some((denied) => denied.toLowerCase() === routeId.toLowerCase())
+    );
   }
 
   private isDeniedToken(token: { warpRouteIds: string[] }): boolean {

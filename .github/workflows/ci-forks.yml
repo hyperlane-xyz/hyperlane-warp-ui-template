@@ -1,0 +1,120 @@
+name: fork-ci
+
+on:
+  pull_request:
+    branches: [main, nautilus, nexus, injective, trump, ousdt]
+
+permissions:
+  contents: read
+
+env:
+  NEXT_PUBLIC_ROUTER_API_URL: https://hyperswaps-api.hyperlane.xyz
+
+jobs:
+  build:
+    name: ${{ github.event.pull_request.head.repo.fork && 'ci / build' || 'fork-ci-disabled / build' }}
+    if: ${{ github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          CHANGES=$(git status -s)
+          if [[ -n $CHANGES ]]; then
+            echo "Changes found: $CHANGES"
+            git diff
+            exit 1
+          fi
+
+      # Fork pull_request workflows cannot access repository secrets. The app
+      # supports an empty WalletConnect ID for build-only validation.
+      - name: Build
+        run: pnpm run build
+
+      - name: Check bundle size
+        run: pnpm check:bundle
+
+  typecheck:
+    name: ${{ github.event.pull_request.head.repo.fork && 'ci / typecheck' || 'fork-ci-disabled / typecheck' }}
+    if: ${{ github.event.pull_request.head.repo.fork && needs.build.result == 'success' }}
+    needs: [build]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Confirm build typechecked successfully
+        run: echo "TypeScript validation completed in the required build job"
+
+  format:
+    name: ${{ github.event.pull_request.head.repo.fork && 'ci / format' || 'fork-ci-disabled / format' }}
+    if: ${{ github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: |
+          pnpm run format
+          CHANGES=$(git status -s)
+          if [[ -n $CHANGES ]]; then
+            echo "Changes found: $CHANGES"
+            git diff
+            exit 1
+          fi
+
+  lint:
+    name: ${{ github.event.pull_request.head.repo.fork && 'ci / lint' || 'fork-ci-disabled / lint' }}
+    if: ${{ github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+  test:
+    name: ${{ github.event.pull_request.head.repo.fork && 'ci / test' || 'fork-ci-disabled / test' }}
+    if: ${{ github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm run test

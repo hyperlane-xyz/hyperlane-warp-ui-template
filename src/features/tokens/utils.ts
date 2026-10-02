@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   IToken,
   MultiProtocolProvider,
@@ -8,39 +9,17 @@ import {
 import { eqAddress, isNullish, normalizeAddress } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
 import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
+=======
+import type { UiToken } from './types';
+>>>>>>> origin/main
 
-// Map of token symbols and token chain map
-// Symbols are not duplicated to avoid the same symbol from being shown
-// TokenChainMap: An object containing token information and a map
-// chain names with its metadata and the related token
-export function assembleTokensBySymbolChainMap(
-  tokens: Token[],
-  multiProvider: MultiProtocolProvider,
-): Record<string, TokenChainMap> {
-  const multiChainTokens = tokens.filter((t) => t.isMultiChainToken());
-  return multiChainTokens.reduce<Record<string, TokenChainMap>>((acc, token) => {
-    if (!token.connections || !token.connections.length) return acc;
+export type TokenRouteKind = 'bridge' | 'swap';
 
-    if (!acc[token.symbol]) {
-      acc[token.symbol] = {
-        chains: {},
-        tokenInformation: token,
-      };
-    }
-    if (!acc[token.symbol].chains[token.chainName]) {
-      const chainMetadata = multiProvider.tryGetChainMetadata(token.chainName);
-
-      // remove chain from map if it is disabled
-      const chainDisabled = isChainDisabled(chainMetadata);
-      if (chainDisabled) return acc;
-
-      acc[token.symbol].chains[token.chainName] = { token, metadata: chainMetadata };
-    }
-
-    return acc;
-  }, {});
+export function getTokenKey(token: UiToken): string {
+  return tokenKey(token.chainId, token.address);
 }
 
+<<<<<<< HEAD
 export function isValidMultiCollateralToken(
   originToken: Token | IToken,
   destination: ChainName | IToken,
@@ -125,18 +104,37 @@ export function getTokensWithSameCollateralAddresses(
 
       return originMatches && destinationMatches;
     });
+=======
+export function tokenKey(chainId: number, address: string): string {
+  const normalizedAddress = /^0x[a-fA-F0-9]{40}$/.test(address) ? address.toLowerCase() : address;
+  return `${chainId}-${normalizedAddress}`;
 }
 
-// De-duplicate collaterized tokens
-// Returns a map of token with same origin and dest collateral address
-// And an array of tokens with repeated collateral addresses grouped into one
-export function dedupeMultiCollateralTokens(tokens: Tokens, destination) {
-  return tokens.reduce<{ tokens: Tokens; multiCollateralTokenMap: MultiCollateralTokenMap }>(
-    (acc, t) => {
-      const originToken = t.token;
-      const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
-      if (!isMultiCollateralToken) return { ...acc, tokens: [...acc.tokens, t] };
+export function mergeRouteTokensFirst(routeTokens: UiToken[], tokens: UiToken[]): UiToken[] {
+  if (!routeTokens.length) return tokens;
+  const seen = new Set<string>();
+  const out: UiToken[] = [];
+  for (const token of [...routeTokens, ...tokens]) {
+    const key = getTokenKey(token);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(token);
+  }
+  return out;
+>>>>>>> origin/main
+}
 
+export function getTokenRouteKind(
+  token: UiToken,
+  directRouteTokenKeys: Set<string>,
+  counterpartToken?: UiToken,
+): TokenRouteKind | undefined {
+  if (directRouteTokenKeys.has(getTokenKey(token))) return 'bridge';
+  if (token.canSwap && counterpartToken?.canSwap) return 'swap';
+  return undefined;
+}
+
+<<<<<<< HEAD
       const destinationToken = originToken.getConnectionForChain(destination)!.token;
 
       // For HypNative tokens, use their symbol and standard as identifier since they don't have collateralAddressOrDenom
@@ -147,18 +145,19 @@ export function dedupeMultiCollateralTokens(tokens: Tokens, destination) {
       const destinationAddress = destinationToken.collateralAddressOrDenom
         ? normalizeAddress(destinationToken.collateralAddressOrDenom, destinationToken.protocol)
         : `hypnative-${destinationToken.standard}-${destinationToken.symbol}`;
+=======
+export function getRoutePrefillToken(
+  routeTokens: UiToken[],
+  currentToken?: UiToken,
+): UiToken | undefined {
+  if (!routeTokens.length) return undefined;
+  if (!currentToken) return routeTokens[0];
+>>>>>>> origin/main
 
-      // now origin and destination are both collaterals
-      // create map for tokens with same origin and destination collateral addresses
-      acc.multiCollateralTokenMap[originAddress] ||= {};
-      if (!acc.multiCollateralTokenMap[originAddress][destinationAddress]) {
-        acc.multiCollateralTokenMap[originAddress][destinationAddress] = [];
-        acc.tokens.push(t);
-      }
-
-      acc.multiCollateralTokenMap[originAddress][destinationAddress].push(originToken);
-      return acc;
-    },
-    { tokens: [], multiCollateralTokenMap: {} },
-  );
+  const currentKey = getTokenKey(currentToken);
+  // Origin changes prefer a direct bridge destination over preserving a
+  // swap-only destination, so the user lands on the safest known route.
+  return routeTokens.some((token) => getTokenKey(token) === currentKey)
+    ? undefined
+    : routeTokens[0];
 }

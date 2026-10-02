@@ -1,0 +1,603 @@
+import { IToken } from '@hyperlane-xyz/sdk';
+import { CopyButton, HyperlaneLogo, Modal, RefreshIcon } from '@hyperlane-xyz/widgets';
+import { Fragment, useMemo, useState } from 'react';
+
+import { ChainLogo } from '../../../../components/icons/ChainLogo';
+import { TokenIcon } from '../../../../components/icons/TokenIcon';
+import { HoverTooltip } from '../../../../components/tooltip/HoverTooltip';
+import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../../api/types';
+import { formatDisplayAmount, formatFeeAmount } from '../../../balances/utils';
+import { useMultiProvider } from '../../../chains/hooks';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../../tokens/hooks';
+import type { UiToken } from '../../../tokens/types';
+import { tokenKey } from '../../../tokens/utils';
+import { trustedWrappedNativeAddressForToken } from '../../../tokens/wrappedNative';
+import { getDexMeta } from '../dexMeta';
+import type { AugmentedRoute } from '../types';
+import { useRouteChainTokens } from './hooks';
+import { buildFlowNodes, computeRate, formatStepAmount, formatWarpRouteId } from './utils';
+
+interface Props {
+  isOpen: boolean;
+  close: () => void;
+  routes: AugmentedRoute[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+  srcToken?: UiToken | null;
+  dstToken?: UiToken | null;
+}
+
+type ViewMode = 'flow' | 'json';
+const VIEW_MODES: ViewMode[] = ['flow', 'json'];
+
+export function RouteSelectionModal({
+  isOpen,
+  close,
+  routes,
+  selectedIndex,
+  onSelect,
+  srcToken,
+  dstToken,
+}: Props) {
+  const [view, setView] = useState<ViewMode>('flow');
+
+  const handleSelect = (i: number) => {
+    onSelect(i);
+    close();
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      panelClassname="route-selection-modal max-w-2xl overflow-hidden p-0 dark:border dark:border-primary-300/40 dark:bg-surface dark:text-foreground-primary dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+    >
+      <div className="flex w-full items-center justify-between bg-accent-gradient px-4 py-2.5 shadow-accent-glow">
+        <span className="font-secondary text-base font-normal tracking-wider text-white">
+          Available Routes
+        </span>
+        <div className="flex gap-1">
+          {VIEW_MODES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setView(m)}
+              className={`rounded px-2.5 py-0.5 font-secondary text-xs capitalize text-white transition-colors ${
+                view === m ? 'bg-white/25' : 'hover:bg-white/10'
+              }`}
+            >
+              {m === 'flow' ? 'Flow' : 'JSON'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto p-4">
+        {view === 'flow' ? (
+          routes.map((route, i) => (
+            <RouteCard
+              key={i}
+              route={route}
+              index={i}
+              isSelected={i === selectedIndex}
+              isBest={i === 0}
+              onSelect={handleSelect}
+              srcToken={srcToken}
+              dstToken={dstToken}
+            />
+          ))
+        ) : (
+          <JsonView routes={routes} />
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+interface RouteCardProps {
+  route: AugmentedRoute;
+  index: number;
+  isSelected: boolean;
+  isBest: boolean;
+  onSelect: (i: number) => void;
+  srcToken?: UiToken | null;
+  dstToken?: UiToken | null;
+}
+
+function RouteCard({
+  route,
+  index,
+  isSelected,
+  isBest,
+  onSelect,
+  srcToken,
+  dstToken,
+}: RouteCardProps) {
+  const decimals = dstToken?.decimals ?? 18;
+  const symbol = dstToken?.symbol ?? '';
+  const outputFormatted = formatDisplayAmount(BigInt(route.raw.output), decimals);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(index)}
+      className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+        isSelected
+          ? 'border-accent-500 bg-accent-500/5 dark:border-accent-500/70 dark:bg-accent-500/10'
+          : 'border-gray-200 bg-white hover:border-gray-300 dark:border-primary-300/20 dark:bg-transparent dark:hover:border-primary-300/40'
+      }`}
+    >
+      <div className="mb-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {isBest && (
+            <span className="rounded bg-accent-500 px-1.5 py-0.5 font-secondary text-xxs text-white">
+              Best
+            </span>
+          )}
+          <span className="font-secondary text-xs text-gray-500 dark:text-foreground-secondary">
+            Route {index + 1}
+          </span>
+        </div>
+        <span className="font-secondary text-sm font-medium dark:text-foreground-primary">
+          {outputFormatted} {symbol}
+        </span>
+      </div>
+      <RouteFlowDiagram steps={route.raw.steps} srcToken={srcToken} dstToken={dstToken} />
+    </button>
+  );
+}
+
+function RouteFlowDiagram({
+  steps,
+  srcToken,
+  dstToken,
+}: {
+  steps: QuoteStep[];
+  srcToken?: UiToken | null;
+  dstToken?: UiToken | null;
+}) {
+  const tokenMap = useTokenByKeyMap();
+  const multiProvider = useMultiProvider();
+  // Ensure tokens for every chain that appears in these steps are loaded
+  // into the tokenMap. Intermediate chains (e.g. Arbitrum when the user
+  // picked Base→Viction) are never fetched by the token picker, so
+  // tokens like WETH on Arb would otherwise stay unresolved.
+  useRouteChainTokens(steps);
+  const nodes = buildFlowNodes(steps, { destinationTokenAddress: dstToken?.address });
+  const lastIdx = nodes.length - 1;
+  const firstNode = nodes[0];
+  const lastNode = nodes[lastIdx];
+  const showWrap =
+    !!firstNode && isDisplayWrappedNative(srcToken, firstNode.chainId, firstNode.tokenAddress);
+  const showUnwrap =
+    !!lastNode && isDisplayWrappedNative(dstToken, lastNode.chainId, lastNode.tokenAddress);
+
+  // Resolve all node tokens upfront so step edges can receive their tokenOut
+  // directly rather than re-looking it up (avoids misses for dest-chain tokens).
+  const resolvedTokens: (UiToken | null)[] = nodes.map((node, i) => {
+    const found = getTokenByKeyFromMap(tokenMap, tokenKey(node.chainId, node.tokenAddress));
+    if (found) return found;
+    if (i === lastIdx && dstToken && !showUnwrap) return dstToken;
+    return null;
+  });
+
+  return (
+    <div className="-mx-1 overflow-x-auto px-1 pb-2">
+      <div className="flex min-w-max flex-nowrap items-end gap-1.5">
+        {showWrap && firstNode && (
+          <>
+            <TokenNode token={srcToken ?? null} chainName={srcToken?.chainName} />
+            <WrapEdge action="wrap" fromToken={srcToken ?? null} toToken={resolvedTokens[0]} />
+          </>
+        )}
+        {nodes.map((node, i) => {
+          const step = i < steps.length ? steps[i] : undefined;
+          const token = resolvedTokens[i];
+          const tokenOut = i + 1 <= lastIdx ? resolvedTokens[i + 1] : null;
+          const chainName = multiProvider.tryGetChainName(node.chainId) ?? undefined;
+
+          return (
+            <Fragment key={i}>
+              <TokenNode token={token} chainName={chainName} />
+              {step && (
+                <StepEdge
+                  step={step}
+                  tokenMap={tokenMap}
+                  tokenOut={tokenOut}
+                  stepIndex={i}
+                  steps={steps}
+                />
+              )}
+            </Fragment>
+          );
+        })}
+        {showUnwrap && lastNode && (
+          <>
+            <WrapEdge
+              action="unwrap"
+              fromToken={resolvedTokens[lastIdx]}
+              toToken={dstToken ?? null}
+            />
+            <TokenNode token={dstToken ?? null} chainName={dstToken?.chainName} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── JSON view with copy button ─────────────────────────────────────────
+
+function JsonView({ routes }: { routes: AugmentedRoute[] }) {
+  const json = useMemo(
+    () =>
+      JSON.stringify(
+        routes.map((r) => r.raw),
+        null,
+        2,
+      ),
+    [routes],
+  );
+
+  return (
+    <div className="relative">
+      <CopyButton copyValue={json} width={14} height={14} className="absolute right-2 top-2 z-10" />
+      <pre className="font-mono overflow-x-auto whitespace-pre-wrap break-all rounded bg-gray-50 p-3 pt-8 text-xs dark:bg-white/5 dark:text-foreground-primary">
+        {json}
+      </pre>
+    </div>
+  );
+}
+
+const CHAIN_BADGE_SIZE = 13;
+const CHAIN_BADGE_CONTAINER = CHAIN_BADGE_SIZE + 2;
+
+function TokenNode({ token, chainName }: { token: UiToken | null; chainName?: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="relative" style={{ width: 26, height: 26 }}>
+        <TokenIcon token={token as unknown as IToken} size={26} />
+        {chainName && (
+          <div
+            className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border border-white bg-white dark:border-white/[0.22] dark:bg-surface"
+            style={{ width: CHAIN_BADGE_CONTAINER, height: CHAIN_BADGE_CONTAINER }}
+          >
+            <ChainLogo chainName={chainName} size={CHAIN_BADGE_SIZE} />
+          </div>
+        )}
+      </div>
+      <span className="mt-1 max-w-[3.5rem] truncate font-secondary text-xxs text-gray-500 dark:text-foreground-secondary">
+        {token?.symbol ?? '?'}
+      </span>
+    </div>
+  );
+}
+
+function StepEdge({
+  step,
+  tokenMap,
+  tokenOut,
+  stepIndex,
+  steps,
+}: {
+  step: QuoteStep;
+  tokenMap: Map<string, UiToken>;
+  tokenOut: UiToken | null;
+  stepIndex: number;
+  steps: QuoteStep[];
+}) {
+  if (step.type === 'swap')
+    return <SwapEdge step={step} tokenMap={tokenMap} resolvedTokenOut={tokenOut} />;
+  return (
+    <CrossChainEdge
+      step={step}
+      tokenMap={tokenMap}
+      resolvedDestAsset={tokenOut}
+      stepIndex={stepIndex}
+      steps={steps}
+    />
+  );
+}
+
+// ── Native wrapper display edge ─────────────────────────────────────────
+
+function WrapEdge({
+  action,
+  fromToken,
+  toToken,
+}: {
+  action: 'wrap' | 'unwrap';
+  fromToken: UiToken | null;
+  toToken: UiToken | null;
+}) {
+  const label = action === 'wrap' ? 'Wrap' : 'Unwrap';
+
+  return (
+    <div className="flex items-center gap-1 pb-4">
+      <span className="text-sm text-gray-400">→</span>
+      <HoverTooltip
+        tooltip={<WrapEdgeTooltip label={label} fromToken={fromToken} toToken={toToken} />}
+      >
+        <div className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 dark:border-white/15 dark:bg-white/10">
+          <RefreshIcon
+            width={13}
+            height={13}
+            color="currentColor"
+            className="text-gray-600 dark:text-foreground-secondary"
+          />
+          <span className="font-secondary text-xxs text-gray-700 dark:text-foreground-secondary">
+            {label}
+          </span>
+        </div>
+      </HoverTooltip>
+      <span className="text-sm text-gray-400">→</span>
+    </div>
+  );
+}
+
+function WrapEdgeTooltip({
+  label,
+  fromToken,
+  toToken,
+}: {
+  label: string;
+  fromToken: UiToken | null;
+  toToken: UiToken | null;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="font-medium dark:text-foreground-primary">{label}</div>
+      <div className="space-y-0.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">From</span>
+          <span className="dark:text-foreground-primary">{fromToken?.symbol ?? '?'}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">To</span>
+          <span className="dark:text-foreground-primary">{toToken?.symbol ?? '?'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isDisplayWrappedNative(
+  selectedToken: UiToken | null | undefined,
+  chainId: number,
+  routeTokenAddress: string,
+): boolean {
+  return (
+    !!selectedToken?.isNative &&
+    tokenKey(chainId, routeTokenAddress) ===
+      tokenKey(chainId, trustedWrappedNativeAddressForToken(selectedToken) ?? '')
+  );
+}
+
+// ── Swap step edge ──────────────────────────────────────────────────────
+
+function SwapEdge({
+  step,
+  tokenMap,
+  resolvedTokenOut,
+}: {
+  step: QuoteSwapStep;
+  tokenMap: Map<string, UiToken>;
+  resolvedTokenOut: UiToken | null;
+}) {
+  const meta = getDexMeta(step.dex);
+  const tokenIn = getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.tokenIn));
+  // Use the pre-resolved output token (which already has dstToken applied as fallback).
+  const tokenOut =
+    getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.tokenOut)) ?? resolvedTokenOut;
+
+  const decimalsIn = tokenIn?.decimals ?? 18;
+  const decimalsOut = tokenOut?.decimals ?? 18;
+  const amountIn = formatStepAmount(step.amountIn, decimalsIn);
+  const amountOut = formatStepAmount(step.amountOut, decimalsOut);
+
+  // Human-readable exchange rate: how many tokenOut per 1 tokenIn.
+  const rate = computeRate(step.amountIn, decimalsIn, step.amountOut, decimalsOut);
+
+  const tooltip = (
+    <div className="flex flex-col gap-1.5">
+      <div className="font-medium dark:text-foreground-primary">{meta?.name ?? step.dex}</div>
+      {/* Amounts */}
+      <div className="space-y-0.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">Amount in</span>
+          <span className="dark:text-foreground-primary">
+            {amountIn} <span className="text-gray-400">{tokenIn?.symbol ?? '?'}</span>
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">Amount out</span>
+          <span className="dark:text-foreground-primary">
+            {amountOut} <span className="text-gray-400">{tokenOut?.symbol ?? '?'}</span>
+          </span>
+        </div>
+        {rate && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-gray-400 dark:text-foreground-secondary">Rate</span>
+            <span className="dark:text-foreground-primary">
+              1 {tokenIn?.symbol ?? '?'} = {rate} {tokenOut?.symbol ?? '?'}
+            </span>
+          </div>
+        )}
+      </div>
+      {/* Pool info — only shown when there's something non-trivial to display */}
+      {(step.path.length > 2 || step.minPoolTvlUsd != null) && (
+        <div className="space-y-0.5 border-t border-gray-100 pt-1 dark:border-white/10">
+          {step.path.length > 2 && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-400 dark:text-foreground-secondary">Hops</span>
+              <span className="dark:text-foreground-primary">{step.path.length - 1}</span>
+            </div>
+          )}
+          {step.minPoolTvlUsd != null && step.minPoolTvlUsd > 0 && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-400 dark:text-foreground-secondary">Min pool TVL</span>
+              <span className="dark:text-foreground-primary">
+                ${step.minPoolTvlUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex items-center gap-1 pb-4">
+      <span className="text-sm text-gray-400">→</span>
+      <HoverTooltip tooltip={tooltip}>
+        <div className="flex items-center gap-1 rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 dark:border-purple-800/30 dark:bg-purple-900/15">
+          <DexLogo meta={meta} dexKey={step.dex} size={13} />
+          <span className="font-secondary text-xxs text-purple-700 dark:text-purple-300">
+            {meta?.name ?? step.dex}
+          </span>
+        </div>
+      </HoverTooltip>
+      <span className="text-sm text-gray-400">→</span>
+    </div>
+  );
+}
+
+// ── Cross-chain edge ────────────────────────────────────────────────────
+
+function CrossChainEdge({
+  step,
+  tokenMap,
+  resolvedDestAsset,
+  stepIndex,
+  steps,
+}: {
+  step: QuoteBridgeStep;
+  tokenMap: Map<string, UiToken>;
+  resolvedDestAsset: UiToken | null;
+  stepIndex: number;
+  steps: QuoteStep[];
+}) {
+  const asset = getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.asset));
+  const igpToken = getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.fee.igpToken));
+
+  // Use next swap step's tokenIn decimals for amountOut if available (dest-chain address).
+  const nextStep = steps[stepIndex + 1];
+  const destAsset =
+    nextStep?.type === 'swap'
+      ? getTokenByKeyFromMap(tokenMap, tokenKey(step.destChain, nextStep.tokenIn))
+      : nextStep?.type === 'bridge'
+        ? getTokenByKeyFromMap(tokenMap, tokenKey(step.destChain, nextStep.asset))
+        : (resolvedDestAsset ?? asset);
+
+  const amountIn = formatStepAmount(step.amountIn, asset?.decimals ?? 18);
+  const amountOut = formatStepAmount(step.amountOut, destAsset?.decimals ?? asset?.decimals ?? 18);
+  const tokenFee = BigInt(step.fee.tokenFee);
+  const igpAmount = BigInt(step.fee.igpAmount);
+
+  const symbol = asset?.symbol ?? step.bridgeSymbol ?? '?';
+  const routeLabel = step.warpRouteId
+    ? formatWarpRouteId(step.warpRouteId)
+    : (step.bridgeSymbol ?? 'Transfer');
+
+  const tooltip = (
+    <div className="flex flex-col gap-1.5">
+      <div className="font-medium dark:text-foreground-primary">Hyperlane Transfer</div>
+      {step.warpRouteId && (
+        <div className="font-mono break-all text-gray-400 dark:text-foreground-secondary">
+          {step.warpRouteId}
+        </div>
+      )}
+      {/* Amounts */}
+      <div className="space-y-0.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">Amount in</span>
+          <span className="dark:text-foreground-primary">
+            {amountIn} <span className="text-gray-400">{symbol}</span>
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">Amount out</span>
+          <span className="dark:text-foreground-primary">
+            {amountOut} <span className="text-gray-400">{symbol}</span>
+          </span>
+        </div>
+      </div>
+      {/* Fees */}
+      {(tokenFee > 0n || igpAmount > 0n) && (
+        <div className="border-t border-gray-100 pt-1 dark:border-white/10">
+          {tokenFee > 0n && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-400 dark:text-foreground-secondary">Route fee</span>
+              <span className="dark:text-foreground-primary">
+                {formatFeeAmount(tokenFee, asset?.decimals ?? 18)}{' '}
+                <span className="text-gray-400">{symbol}</span>
+              </span>
+            </div>
+          )}
+          {igpAmount > 0n && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-400 dark:text-foreground-secondary">IGP</span>
+              <span className="dark:text-foreground-primary">
+                {formatFeeAmount(igpAmount, igpToken?.decimals ?? 18)}{' '}
+                <span className="text-gray-400">{igpToken?.symbol ?? '?'}</span>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex items-center gap-1 pb-4">
+      <span className="text-sm text-gray-400">→</span>
+      <HoverTooltip tooltip={tooltip}>
+        <div className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 dark:border-blue-800/30 dark:bg-blue-900/15">
+          <HyperlaneLogo width={13} height={13} color="currentColor" />
+          <span className="max-w-[7rem] truncate font-secondary text-xxs text-blue-700 dark:text-blue-300">
+            {routeLabel}
+          </span>
+        </div>
+      </HoverTooltip>
+      <span className="text-sm text-gray-400">→</span>
+    </div>
+  );
+}
+
+// ── Visual primitives ──────────────────────────────────────────────────
+
+function DexLogo({
+  meta,
+  dexKey,
+  size,
+}: {
+  meta: { name: string; logoUri: string } | undefined;
+  dexKey: string;
+  size: number;
+}) {
+  const [failed, setFailed] = useState(false);
+  const initial = (meta?.name ?? dexKey).charAt(0).toUpperCase();
+
+  if (meta?.logoUri && !failed) {
+    return (
+      <img
+        src={meta.logoUri}
+        alt={meta.name}
+        width={size}
+        height={size}
+        className="rounded-full object-cover"
+        onError={() => setFailed(true)}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="inline-flex items-center justify-center rounded-full bg-purple-200 font-secondary font-bold text-purple-800 dark:bg-purple-800/40 dark:text-purple-200"
+      style={{ width: size, height: size, fontSize: Math.floor(size * 0.6) }}
+    >
+      {initial}
+    </span>
+  );
+}

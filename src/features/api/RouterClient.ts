@@ -52,10 +52,15 @@ const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_QUOTE_TIMEOUT_MS = 30_000;
 
 export class RouterClient {
+  // Route IDs compare case-insensitively, matching the registry lookup map.
+  private readonly deniedRouteIds: ReadonlySet<string>;
+
   constructor(
     private baseUrl: string,
-    private warpRouteDenylist: readonly string[] = [],
-  ) {}
+    warpRouteDenylist: readonly string[] = [],
+  ) {
+    this.deniedRouteIds = new Set(warpRouteDenylist.map((id) => id.toLowerCase()));
+  }
 
   async health(options: RequestOptions = {}): Promise<boolean> {
     try {
@@ -190,10 +195,7 @@ export class RouterClient {
   }
 
   private isDeniedRoute(routeId: string | undefined): boolean {
-    return (
-      !!routeId &&
-      this.warpRouteDenylist.some((denied) => denied.toLowerCase() === routeId.toLowerCase())
-    );
+    return !!routeId && this.deniedRouteIds.has(routeId.toLowerCase());
   }
 
   private isDeniedToken(token: { warpRouteIds: string[] }): boolean {

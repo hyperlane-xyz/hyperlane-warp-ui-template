@@ -1,4 +1,5 @@
 import {
+  blast,
   botanix,
   eclipsemainnet,
   eclipsemainnetAddresses,
@@ -31,6 +32,11 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...soon,
     mailbox: soonAddresses.mailbox,
     // Temporarily restore withdrawals during the extended deprecation window.
+    availability: { status: ChainStatus.Live },
+  },
+  blast: {
+    ...blast,
+    // Temporarily restore Blast ezETH transfers until Oct 20, before the Oct 26 Blast shutdown.
     availability: { status: ChainStatus.Live },
   },
   sonicsvm: {

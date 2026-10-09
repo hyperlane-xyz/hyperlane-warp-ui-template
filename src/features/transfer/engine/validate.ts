@@ -167,6 +167,10 @@ export function validateQuote(args: {
   if (quoteExpiresAt != null && quoteExpiresAt * 1000 < Date.now()) {
     return { form: 'Quote has expired — refresh to continue' };
   }
+  const blockingNotice = bestRoute.raw.notices?.find((notice) => notice.blocksTransfer);
+  if (bestRoute.raw.executable === false || blockingNotice) {
+    return { form: blockingNotice?.message ?? 'Route is not executable' };
+  }
   if (!getRouteTxs(bestRoute.raw).length) {
     return { form: 'Route is not executable' };
   }

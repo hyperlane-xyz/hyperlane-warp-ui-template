@@ -513,6 +513,39 @@ describe('validateBalances', () => {
 });
 
 describe('validateQuote', () => {
+  test('rejects blocked routes with their custom message', () => {
+    const bestRoute = routeWithNativeFee(0n, 358974494, null);
+    bestRoute.raw.executable = false;
+    bestRoute.raw.notices = [
+      {
+        blocksTransfer: true,
+        message: 'This route is currently not usable.',
+        severity: 'error',
+      },
+    ];
+
+    expect(validateQuote({ bestRoute, quoteExpiresAt: undefined })).toEqual({
+      form: 'This route is currently not usable.',
+    });
+  });
+
+  test('allows warning notices on executable routes', () => {
+    const bestRoute = routeWithNativeFee(0n, 358974494, {
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0x',
+      value: '0',
+    });
+    bestRoute.raw.notices = [
+      {
+        blocksTransfer: false,
+        message: 'This route has custom unaudited code.',
+        severity: 'warning',
+      },
+    ];
+
+    expect(validateQuote({ bestRoute, quoteExpiresAt: undefined })).toBeNull();
+  });
+
   test('rejects expired quotes', () => {
     const now = Math.floor(Date.now() / 1000);
 

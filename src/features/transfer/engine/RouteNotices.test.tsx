@@ -21,5 +21,8 @@ describe('RouteNotices', () => {
     expect(markup).toContain('role="alert"');
     expect(markup).toContain('data-testid="route-notice-warning"');
     expect(markup).toContain('data-testid="route-notice-info"');
+    expect(markup).toContain('bg-red-400');
+    expect(markup).toContain('bg-orange-400');
+    expect(markup).toContain('bg-blue-500');
   });
 });

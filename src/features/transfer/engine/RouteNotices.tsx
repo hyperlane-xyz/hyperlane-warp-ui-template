@@ -1,14 +1,21 @@
+import { ErrorIcon, WarningIcon } from '@hyperlane-xyz/widgets';
 import clsx from 'clsx';
 
+import { InfoCircleIcon } from '../../../components/icons/InfoCircleIcon';
 import type { RouteNotice } from '../../api/types';
 
 const severityClasses: Record<RouteNotice['severity'], string> = {
-  error:
-    'border-red-300 bg-red-50 text-red-800 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200',
-  warning:
-    'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-100',
-  info: 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-400/40 dark:bg-blue-500/10 dark:text-blue-200',
+  error: 'bg-red-400 text-white dark:bg-red-500',
+  warning: 'bg-orange-400 text-gray-950 dark:bg-orange-500',
+  info: 'bg-blue-500 text-white dark:bg-blue-600',
 };
+
+function NoticeIcon({ severity, size }: { severity: RouteNotice['severity']; size: number }) {
+  const props = { 'aria-hidden': true, color: 'currentColor', height: size, width: size };
+  if (severity === 'error') return <ErrorIcon {...props} />;
+  if (severity === 'warning') return <WarningIcon {...props} />;
+  return <InfoCircleIcon {...props} />;
+}
 
 export function RouteNotices({
   notices,
@@ -27,12 +34,15 @@ export function RouteNotices({
           role={notice.blocksTransfer ? 'alert' : 'status'}
           data-testid={`route-notice-${notice.severity}`}
           className={clsx(
-            'rounded border font-secondary',
-            compact ? 'px-2 py-1 text-xxs' : 'px-3 py-2 text-sm',
+            'flex items-start gap-2 rounded font-secondary leading-snug shadow-card',
+            compact ? 'px-2 py-1.5 text-xxs' : 'px-4 py-2 text-sm',
             severityClasses[notice.severity],
           )}
         >
-          {notice.message}
+          <span className="mt-px shrink-0">
+            <NoticeIcon severity={notice.severity} size={compact ? 14 : 18} />
+          </span>
+          <span>{notice.message}</span>
         </div>
       ))}
     </div>

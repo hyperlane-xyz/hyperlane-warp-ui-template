@@ -1,5 +1,11 @@
+import { ChainName, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
+import { useMemo } from 'react';
+
+import { useChains } from '../api/hooks';
+import type { ChainDiscovery } from '../api/types';
 import { useStore } from '../store';
-import { getChainDisplayName } from './utils';
+import { getChainDisplayName, isChainDisabled } from './utils';
 
 export function useMultiProvider() {
   return useStore((s) => s.multiProvider);
@@ -27,4 +33,91 @@ export function useChainProtocol(chainName?: ChainName) {
 export function useChainDisplayName(chainName: ChainName, shortName = false) {
   const multiProvider = useMultiProvider();
   return getChainDisplayName(multiProvider, chainName, shortName);
+}
+
+export interface ChainInfo {
+  name: string;
+  displayName: string;
+  chainId: ChainId;
+  protocol: ProtocolType;
+  isTestnet: boolean;
+  disabled: boolean;
+  canSwap?: boolean;
+}
+
+export function useChainInfos(): ChainInfo[] {
+  const chainMetadata = useStore((s) => s.chainMetadata);
+
+  return useMemo(() => {
+    const chainInfos = Object.values(chainMetadata).map((chain) => ({
+      name: chain.name,
+      displayName: chain.displayName || chain.name,
+      chainId: chain.chainId,
+      protocol: chain.protocol,
+      isTestnet: !!chain.isTestnet,
+      disabled: isChainDisabled(chain),
+    }));
+    return chainInfos;
+  }, [chainMetadata]);
+}
+
+export function useDisabledChains(): Set<string> {
+  const chainInfos = useChainInfos();
+  return useMemo(
+    () => new Set(chainInfos.filter((c) => c.disabled).map((c) => c.name)),
+    [chainInfos],
+  );
+}
+
+// Engine-driven chain list for the transfer modal. /v1/chains is the source
+// of truth for what the transfer form can quote against. Fall back to
+// multiProvider metadata for display name + protocol when engine entries
+// are missing those fields.
+export function useTransferChainInfos(): ChainInfo[] {
+  const { data } = useChains();
+  const mp = useMultiProvider();
+  return useMemo(() => {
+    const chains: ChainInfo[] = [];
+    for (const c of (data?.chains ?? []) as ChainDiscovery[]) {
+      chains.push(toTransferChainInfo(c, mp));
+    }
+    return chains;
+  }, [data, mp]);
+}
+
+export function toTransferChainInfo(
+  chain: ChainDiscovery,
+  multiProvider: Pick<MultiProtocolProvider, 'tryGetChainMetadata'>,
+): ChainInfo {
+  const meta = multiProvider.tryGetChainMetadata(chain.chainName);
+  return {
+    name: chain.chainName,
+    displayName: chain.displayName || meta?.displayName || chain.chainName,
+    chainId: chain.id,
+    protocol: (meta?.protocol ?? mapProtocol(chain.protocol)) as ProtocolType,
+    isTestnet: !!meta?.isTestnet,
+    disabled: isChainDisabled(meta ?? null),
+    canSwap: chain.canSwap,
+  };
+}
+
+function mapProtocol(p: string): ProtocolType {
+  switch (p.toLowerCase()) {
+    case 'ethereum':
+      return ProtocolType.Ethereum;
+    case 'sealevel':
+      return ProtocolType.Sealevel;
+    case 'cosmos':
+      return ProtocolType.Cosmos;
+    case 'starknet':
+      return ProtocolType.Starknet;
+    case 'radix':
+      return ProtocolType.Radix;
+    case 'tron':
+      return ProtocolType.Tron;
+    case 'aleo':
+      return ProtocolType.Aleo;
+    default:
+      return ProtocolType.Ethereum;
+  }
 }

@@ -1,0 +1,20 @@
+{
+  "/readyz": {
+    "activeSnapshotAgeMs": 1311071,
+    "activeSnapshotExpiresAt": "2026-09-22T10:56:46.836Z",
+    "activeSnapshotStale": false,
+    "activeSnapshotUpdatedAt": "2026-09-22T10:32:12.878Z",
+    "chainCacheHydrated": true,
+    "coreConfigChains": 90,
+    "graphConnections": 2154,
+    "graphReady": true,
+    "icaConfigChains": 8,
+    "icaConfigFailures": 0,
+    "icaConfigStatus": "ready",
+    "lastRegistryRevisionLookupStatus": "ok",
+    "lastRouteCacheRefreshAt": "2026-09-22T10:51:46.836Z",
+    "lastRouteCacheRefreshStatus": "ok",
+    "ok": true,
+    "registryRevision": "1976578b8e525bf06cd3377ea1e79545c5a489d1"
+  }
+}

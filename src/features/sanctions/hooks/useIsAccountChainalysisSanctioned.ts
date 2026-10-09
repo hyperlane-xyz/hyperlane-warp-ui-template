@@ -1,6 +1,7 @@
-import { useEthereumAccount } from '@hyperlane-xyz/widgets';
+import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
 import { isAddress } from 'viem';
 import { useReadContract } from 'wagmi';
+
 import { useMultiProvider } from '../../chains/hooks';
 
 // https://go.chainalysis.com/chainalysis-oracle-docs.html

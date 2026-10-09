@@ -15,7 +15,7 @@ export function RecipientWarningBanner({
           The recipient address is the same as the currently connected smart contract wallet,{' '}
           <strong>but it does not exist as a smart contract on {destinationChain}</strong>.
         </p>
-        <p className="my-2">This may result in losing access to your bridged tokens.</p>
+        <p className="my-2">This may result in losing access to your transferred tokens.</p>
         <p className="my-2">
           <strong>
             Only proceed if you are certain you have control over this address on {destinationChain}
@@ -28,7 +28,9 @@ export function RecipientWarningBanner({
             id="confirm-address"
             name="confirm-recipient"
           />
-          <label htmlFor="confirm-address">I have control and want to bridge to this address</label>
+          <label htmlFor="confirm-address">
+            I have control and want to transfer to this address
+          </label>
         </div>
       </div>
     </div>

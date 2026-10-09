@@ -493,7 +493,13 @@ function TransferFormContent() {
   );
 
   const onContinue = useCallback(async () => {
-    if (isAmountDebouncing || !isApprovalReady || !isSourceFeeReady || hasExcessivePriceImpact) {
+    if (
+      isAmountDebouncing ||
+      !isApprovalReady ||
+      !isSourceFeeReady ||
+      hasExcessivePriceImpact ||
+      routeUnavailableMessage
+    ) {
       return;
     }
     const snapshot = values;
@@ -550,6 +556,7 @@ function TransferFormContent() {
     isApprovalReady,
     isSourceFeeReady,
     hasExcessivePriceImpact,
+    routeUnavailableMessage,
     approvalTransactionCount,
     sourceFeeQuery.data,
     validateCurrentForm,
@@ -610,6 +617,7 @@ function TransferFormContent() {
     if (!sender || !srcToken || !dstToken || !bestRoute || !values.srcChain || !values.dstChain) {
       return;
     }
+    if (routeUnavailableMessage) return;
     if (hasExcessivePriceImpact) {
       setIsReview(false);
       return;
@@ -758,6 +766,7 @@ function TransferFormContent() {
     srcToken,
     dstToken,
     bestRoute,
+    routeUnavailableMessage,
     hasExcessivePriceImpact,
     values,
     effectiveRecipient,

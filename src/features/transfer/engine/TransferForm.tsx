@@ -74,6 +74,7 @@ import {
   routeContainsSwap,
 } from './priceImpact';
 import { emptyRouteMessageForRejections } from './rejections';
+import { RouteNotices } from './RouteNotices';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
 import { estimateRouteSourceFee, sourceFeeRouteKey, withEstimatedSourceFee } from './sourceFee';
@@ -207,6 +208,12 @@ function TransferFormContent() {
   const hasRouteRejection = !!quoteResponse?.rejections?.length;
   const safeIndex = selectedRouteIndex < routes.length ? selectedRouteIndex : 0;
   const bestRoute = routes[safeIndex] ?? routes[0];
+  const blockingRouteNotice = bestRoute?.raw.notices?.find((notice) => notice.blocksTransfer);
+  const isRouteExecutable =
+    !!bestRoute && bestRoute.raw.executable !== false && !blockingRouteNotice;
+  const routeUnavailableMessage =
+    blockingRouteNotice?.message ??
+    (bestRoute?.raw.executable === false ? 'This route is currently unavailable.' : undefined);
   const approval = bestRoute?.raw.approval ?? null;
   const srcChainInfo = chainsResp?.chains.find((chain) => chain.id === values.srcChain);
   const dstChainInfo = chainsResp?.chains.find((chain) => chain.id === values.dstChain);
@@ -301,7 +308,7 @@ function TransferFormContent() {
         approvalTransactionCount,
       });
     },
-    enabled: !!bestRoute && !!srcChainName && !!sender && isApprovalReady && !isReview,
+    enabled: isRouteExecutable && !!srcChainName && !!sender && isApprovalReady && !isReview,
     staleTime: 10_000,
     refetchInterval: 10_000,
     retry: 1,
@@ -321,7 +328,7 @@ function TransferFormContent() {
         : undefined,
     [bestRoute, sourceFeeQuery.data, values.srcChain],
   );
-  const isSourceFeeReady = !bestRoute || !sourceFeeQuery.isPending;
+  const isSourceFeeReady = !bestRoute || !isRouteExecutable || !sourceFeeQuery.isPending;
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -852,11 +859,13 @@ function TransferFormContent() {
         />
       </TransferSection>
 
+      <RouteNotices notices={bestRoute?.raw.notices} />
+
       {!isReview && (
         <div className="mt-2 flex items-center justify-between gap-3 px-1">
           <FeeSectionButton
             feeBreakdown={displayedBestRoute?.feeBreakdown}
-            isLoading={quoteLoading || (!!bestRoute && sourceFeeQuery.isPending)}
+            isLoading={quoteLoading || (isRouteExecutable && sourceFeeQuery.isPending)}
             inputUsd={amountUsd}
           />
           <div className="flex items-center gap-2">
@@ -919,6 +928,7 @@ function TransferFormContent() {
         hasAmount={hasAmount}
         hasTokens={hasTokens}
         hasRoute={!!bestRoute}
+        blockingRouteMessage={routeUnavailableMessage}
         emptyRouteMessage={emptyRouteMessage}
         isRouteDataUnavailable={isRouteDataUnavailable}
         isAmountDebouncing={isAmountDebouncing}
@@ -1441,6 +1451,7 @@ function ButtonSection({
   hasAmount,
   hasTokens,
   hasRoute,
+  blockingRouteMessage,
   emptyRouteMessage,
   isRouteDataUnavailable,
   isAmountDebouncing,
@@ -1462,6 +1473,7 @@ function ButtonSection({
   hasAmount: boolean;
   hasTokens: boolean;
   hasRoute: boolean;
+  blockingRouteMessage?: string;
   emptyRouteMessage?: string;
   isRouteDataUnavailable: boolean;
   isAmountDebouncing: boolean;
@@ -1502,6 +1514,9 @@ function ButtonSection({
     } else if (isAmountDebouncing) {
       text = 'Fetching quote…';
       disabled = true;
+    } else if (blockingRouteMessage) {
+      text = 'Route unavailable';
+      disabled = true;
     } else if (hasExcessivePriceImpact) {
       text = priceImpactBlockMessage;
       disabled = true;
@@ -1537,6 +1552,7 @@ function ButtonSection({
   let sendText = `Send to ${dstDisplay}`;
   if (sendPending) sendText = 'Sending…';
   if (hasExcessivePriceImpact) sendText = priceImpactBlockMessage;
+  if (blockingRouteMessage) sendText = 'Route unavailable';
 
   return (
     <div className="mb-4 mt-4 flex items-center justify-between space-x-4">
@@ -1553,7 +1569,9 @@ function ButtonSection({
         type="button"
         color="accent"
         onClick={onSendTransactions}
-        disabled={sendPending || !recipientConfirmed || hasExcessivePriceImpact}
+        disabled={
+          sendPending || !recipientConfirmed || hasExcessivePriceImpact || !!blockingRouteMessage
+        }
         className="flex-1 px-3 py-1.5 font-secondary text-white"
       >
         {sendText}

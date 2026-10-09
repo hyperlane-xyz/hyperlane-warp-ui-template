@@ -272,7 +272,16 @@ export const SourceTransactionFeeSchema = z.object({
 });
 export type SourceTransactionFee = z.infer<typeof SourceTransactionFeeSchema>;
 
+export const RouteNoticeSchema = z.strictObject({
+  blocksTransfer: z.boolean(),
+  message: z.string().trim().min(1),
+  severity: z.enum(['error', 'warning', 'info']),
+});
+export type RouteNotice = z.infer<typeof RouteNoticeSchema>;
+
 export const RouteResponseSchema = z.object({
+  executable: z.literal(false).optional(),
+  notices: z.array(RouteNoticeSchema).optional(),
   steps: z.array(QuoteStepSchema),
   output: BigIntString,
   outputMin: BigIntString,

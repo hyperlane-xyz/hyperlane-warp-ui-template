@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify';
+
 import { links } from '../../consts/links';
 
 export function toastIgpDetails(igpFee: string, tokenName = 'native token') {

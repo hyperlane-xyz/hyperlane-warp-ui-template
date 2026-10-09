@@ -36,6 +36,9 @@ export function validateRouteSecurity(
   const stepBindingValidation = validateStepBindings(route, context);
   if (!stepBindingValidation.valid) return stepBindingValidation;
 
+  // Blocked routes intentionally have no transaction to validate.
+  if (route.executable === false) return { valid: true };
+
   const approvalValidation = validateApproval(route, context);
   if (!approvalValidation.valid) return approvalValidation;
 

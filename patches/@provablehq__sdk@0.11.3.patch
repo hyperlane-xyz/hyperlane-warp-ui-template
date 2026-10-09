@@ -1,0 +1,136 @@
+diff --git a/dist/mainnet/browser.js b/dist/mainnet/browser.js
+index fdebeabf18428d29f4cb57d99cbc7534298972c5..393c815e22495916e877781f26e72c0011a6c31c 100644
+--- a/dist/mainnet/browser.js
++++ b/dist/mainnet/browser.js
+@@ -1379,7 +1379,29 @@ function isProveApiErrorBody(value) {
+         "message" in value);
+ }
+ 
+-const KEY_STORE = Metadata.baseUrl();
++const IS_BROWSER_RUNTIME = (typeof window !== "undefined" && typeof document !== "undefined") || (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope);
++const SSR_CREDITS_PROGRAM_KEY = {
++    name: "",
++    locator: "",
++    prover: "",
++    verifier: "",
++    verifyingKey() {
++        throw new Error("Aleo browser runtime is unavailable during SSR");
++    },
++};
++const SSR_CREDITS_PROGRAM_KEYS = new Proxy({
++    getKey() {
++        return SSR_CREDITS_PROGRAM_KEY;
++    },
++}, {
++    get(target, prop, receiver) {
++        if (prop in target) {
++            return Reflect.get(target, prop, receiver);
++        }
++        return SSR_CREDITS_PROGRAM_KEY;
++    },
++});
++const KEY_STORE = IS_BROWSER_RUNTIME ? Metadata.baseUrl() : "";
+ function convert(metadata) {
+     // This looks up the method name in VerifyingKey
+     const verifyingKey = VerifyingKey[metadata.verifyingKey];
+@@ -1394,7 +1416,7 @@ function convert(metadata) {
+         verifyingKey,
+     };
+ }
+-const CREDITS_PROGRAM_KEYS = {
++const CREDITS_PROGRAM_KEYS = IS_BROWSER_RUNTIME ? {
+     bond_public: convert(Metadata.bond_public()),
+     bond_validator: convert(Metadata.bond_validator()),
+     claim_unbond_public: convert(Metadata.claim_unbond_public()),
+@@ -1418,7 +1440,7 @@ const CREDITS_PROGRAM_KEYS = {
+             throw new Error(`Key "${key}" not found.`);
+         }
+     }
+-};
++} : SSR_CREDITS_PROGRAM_KEYS;
+ const PRIVATE_TRANSFER_TYPES = new Set([
+     "transfer_private",
+     "private",
+@@ -5437,7 +5459,13 @@ class RecordScanner {
+  * ```
+  */
+ class SealanceMerkleTree {
+-    static hasher = new Poseidon4();
++    static _hasher;
++    static get hasher() {
++        if (!this._hasher) {
++            this._hasher = new Poseidon4();
++        }
++        return this._hasher;
++    }
+     /**
+     * Converts an Aleo blockchain address to a field element.
+     *
+diff --git a/dist/testnet/browser.js b/dist/testnet/browser.js
+index 8a868da9d26a703f6b5373ad011679eb9822b2a9..c1f0970c906ca42fe1acc81f52e49f7e565cae5c 100644
+--- a/dist/testnet/browser.js
++++ b/dist/testnet/browser.js
+@@ -1379,7 +1379,29 @@ function isProveApiErrorBody(value) {
+         "message" in value);
+ }
+ 
+-const KEY_STORE = Metadata.baseUrl();
++const IS_BROWSER_RUNTIME = (typeof window !== "undefined" && typeof document !== "undefined") || (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope);
++const SSR_CREDITS_PROGRAM_KEY = {
++    name: "",
++    locator: "",
++    prover: "",
++    verifier: "",
++    verifyingKey() {
++        throw new Error("Aleo browser runtime is unavailable during SSR");
++    },
++};
++const SSR_CREDITS_PROGRAM_KEYS = new Proxy({
++    getKey() {
++        return SSR_CREDITS_PROGRAM_KEY;
++    },
++}, {
++    get(target, prop, receiver) {
++        if (prop in target) {
++            return Reflect.get(target, prop, receiver);
++        }
++        return SSR_CREDITS_PROGRAM_KEY;
++    },
++});
++const KEY_STORE = IS_BROWSER_RUNTIME ? Metadata.baseUrl() : "";
+ function convert(metadata) {
+     // This looks up the method name in VerifyingKey
+     const verifyingKey = VerifyingKey[metadata.verifyingKey];
+@@ -1394,7 +1416,7 @@ function convert(metadata) {
+         verifyingKey,
+     };
+ }
+-const CREDITS_PROGRAM_KEYS = {
++const CREDITS_PROGRAM_KEYS = IS_BROWSER_RUNTIME ? {
+     bond_public: convert(Metadata.bond_public()),
+     bond_validator: convert(Metadata.bond_validator()),
+     claim_unbond_public: convert(Metadata.claim_unbond_public()),
+@@ -1418,7 +1440,7 @@ const CREDITS_PROGRAM_KEYS = {
+             throw new Error(`Key "${key}" not found.`);
+         }
+     }
+-};
++} : SSR_CREDITS_PROGRAM_KEYS;
+ const PRIVATE_TRANSFER_TYPES = new Set([
+     "transfer_private",
+     "private",
+@@ -5437,7 +5459,13 @@ class RecordScanner {
+  * ```
+  */
+ class SealanceMerkleTree {
+-    static hasher = new Poseidon4();
++    static _hasher;
++    static get hasher() {
++        if (!this._hasher) {
++            this._hasher = new Poseidon4();
++        }
++        return this._hasher;
++    }
+     /**
+     * Converts an Aleo blockchain address to a field element.
+     *

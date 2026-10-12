@@ -1,6 +1,7 @@
 ---
-name: claude-review
-description: Review code changes using Hyperlane Warp UI coding standards. Use when reviewing PRs, checking your own changes, or doing self-review before committing.
+name: code-review
+description: Review code changes using Hyperlane Warp UI coding standards. Use when
+  reviewing PRs, checking your own changes, or doing self-review before committing.
 ---
 
 # Code Review Skill

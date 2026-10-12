@@ -13,6 +13,7 @@ import type { UiToken } from '../../../tokens/types';
 import { tokenKey } from '../../../tokens/utils';
 import { trustedWrappedNativeAddressForToken } from '../../../tokens/wrappedNative';
 import { getDexMeta } from '../dexMeta';
+import { RouteNotices } from '../RouteNotices';
 import type { AugmentedRoute } from '../types';
 import { useRouteChainTokens } from './hooks';
 import { buildFlowNodes, computeRate, formatStepAmount, formatWarpRouteId } from './utils';
@@ -116,6 +117,8 @@ function RouteCard({
   const decimals = dstToken?.decimals ?? 18;
   const symbol = dstToken?.symbol ?? '';
   const outputFormatted = formatDisplayAmount(BigInt(route.raw.output), decimals);
+  const isExecutable =
+    route.raw.executable !== false && !route.raw.notices?.some((notice) => notice.blocksTransfer);
 
   return (
     <button
@@ -129,7 +132,7 @@ function RouteCard({
     >
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          {isBest && (
+          {isBest && isExecutable && (
             <span className="rounded bg-accent-500 px-1.5 py-0.5 font-secondary text-xxs text-white">
               Best
             </span>
@@ -137,12 +140,18 @@ function RouteCard({
           <span className="font-secondary text-xs text-gray-500 dark:text-foreground-secondary">
             Route {index + 1}
           </span>
+          {!isExecutable && (
+            <span className="rounded bg-red-500 px-1.5 py-0.5 font-secondary text-xxs text-white">
+              Unavailable
+            </span>
+          )}
         </div>
         <span className="font-secondary text-sm font-medium dark:text-foreground-primary">
           {outputFormatted} {symbol}
         </span>
       </div>
       <RouteFlowDiagram steps={route.raw.steps} srcToken={srcToken} dstToken={dstToken} />
+      <RouteNotices notices={route.raw.notices} compact />
     </button>
   );
 }

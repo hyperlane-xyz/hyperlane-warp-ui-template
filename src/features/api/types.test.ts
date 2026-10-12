@@ -8,6 +8,40 @@ import {
 } from './types';
 
 describe('QuoteResponseSchema', () => {
+  test('preserves route notices and blocked state', () => {
+    const parsed = QuoteResponseSchema.parse({
+      expiresAt: Math.floor(Date.now() / 1000) + 30,
+      routes: [
+        {
+          executable: false,
+          notices: [
+            {
+              blocksTransfer: true,
+              message: 'This route is currently not usable.',
+              severity: 'error',
+            },
+            {
+              blocksTransfer: false,
+              message: 'This route has custom unaudited code.',
+              severity: 'warning',
+            },
+          ],
+          steps: [],
+          output: '0',
+          outputMin: '0',
+          executionKind: 'warpDirect',
+          connection: null,
+          gas: { originGas: '0', destGas: '0' },
+          tx: null,
+          approval: null,
+        },
+      ],
+    });
+
+    expect(parsed.routes[0]?.executable).toBe(false);
+    expect(parsed.routes[0]?.notices).toHaveLength(2);
+  });
+
   test('accepts structured route rejections', () => {
     expect(() =>
       QuoteResponseSchema.parse({

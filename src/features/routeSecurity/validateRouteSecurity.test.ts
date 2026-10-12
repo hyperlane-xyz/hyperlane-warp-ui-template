@@ -77,6 +77,14 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(universalRouterRoute(), context())).toEqual({ valid: true });
   });
 
+  test('accepts a blocked route without executable transactions', () => {
+    const route = universalRouterRoute({ approval: null });
+    route.executable = false;
+    route.tx = null;
+
+    expect(validateRouteSecurity(route, context())).toEqual({ valid: true });
+  });
+
   test('accepts trusted wrapped native tokens around a native bridge', () => {
     expect(
       validateRouteSecurity(

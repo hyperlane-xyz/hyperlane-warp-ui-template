@@ -191,7 +191,7 @@ describe('RouterClient.tokens', () => {
       ),
     );
 
-    await expect(new RouterClient('https://router.test', ['NES/bsc']).tokens()).resolves.toEqual({
+    await expect(new RouterClient('https://router.test', ['nes/BSC']).tokens()).resolves.toEqual({
       tokens: [
         baseToken,
         { ...baseToken, symbol: 'SHARED', warpRouteIds: ['NES/bsc', 'TEST/route'] },
@@ -216,7 +216,7 @@ describe('RouterClient route denylist', () => {
     );
 
     await expect(
-      new RouterClient('https://router.test', ['NES/bsc']).availableRoutes({
+      new RouterClient('https://router.test', ['nes/BSC']).availableRoutes({
         srcChain: 56,
         srcToken: baseToken.address,
       }),
@@ -252,7 +252,7 @@ describe('RouterClient route denylist', () => {
     );
 
     await expect(
-      new RouterClient('https://router.test', ['NES/bsc']).quote({
+      new RouterClient('https://router.test', ['nes/BSC']).quote({
         srcChain: 56,
         dstChain: 41444,
         srcToken: baseToken.address,
@@ -297,7 +297,7 @@ describe('RouterClient route denylist', () => {
     );
 
     await expect(
-      new RouterClient('https://router.test', ['NES/bsc']).quote({
+      new RouterClient('https://router.test', ['nes/BSC']).quote({
         srcChain: 56,
         dstChain: 41444,
         srcToken: baseToken.address,

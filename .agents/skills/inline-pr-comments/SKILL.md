@@ -1,6 +1,7 @@
 ---
 name: inline-pr-comments
-description: Post a single consolidated PR review with summary and inline comments. Use this skill to deliver code review feedback as one unified review per run.
+description: Post a single consolidated PR review with summary and inline comments.
+  Use this skill to deliver code review feedback as one unified review per run.
 ---
 
 # Consolidated PR Review Skill
@@ -9,7 +10,7 @@ Use this skill to submit code review feedback as a **single consolidated GitHub 
 
 ## When to Use
 
-- After completing a code review (use with /claude-review)
+- After completing a code review (use with /code-review)
 - When you have specific line-by-line feedback to deliver
 
 ## Instructions

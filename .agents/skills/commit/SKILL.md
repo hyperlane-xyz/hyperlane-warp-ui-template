@@ -1,6 +1,7 @@
 ---
 name: commit
-description: Commit changes following project quality gates and best practices. Run before creating any git commit.
+description: Commit changes following project quality gates and best practices. Run
+  before creating any git commit.
 ---
 
 # Commit Skill
@@ -28,7 +29,6 @@ Run these in order. **Do not commit if any fail.**
 - Use conventional commit prefixes: `feat:`, `fix:`, `style:`, `chore:`, `refactor:`, `docs:`, `test:`
 - Keep the first line under 72 characters
 - Add a blank line then bullet points for multi-change commits
-- End with `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>`
 - Use a HEREDOC to pass the message to avoid shell escaping issues
 
 ## Things to Watch For

@@ -3,6 +3,7 @@ import clsx from 'clsx';
 
 import { InfoCircleIcon } from '../../../components/icons/InfoCircleIcon';
 import type { RouteNotice } from '../../api/types';
+import { NoticeMessage } from './noticeMessage';
 
 const severityClasses: Record<RouteNotice['severity'], string> = {
   error: 'bg-red-400 text-white dark:bg-red-500',
@@ -42,7 +43,9 @@ export function RouteNotices({
           <span className="mt-px shrink-0">
             <NoticeIcon severity={notice.severity} size={compact ? 14 : 18} />
           </span>
-          <span>{notice.message}</span>
+          <span>
+            <NoticeMessage message={notice.message} linkify={!compact} />
+          </span>
         </div>
       ))}
     </div>

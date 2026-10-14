@@ -170,15 +170,11 @@ export function validateQuote(args: {
   }
   const blockingNotice = bestRoute.raw.notices?.find((notice) => notice.blocksTransfer);
   if (bestRoute.raw.executable === false || blockingNotice) {
-<<<<<<< HEAD
-    return { form: blockingNotice?.message ?? 'Route is not executable' };
-=======
     return {
       form: blockingNotice
         ? noticeMessageToPlainText(blockingNotice.message)
         : 'Route is not executable',
     };
->>>>>>> origin/main
   }
   if (!getRouteTxs(bestRoute.raw).length) {
     return { form: 'Route is not executable' };

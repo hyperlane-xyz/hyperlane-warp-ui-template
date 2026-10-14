@@ -25,8 +25,6 @@ describe('RouteNotices', () => {
     expect(markup).toContain('bg-orange-400');
     expect(markup).toContain('bg-blue-500');
   });
-<<<<<<< HEAD
-=======
 
   test('renders markdown links as anchors in full mode', () => {
     const markup = renderToStaticMarkup(
@@ -63,5 +61,4 @@ describe('RouteNotices', () => {
     expect(markup).not.toContain('<a ');
     expect(markup).toContain('<span class="underline">docs</span>');
   });
->>>>>>> origin/main
 });

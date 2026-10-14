@@ -529,8 +529,6 @@ describe('validateQuote', () => {
     });
   });
 
-<<<<<<< HEAD
-=======
   test('uses blocking notice markdown link text in form errors', () => {
     const bestRoute = routeWithNativeFee(0n, 358974494, null);
     bestRoute.raw.executable = false;
@@ -547,7 +545,6 @@ describe('validateQuote', () => {
     });
   });
 
->>>>>>> origin/main
   test('allows warning notices on executable routes', () => {
     const bestRoute = routeWithNativeFee(0n, 358974494, {
       to: '0x0000000000000000000000000000000000000001',

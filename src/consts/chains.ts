@@ -1,4 +1,6 @@
 import {
+  blast,
+  botanix,
   eclipsemainnet,
   eclipsemainnetAddresses,
   solanamainnet,
@@ -10,7 +12,7 @@ import {
   soon,
   soonAddresses,
 } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainDisabledReason, ChainMap, ChainMetadata, ChainStatus } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -29,6 +31,13 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   soon: {
     ...soon,
     mailbox: soonAddresses.mailbox,
+    // Temporarily restore withdrawals during the extended deprecation window.
+    availability: { status: ChainStatus.Live },
+  },
+  blast: {
+    ...blast,
+    // Temporarily restore Blast ezETH transfers until the Oct 26 Blast shutdown.
+    availability: { status: ChainStatus.Live },
   },
   sonicsvm: {
     ...sonicsvm,
@@ -61,6 +70,13 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
+  botanix: {
+    ...botanix,
+    availability: {
+      status: ChainStatus.Disabled,
+      reasons: [ChainDisabledReason.Unavailable],
+    },
+  },
 };
 
 // rent account payment for (mostly for) SVM chains added on top of IGP,

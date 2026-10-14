@@ -10,4 +10,5 @@ export const Color = {
   primary: themeColors.primary,
   accent: themeColors.accent,
   red: themeColors.red,
+  cream: themeColors.cream,
 } as const;

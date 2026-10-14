@@ -25,4 +25,40 @@ describe('RouteNotices', () => {
     expect(markup).toContain('bg-orange-400');
     expect(markup).toContain('bg-blue-500');
   });
+
+  test('renders markdown links as anchors in full mode', () => {
+    const markup = renderToStaticMarkup(
+      <RouteNotices
+        notices={[
+          {
+            blocksTransfer: false,
+            message: 'Read [docs](https://example.com/routes).',
+            severity: 'info',
+          },
+        ]}
+      />,
+    );
+
+    expect(markup).toContain(
+      '<a href="https://example.com/routes" target="_blank" rel="noopener noreferrer" class="underline">docs</a>',
+    );
+  });
+
+  test('renders markdown links without anchors in compact mode', () => {
+    const markup = renderToStaticMarkup(
+      <RouteNotices
+        compact
+        notices={[
+          {
+            blocksTransfer: false,
+            message: 'Read [docs](https://example.com/routes).',
+            severity: 'info',
+          },
+        ]}
+      />,
+    );
+
+    expect(markup).not.toContain('<a ');
+    expect(markup).toContain('<span class="underline">docs</span>');
+  });
 });

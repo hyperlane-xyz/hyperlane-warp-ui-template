@@ -2,21 +2,17 @@
 
 Find below instructions for customizing the token list and branding assets of this app.
 
-## Registry
+## Registry And Routes
 
 By default, the app will use the canonical Hyperlane registry published on NPM. See `package.json` for the precise version.
 
-To use custom chains or custom warp routes, you can either configure a different registry using the `NEXT_PUBLIC_REGISTRY_URL` environment variable or define them manually (see the next two sections).
+The transfer form is powered by the Universal Router API. Token lists, route availability, quotes, approvals, and executable transactions come from the engine endpoints, not local warp route files.
 
-## Custom Warp Route Configs
-
-This app requires a set of warp route configs to function. The configs are located in `./src/consts/warpRoutes.yaml` and `./src/consts/warpRoutes.ts`. The output artifacts of a warp route deployment using the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) can be used here.
-
-In addition to defining your warp route configs, you can control which routes display in the UI via the `warpRouteWhitelist.ts` file.
+To use custom chains or custom warp routes, configure the registry used by the Universal Router API. The UI can still use `NEXT_PUBLIC_REGISTRY_URL` and `NEXT_PUBLIC_REGISTRY_BRANCH` for chain metadata and RPC overrides, but route discovery must be available from the engine.
 
 ## Custom Chain Configs
 
-By default, the app will use only the chains that are included in the configured registry and included in your warp routes.
+By default, the app will use the chains returned by the Universal Router API and resolve their metadata from the configured registry.
 
 To add support for additional chains, or to override a chain's properties (such as RPC URLs), add chain metadata to either `./src/consts/chains.ts` or `./src/consts/chains.yaml`. The same chain configs used in the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) will work here. You may also add an optional `logoURI` field to a chain config to show a custom logo image in the app.
 

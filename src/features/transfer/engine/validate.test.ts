@@ -529,6 +529,22 @@ describe('validateQuote', () => {
     });
   });
 
+  test('uses blocking notice markdown link text in form errors', () => {
+    const bestRoute = routeWithNativeFee(0n, 358974494, null);
+    bestRoute.raw.executable = false;
+    bestRoute.raw.notices = [
+      {
+        blocksTransfer: true,
+        message: 'Read [docs](https://example.com/routes) before using.',
+        severity: 'error',
+      },
+    ];
+
+    expect(validateQuote({ bestRoute, quoteExpiresAt: undefined })).toEqual({
+      form: 'Read docs before using.',
+    });
+  });
+
   test('allows warning notices on executable routes', () => {
     const bestRoute = routeWithNativeFee(0n, 358974494, {
       to: '0x0000000000000000000000000000000000000001',

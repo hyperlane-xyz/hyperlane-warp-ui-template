@@ -17,6 +17,7 @@ import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
+import { noticeMessageToPlainText } from './noticeMessage';
 import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -169,7 +170,11 @@ export function validateQuote(args: {
   }
   const blockingNotice = bestRoute.raw.notices?.find((notice) => notice.blocksTransfer);
   if (bestRoute.raw.executable === false || blockingNotice) {
-    return { form: blockingNotice?.message ?? 'Route is not executable' };
+    return {
+      form: blockingNotice
+        ? noticeMessageToPlainText(blockingNotice.message)
+        : 'Route is not executable',
+    };
   }
   if (!getRouteTxs(bestRoute.raw).length) {
     return { form: 'Route is not executable' };

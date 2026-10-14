@@ -1,6 +1,7 @@
 ---
-name: claude-security-review
-description: Security-focused review for frontend/Web3 code. Use for XSS, wallet security, CSP, and dependency checks.
+name: security-review
+description: Security-focused review for frontend/Web3 code. Use for XSS, wallet security,
+  CSP, and dependency checks.
 ---
 
 # Security Review Skill

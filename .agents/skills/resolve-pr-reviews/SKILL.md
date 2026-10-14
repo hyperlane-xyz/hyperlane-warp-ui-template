@@ -1,6 +1,7 @@
 ---
 name: resolve-pr-reviews
-description: Review and resolve PR review comments interactively. Fetches unresolved comments, proposes fixes or explains why to skip, and replies on GitHub.
+description: Review and resolve PR review comments interactively. Fetches unresolved
+  comments, proposes fixes or explains why to skip, and replies on GitHub.
 ---
 
 # Resolve PR Reviews

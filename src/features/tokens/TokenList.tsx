@@ -1,6 +1,6 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { useDebounce } from '@hyperlane-xyz/widgets';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useLayoutEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { useTokenBalances } from '../balances/hooks';
@@ -10,12 +10,17 @@ import { getChainDisplayName } from '../chains/utils';
 import { useTokens } from './hooks';
 import type { TokenSelectionMode, UiToken } from './types';
 import { useTokenPrices } from './useTokenPrice';
+import { useVirtualizedList } from './useVirtualizedList';
 import {
   getTokenKey,
   getTokenRouteKind,
   mergeRouteTokensFirst,
   type TokenRouteKind,
 } from './utils';
+
+const TOKEN_ROW_SIZE = 68;
+const TOKEN_LIST_PADDING = 48;
+const TOKEN_LIST_TOP_PADDING = 8;
 
 interface TokenListProps {
   selectionMode: TokenSelectionMode;
@@ -109,7 +114,7 @@ export function TokenList({
     return { balanceMap: bMap, usdMap: uMap };
   }, [balanceTokens, balances, prices]);
 
-  const { tokens, isLimited } = useMemo(() => {
+  const tokens = useMemo(() => {
     const sorted = [...allTokens].sort((a, b) => {
       const aKey = getTokenKey(a);
       const bKey = getTokenKey(b);
@@ -139,18 +144,21 @@ export function TokenList({
       return a.chainName.localeCompare(b.chainName);
     });
 
-    const hasFilter = !!trimmedSearch || !!chainFilter;
-    const maxDisplay = 50;
-    const shouldCap = !hasFilter;
-    const isLimited = shouldCap && sorted.length > maxDisplay;
-    const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
+    return sorted;
+  }, [allTokens, routePriorityTokenKeys, usdMap, balanceMap]);
 
-    return { tokens: displayTokens, isLimited };
-  }, [allTokens, trimmedSearch, chainFilter, routePriorityTokenKeys, usdMap, balanceMap]);
+  const { startIndex, endIndex, offsetTop, totalSize, onScroll } = useVirtualizedList({
+    itemCount: tokens.length,
+    itemSize: TOKEN_ROW_SIZE,
+    overscan: 4,
+    scrollRef,
+  });
+  const visibleTokens = tokens.slice(startIndex, endIndex);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
-  }, [searchQuery, chainFilter]);
+    onScroll();
+  }, [searchQuery, chainFilter, onScroll]);
 
   if (tokens.length === 0) {
     return (
@@ -166,36 +174,38 @@ export function TokenList({
   }
 
   return (
-    <div className="relative flex-1 overflow-hidden">
-      <div ref={scrollRef} className="h-full overflow-auto">
-        <div className="token-picker-header sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
-          <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
-        </div>
-        <div className="py-2 md:px-3">
-          {tokens.map((token) => {
-            const key = getTokenKey(token);
-            const balance = balanceMap.get(key);
-            const usdValue = usdMap.get(key) ?? null;
+    <div className="relative flex flex-1 flex-col overflow-hidden">
+      <div className="token-picker-header z-10 shrink-0 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
+        <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
+      </div>
+      <div
+        ref={scrollRef}
+        className="token-picker-scroll min-h-0 flex-1 overflow-auto"
+        onScroll={onScroll}
+      >
+        <div className="relative" style={{ height: totalSize + TOKEN_LIST_PADDING }}>
+          <div
+            className="absolute left-0 right-0 md:px-3"
+            style={{ transform: `translateY(${TOKEN_LIST_TOP_PADDING + offsetTop}px)` }}
+          >
+            {visibleTokens.map((token) => {
+              const key = getTokenKey(token);
+              const balance = balanceMap.get(key);
+              const usdValue = usdMap.get(key) ?? null;
 
-            return (
-              <TokenButton
-                key={key}
-                token={token}
-                onSelect={onSelect}
-                balance={balance}
-                usdValue={usdValue}
-                isBalanceLoading={isBalanceLoading && hasAnyAddress}
-                routeKind={tokenRouteMap?.get(key)}
-              />
-            );
-          })}
-
-          {isLimited && (
-            <div className="token-picker-hint mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
-              <p className="text-sm text-blue-600">Search or select a chain to see more tokens</p>
-            </div>
-          )}
-          <div className="h-10" />
+              return (
+                <TokenButton
+                  key={key}
+                  token={token}
+                  onSelect={onSelect}
+                  balance={balance}
+                  usdValue={usdValue}
+                  isBalanceLoading={isBalanceLoading && hasAnyAddress}
+                  routeKind={tokenRouteMap?.get(key)}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
       <div className="token-picker-fade pointer-events-none absolute bottom-0 left-0 right-0 hidden h-12 bg-gradient-to-b from-transparent to-cream-200 md:block" />

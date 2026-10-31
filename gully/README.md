@@ -56,6 +56,24 @@ VITE_GULLY_ID_SIGNIN=off node scripts/build-staging.mjs <out>  # rollback: no bu
 
 `VITE_GULLY_ID_CLIENT_ID` / `VITE_GULLY_ID_ISSUER` override the defaults.
 
+## Gully Warp Mirrors (coin routes from /mirrors.json)
+
+At startup the app fetches same-origin `/mirrors.json` (published every minute by the relayer sync on gully-l3, gully-ops
+`l3/hyperlane/agents/sync-mirrors.mjs`, schema `gully-warp-mirrors/1`) and adds one Fast route per active, relayed
+Gully Core coin mirror on a chain the app knows (testnet: Arbitrum Sepolia): `MIRROR/<originToken>/<chainKey>`, GullyChain
+side = the GullyCollateral (`EvmHypCollateral`, `collateralAddress` = the coin, approve first), destination side = the
+GullyMirror (`EvmHypSynthetic`). They live in `MIRROR_ROUTES` (`src/config/routes.ts`), separate from the ETH routes, so
+the default ETH route, stats and the activity feed are unchanged; no file or a fetch error simply means no mirror routes.
+
+- The card shows an Asset picker (ETH + every mirror) and, on a mirror, "Trading on <chain> · Launched on Gully Chain ·
+  Liquidity on Gully Core" with links to the mirror on the destination explorer (provenance), the coin on kre8.fun and
+  Powered by Gully Core. Mirror routes are Fast only (the canonical bridge carries ETH only).
+- Deep link `?token=<originToken>&to=<domain|chainKey>` (kre8.fun Drop page): preselects that mirror, direction
+  GullyChain -> destination; when the connected wallet holds the mirror the default flips to **Bridge back**
+  (destination -> GullyChain) unless the link set `direction=`.
+- While the relayer is restarting on a new whitelist (`pendingRelayerRestart`), quotes are unavailable ("syncing").
+- Tests: `src/config/mirrors.test.ts` (route mapping, registry, deep-link parser).
+
 ## Commands
 
 ```sh

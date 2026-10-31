@@ -196,7 +196,8 @@ export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
         </span>
       </div>
       <div className="amount-meta" id="amount-bal">
-        <UsdLine v={b.amount && b.amount > 0n ? b.amount : null} />
+        {/* ETH/USD only: a Gully Core coin has no USD price here */}
+        <UsdLine v={!b.mirror && b.amount && b.amount > 0n ? b.amount : null} />
         {b.wallet.address && b.balanceFrom !== undefined ? (
           <>
             <span>
@@ -259,6 +260,69 @@ export function RouteOptions({ b }: { b: BridgeState }) {
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Gully Warp Mirrors: which asset the card moves. Shown only when /mirrors.json listed at least one mirror route
+ * (the ETH routes stay the default; a deep link `?token=&to=` preselects a mirror).
+ */
+export function AssetPicker({ b }: { b: BridgeState }) {
+  if (!b.mirrorRoutes.length) return null;
+  return (
+    <label className="asset-pick">
+      <span>Asset</span>
+      <select value={b.mirror ? b.route.id : ''} onChange={(e) => b.selectMirror(e.target.value || undefined)} aria-label="Asset to bridge">
+        <option value="">ETH</option>
+        {b.mirrorRoutes.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.warp!.coinSymbol} ⇄ {r.tokens[r.warp!.chain].symbol} on {CHAINS[r.warp!.chain].short}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/**
+ * The label every mirror surface carries (owner wording), the provenance links and the Gully Core credit.
+ * "Bridge back" = destination -> Gully Chain, where the coin trades on its Gully Core pool.
+ */
+export function WarpMirrorNotice({ b }: { b: BridgeState }) {
+  const m = b.mirror;
+  if (!m) return null;
+  const mirrorSym = b.route.tokens[m.chain].symbol;
+  return (
+    <div className="note mirror-note" role="status">
+      <Icon name="info" size={16} />
+      <span>
+        <b>{m.label}</b>
+        <br />
+        {b.direction === 'deposit'
+          ? `Bridge back: ${mirrorSym} on ${CHAINS[m.chain].short} returns 1:1 as ${m.coinSymbol} on GullyChain. `
+          : `${m.coinSymbol} is locked on GullyChain and ${mirrorSym} is minted 1:1 on ${CHAINS[m.chain].short}. `}
+        <Ext href={m.provenanceUrl} newTab>
+          Official mirror
+        </Ext>
+        {' · '}
+        <Ext href={m.kre8Url} newTab>
+          {m.coinSymbol} on kre8.fun
+        </Ext>
+        {' · '}
+        <button className="link-btn" onClick={() => b.selectMirror(undefined)}>
+          Bridge ETH instead
+        </button>
+      </span>
+      <a className="gc-core-mark" href={GULLY_CORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Powered by Gully Core (opens in a new tab)">
+        <img
+          src="brand/badges/gully-core-mark-dark.svg"
+          srcSet="brand/badges/gully-core-mark-dark.png 1x, brand/badges/gully-core-mark-dark-2x.png 2x, brand/badges/gully-core-mark-dark-3x.png 3x"
+          width={146}
+          height={24}
+          alt="Powered by Gully Core"
+        />
+      </a>
     </div>
   );
 }

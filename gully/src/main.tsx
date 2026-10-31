@@ -6,6 +6,8 @@ import { AppB } from './ui/b/AppB';
 import { AppC } from './ui/c/AppC';
 import { Toaster } from './ui/common/toasts';
 import { readUrl } from './ui/useBridge';
+import { fetchMirrorRoutes, MIRRORS_URL } from './config/mirrors';
+import { setMirrorRoutes } from './config/routes';
 import './styles/night/tokens.css';
 import './styles/base.css';
 import './styles/a.css';
@@ -32,9 +34,17 @@ if (!indexable) {
   document.querySelector('meta[property="og:url"]')?.remove();
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    {direction === 'a' ? <AppA url={url} /> : direction === 'b' ? <AppB url={url} /> : <AppC url={url} />}
-    <Toaster />
-  </StrictMode>,
-);
+const render = () =>
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      {direction === 'a' ? <AppA url={url} /> : direction === 'b' ? <AppB url={url} /> : <AppC url={url} />}
+      <Toaster />
+    </StrictMode>,
+  );
+
+// Gully Warp Mirrors: same-origin /mirrors.json (published every minute by the relayer sync on gully-l3) adds one Fast
+// route per active coin mirror before the first render, so a deep link ?token=&to= can preselect it. Missing file,
+// timeout or bad JSON = no mirror routes; the ETH routes and the default are unchanged either way.
+fetchMirrorRoutes(MIRRORS_URL, url.mirror ? 3000 : 1500)
+  .then(setMirrorRoutes)
+  .finally(render);

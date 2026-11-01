@@ -49,7 +49,8 @@
           "collateralAddress": null
         }
       },
-      "legacy": true
+      "legacy": true,
+      "mirror": true
     },
     {
       "id": "ETH/arbitrumsepolia-gullychaintestnet",
@@ -74,7 +75,8 @@
           "collateralAddress": null
         }
       },
-      "legacy": true
+      "legacy": true,
+      "mirror": true
     }
   ]
 }

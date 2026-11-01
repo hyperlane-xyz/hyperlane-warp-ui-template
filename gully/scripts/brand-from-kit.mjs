@@ -19,6 +19,12 @@ cp(join(shared, 'brand/og/testnet-bridge.gullychain.xyz.png'), 'og-image.png');
 // Gully Chain Night (black) surfaces: header = kit icon (32 px), footer = icon + the dark kit badge (960x256 at 180x48)
 cp(join(kit, 'logo/gc-icon.svg'), 'brand/logo/gc-icon.svg');
 cp(join(kit, 'badges/badge-dark.png'), 'brand/badges/badge-dark.png');
+// "Powered by Gully Core" (kit v4 badges/gully-core, owner-approved 2026-10-30): full badge (194x56) + compact mark (146x24),
+// dark ground only; shown on mirror routes (tests/night.test.ts hashes every copy)
+for (const f of ['gully-core-powered-by-dark.svg', 'gully-core-powered-by-dark.png', 'gully-core-powered-by-dark-2x.png', 'gully-core-powered-by-dark-3x.png',
+  'gully-core-mark-dark.svg', 'gully-core-mark-dark.png', 'gully-core-mark-dark-2x.png', 'gully-core-mark-dark-3x.png']) {
+  cp(join(kit, 'badges/gully-core', f), `brand/badges/${f}`);
+}
 for (const f of readdirSync(join(labs, 'badges')).filter((f) => f.startsWith('powered-by-gully-labs-dark'))) cp(join(labs, 'badges', f), `brand/badges/${f}`);
 
 writeFileSync(join(pub, 'site.webmanifest'), JSON.stringify({

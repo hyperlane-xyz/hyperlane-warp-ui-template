@@ -30,6 +30,9 @@ for (const sym of readdirSync(dir)) {
 if (!routes.length) throw new Error('no arbitrumsepolia <-> gullychaintestnet warp route found');
 routes.sort((a, b) => rank(b) - rank(a));
 routes.forEach((r, i) => { if (i > 0) r.legacy = true; });
+// mirror routes: the GullyChain-side token is minted on Gully Chain (synthetic/collateral, not native); the UI shows the
+// "Powered by Gully Core" badge (brand kit v4) on them
+routes.forEach((r) => { if (r.tokens.gullychaintestnet.tokenType !== 'native') r.mirror = true; });
 const out = { generatedFrom: 'gully-ops l3/hyperlane/registry/deployments/warp_routes', defaultRouteId: routes[0].id, routes };
 writeFileSync(new URL('../src/config/routes.json', import.meta.url), JSON.stringify(out, null, 2) + '\n');
 console.log(`routes.json: ${routes.map((r) => r.id).join(', ')} (default ${out.defaultRouteId})`);

@@ -29,6 +29,15 @@ const KIT: Record<string, string> = {
   'public/brand/badges/powered-by-gully-labs-dark.png': '49f4b242ca6fb6016f47981a82f4858534a0485375b83cf9e0bedbd86ec73134',
   'public/brand/badges/powered-by-gully-labs-dark-2x.png': '15cee9a5612d6065ddf0feea5f5373e86dca68dbf1376b72364f6b201c8672dd',
   'public/brand/badges/powered-by-gully-labs-dark-3x.png': '78861a7b54bf7a35c1baab3328c7000aad901f9b1fa1b213f8409255e41082ce',
+  // "Powered by Gully Core" (kit v4 badges/gully-core, README.md SHA-256 list 2026-10-30), dark ground only
+  'public/brand/badges/gully-core-powered-by-dark.svg': 'b93e952ac9d89c632ddeabd457bfdef2beb2a34751d9a676715ffc45b4a7b43c',
+  'public/brand/badges/gully-core-powered-by-dark.png': '9f0ba1967c13e7c06a8cc09b3cd01afa6ba061141d51c1a0039e8a60b755412e',
+  'public/brand/badges/gully-core-powered-by-dark-2x.png': 'dd79f7c75370be3768291d0fb9caf68a15a193efd5ad685d1a1d506640f24eb7',
+  'public/brand/badges/gully-core-powered-by-dark-3x.png': '40faa6f2d8f6b87c83224d07c7039c2948bc290fbec4f0118a5abcf8a1e0e8ca',
+  'public/brand/badges/gully-core-mark-dark.svg': '02e6842c112586e0f4880f9df917e9b52b455f310cdecd2001fb1e6ae78972f9',
+  'public/brand/badges/gully-core-mark-dark.png': '004c9627d6501fc83ddae5f623e81ef044e02d804515d3849b9395c46842017c',
+  'public/brand/badges/gully-core-mark-dark-2x.png': '53833f5c21492b21c1f9e4338a00f251644c2a7a848ce826961f301387bffbcc',
+  'public/brand/badges/gully-core-mark-dark-3x.png': 'a4d3ef6a0984893c2f3e9b6c49af61180f3d6606685c6613bf6ddc63f6b21219',
 };
 
 describe('Gully Chain Night (shared tokens)', () => {

@@ -137,6 +137,10 @@ table.sr { display: block; }
 .quote dd small { color: var(--gn-text-3); }
 .note { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 0; color: var(--gn-text-3); font-size: 13px; }
 .note svg { margin-top: 3px; flex: none; }
+/* mirror routes: the compact "Powered by Gully Core" mark (kit v4, 146x24) after the one-line notice; scaled only, never restyled */
+.mirror-note { align-items: center; flex-wrap: wrap; }
+.mirror-note .gc-core-mark { display: inline-flex; align-items: center; line-height: 0; margin-left: auto; }
+.mirror-note .gc-core-mark img { width: 146px; height: 24px; vertical-align: middle; }
 .quote-loading { min-height: 76px; }
 .shimmer { display: block; height: 14px; border-radius: 8px; background: linear-gradient(90deg, var(--gn-surface-2) 0%, var(--gn-surface-3) 50%, var(--gn-surface-2) 100%); background-size: 200% 100%; animation: shim 1.2s linear infinite; }
 .shimmer + .shimmer { width: 60%; }

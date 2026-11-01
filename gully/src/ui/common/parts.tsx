@@ -1,6 +1,7 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 import { CHAINS, LINKS, txUrl, type ChainKey } from '../../config/chains';
+import { GULLY_CORE_URL } from '../../config/routes';
 import { ago, duration, fmtAmount, short } from '../../bridge/format';
 import type { ActivityItem, StepDef, TransferRecord } from '../../bridge/types';
 import { disconnect, openConnect, startDiscovery } from '../../bridge/wallet';
@@ -294,6 +295,29 @@ export function LegacyNotice({ b }: { b: BridgeState }) {
           </span>
         ))}
       </span>
+    </div>
+  );
+}
+
+/**
+ * Mirror routes (the GullyChain token is minted on Gully Chain, not native): one line + the official compact
+ * "Powered by Gully Core" mark (brand kit v4 badges/gully-core-mark-dark.*, 146x24, byte-identical, never restyled).
+ */
+export function MirrorNotice({ b }: { b: BridgeState }) {
+  if (!b.route?.mirror) return null;
+  return (
+    <div className="note mirror-note" role="status">
+      <Icon name="info" size={16} />
+      <span>This token is a Gully Core mirror on Gully Chain.</span>
+      <a className="gc-core-mark" href={GULLY_CORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Powered by Gully Core (opens in a new tab)">
+        <img
+          src="brand/badges/gully-core-mark-dark.svg"
+          srcSet="brand/badges/gully-core-mark-dark.png 1x, brand/badges/gully-core-mark-dark-2x.png 2x, brand/badges/gully-core-mark-dark-3x.png 3x"
+          width={146}
+          height={24}
+          alt="Powered by Gully Core"
+        />
+      </a>
     </div>
   );
 }

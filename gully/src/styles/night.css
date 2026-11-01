@@ -79,3 +79,20 @@ a:hover { color: var(--gn-link-hover); }
 .start-b { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--gn-emerald); color: var(--gn-night); font: 700 13px/1 var(--gn-font); text-decoration: none; white-space: nowrap; }
 .start-b svg { width: 16px; height: 16px; }
 @media (max-width: 900px) { .start-b { display: none; } }
+
+/* the bar measures itself (ui/common/headerFit.ts): each step below takes it narrower; the menu holds what the last one removes */
+.top-in > *, .top-act > * { flex-shrink: 0; }
+.nav, .top-act { flex: none; }
+.gully-id-header { flex: none; }
+html[data-hfit~="pill"] .net-pill { display: none; }
+html[data-hfit~="chip"] .gully-id-header .gully-id-wallet { display: none; }
+html[data-hfit~="labels"] .top-in > .nav:not(.nav-open) .nav-l { font-size: 0; gap: 0; padding: 0 10px; }
+html[data-hfit~="menu"] .menu-btn { display: inline-grid; }
+html[data-hfit~="menu"] .start-b, html[data-hfit~="menu"] .gully-id-header { display: none; }
+html[data-hfit~="menu"] .nav { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; background: var(--gn-ink); border-bottom: 1px solid var(--gc-line); padding: 8px 16px 16px; }
+html[data-hfit~="menu"] .nav.nav-open { display: flex; }
+/* Add Gully Chain + USDC.e */
+.add-usdc { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; margin: 12px 0 0; font-size: 13px; }
+.add-usdc-b { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--gc-line-2); background: none; color: var(--gn-text); font: 700 13px var(--gn-font); cursor: pointer; }
+.add-usdc-b:hover { border-color: var(--gn-link); }
+.add-usdc-c { border: 0; background: none; color: var(--gn-text-3); font: 500 12px var(--gn-font); cursor: pointer; text-decoration: underline; min-height: 32px; }

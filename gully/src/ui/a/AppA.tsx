@@ -3,7 +3,7 @@ import { CHAINS } from '../../config/chains';
 import { fmtAmount } from '../../bridge/format';
 import { Icon } from '../common/icons';
 import { ActionButton, ActivityList, AmountField, Footer, MyTransfers, QuoteDetails, RouteOptions, Sparkline, Stepper } from '../common/parts';
-import { ChainPair, CountUp, DirectionTabs, Header } from '../common/shell';
+import { ChainPair, CountUp, DirectionTabs, Header, AddUsdcRow } from '../common/shell';
 import { useActivity, useBridge, useHeads, type UrlOptions } from '../useBridge';
 
 export function AppA({ url }: { url: UrlOptions }) {
@@ -27,6 +27,7 @@ export function AppA({ url }: { url: UrlOptions }) {
       <QuoteDetails b={b} />
       {b.stepDefs.length > 0 && <Stepper defs={b.stepDefs} state={b.steps} />}
       <ActionButton b={b} />
+      <AddUsdcRow />
     </section>
   );
 

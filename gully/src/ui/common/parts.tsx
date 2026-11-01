@@ -3,7 +3,8 @@ import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from '
 import { CHAINS, LINKS, txUrl, type ChainKey } from '../../config/chains';
 import { ago, duration, fmtAmount, short } from '../../bridge/format';
 import type { ActivityItem, StepDef, TransferRecord } from '../../bridge/types';
-import { connect, disconnect, startDiscovery, type WalletInfo } from '../../bridge/wallet';
+import { disconnect, openConnect, startDiscovery } from '../../bridge/wallet';
+import '../../gc-connect/gc-connect.js';
 import type { BridgeState, StepState } from '../useBridge';
 import { useWallet } from '../useBridge';
 import { Icon, type IconName } from './icons';
@@ -143,9 +144,15 @@ export function recordSteps(t: TransferRecord): StepState {
   };
 }
 
+/** opens the shared Gully Chain "Connect a wallet" dialog (gc-connect); errors land in the wallet store */
+export const pickWallet = () => {
+  openConnect().catch(() => {
+    /* shown from the store */
+  });
+};
+
 export function WalletButton({ compact }: { compact?: boolean }) {
   const w = useWallet();
-  const [open, setOpen] = useState(false);
   useEffect(() => startDiscovery(), []);
   if (w.address)
     return (
@@ -161,61 +168,9 @@ export function WalletButton({ compact }: { compact?: boolean }) {
       </button>
     );
   return (
-    <>
-      <Btn variant="secondary" icon="wallet" arrow={false} onClick={() => setOpen(true)} className="btn-sm">
-        Connect
-      </Btn>
-      {open && <WalletModal onClose={() => setOpen(false)} />}
-    </>
-  );
-}
-
-export function WalletModal({ onClose }: { onClose: () => void }) {
-  const w = useWallet();
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, [onClose]);
-  const pick = async (x: WalletInfo) => {
-    try {
-      await connect(x);
-      onClose();
-    } catch {
-      /* error shown from store */
-    }
-  };
-  return (
-    <div className="modal-bg" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="wm-title" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-head">
-          <h2 id="wm-title">Connect a wallet</h2>
-          <button className="icon-btn" aria-label="Close" onClick={onClose}>
-            <Icon name="x" />
-          </button>
-        </div>
-        {w.wallets.length ? (
-          <ul className="wallet-list">
-            {w.wallets.map((x) => (
-              <li key={x.uuid}>
-                <button onClick={() => pick(x)} disabled={w.connecting}>
-                  {x.icon ? <img src={x.icon} width={28} height={28} alt="" /> : <Icon name="wallet" size={28} />}
-                  <span>{x.name}</span>
-                  <Icon name="arrowRight" className="btn-arrow" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="empty">
-            <Icon name="wallet" size={28} />
-            <p>No browser wallet found. Install a wallet extension such as MetaMask or Rabby, then reload.</p>
-          </div>
-        )}
-        {w.error && <p className="err">{w.error}</p>}
-        <p className="fine">GullyChain Testnet is added to your wallet automatically when you bridge.</p>
-      </div>
-    </div>
+    <Btn variant="secondary" icon="wallet" arrow={false} onClick={pickWallet} className="btn-sm" disabled={w.connecting}>
+      Connect
+    </Btn>
   );
 }
 
@@ -383,14 +338,13 @@ export function QuoteDetails({ b }: { b: BridgeState }) {
 }
 
 export function ActionButton({ b }: { b: BridgeState }) {
-  const [open, setOpen] = useState(false);
   if (!b.wallet.address)
     return (
       <>
-        <Btn icon="wallet" className="btn-block" onClick={() => setOpen(true)}>
+        <Btn icon="wallet" className="btn-block" onClick={pickWallet} disabled={b.wallet.connecting}>
           Connect wallet
         </Btn>
-        {open && <WalletModal onClose={() => setOpen(false)} />}
+        {b.wallet.error && <p className="err">{b.wallet.error}</p>}
       </>
     );
   const wrongChain = b.wallet.chainId !== CHAINS[b.from].id;

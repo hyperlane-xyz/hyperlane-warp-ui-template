@@ -1,3 +1,5 @@
 src/styles/night/** -text
 public/assets/fonts/** -text
 public/brand/** -text
+src/gc-connect/** -text
+src/gc-switcher/gc-switcher.js -text

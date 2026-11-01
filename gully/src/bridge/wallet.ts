@@ -1,4 +1,7 @@
-// Browser wallets through EIP-6963 discovery (plus window.ethereum as a fallback). No WalletConnect id needed.
+// Wallets: the shared Gully Chain "Connect a wallet" dialog (src/gc-connect/gc-connect.js, a byte copy of gully-ops
+// sites/_shared/gc-connect) picks the provider: Gully Wallet (Gully ID passkey) first, WalletConnect (when a project id
+// is set), every EIP-6963 wallet, then MetaMask / Rabby / Coinbase install links. EIP-6963 discovery below still
+// powers the silent reconnect of the last injected wallet.
 import { createWalletClient, custom, numberToHex, type Address, type EIP1193Provider, type WalletClient } from 'viem';
 
 import { CHAINS, chainById, type ChainKey } from '../config/chains';
@@ -20,6 +23,28 @@ export interface WalletState {
   connecting: boolean;
   error?: string;
 }
+
+/** what GullyConnect.open() resolves with (gc-connect 1.0.0) */
+export interface ConnectResult {
+  kind: 'gully' | 'walletconnect' | 'injected';
+  id: string;
+  name: string;
+  icon: string | null;
+  rdns: string | null;
+  provider: EIP1193Provider;
+  accounts: Address[];
+}
+interface GullyConnectApi {
+  VERSION: string;
+  open(opts: { appName?: string; request?: boolean; walletConnect?: () => Promise<EIP1193Provider> }): Promise<ConnectResult>;
+}
+declare global {
+  interface Window {
+    GullyConnect?: GullyConnectApi;
+  }
+}
+/** WalletConnect needs a Reown project id (none yet): the dialog then shows the row as "Soon". */
+export const WALLETCONNECT_ID: string = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_WC_PROJECT_ID || '';
 
 let state: WalletState = { wallets: [], connecting: false };
 const subs = new Set<() => void>();
@@ -99,6 +124,32 @@ export async function connect(w: WalletInfo) {
     await attach(w, accts[0]);
   } catch (e) {
     set({ connecting: false, error: (e as Error).message || 'Connection rejected' });
+    throw e;
+  }
+}
+
+/** map a dialog result onto the wallet the bridge keeps (gully -> Gully Wallet rdns, WalletConnect, 6963 by rdns) */
+export function walletFromResult(r: ConnectResult): WalletInfo {
+  const rdns = r.rdns || (r.kind === 'gully' ? 'xyz.gullyid.wallet' : r.kind === 'walletconnect' ? 'walletconnect' : r.id || 'injected');
+  return { uuid: rdns, name: r.name, icon: r.icon || '', rdns, provider: r.provider };
+}
+
+/** open the shared dialog and attach the chosen wallet. Resolves false when the user closes it. */
+export async function openConnect(api: GullyConnectApi | undefined = typeof window !== 'undefined' ? window.GullyConnect : undefined): Promise<boolean> {
+  if (!api) {
+    set({ error: 'The wallet dialog did not load. Reload the page.' });
+    throw new Error('GullyConnect is not loaded');
+  }
+  set({ connecting: true, error: undefined });
+  try {
+    const r = await api.open({ appName: 'Gully Bridge', walletConnect: undefined });
+    if (!r.accounts?.[0]) throw new Error('No account returned');
+    await attach(walletFromResult(r), r.accounts[0]);
+    return true;
+  } catch (e) {
+    const code = (e as { code?: number }).code;
+    set({ connecting: false, error: code === 4001 ? undefined : (e as Error).message || 'Connection failed' });
+    if (code === 4001) return false;
     throw e;
   }
 }

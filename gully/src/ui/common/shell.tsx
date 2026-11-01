@@ -14,6 +14,8 @@ const NAV: { label: string; icon: IconName; href: string; ext?: boolean }[] = [
   { label: 'Faucet', icon: 'droplet', href: LINKS.faucet, ext: true },
   { label: 'Docs', icon: 'book', href: LINKS.docs, ext: true },
 ];
+// the one Gully Chain header action (gully-ops sites/_shared/gc-chrome.json)
+const START_BUILDING = 'https://dev.gullychain.xyz/quickstart/';
 
 export function Header({ className = '' }: { className?: string }) {
   const [open, setOpen] = useState(false);
@@ -39,6 +41,12 @@ export function Header({ className = '' }: { className?: string }) {
               </a>
             ),
           )}
+          {open && (
+            <Ext href={START_BUILDING} className="nav-l">
+              <Icon name="code" />
+              Start building
+            </Ext>
+          )}
           {open && <GullySignIn place="menu" />}
         </nav>
         <div className="top-act">
@@ -46,6 +54,10 @@ export function Header({ className = '' }: { className?: string }) {
             <span className="live-dot" />
             Testnet
           </span>
+          <Ext href={START_BUILDING} className="start-b">
+            <Icon name="code" />
+            Start building
+          </Ext>
           <GullySignIn />
           <WalletButton compact />
           <button className="icon-btn menu-btn" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>

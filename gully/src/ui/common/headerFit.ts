@@ -26,7 +26,7 @@ export function fitHeader(bar: HTMLElement, steps: string[]): () => void {
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(again) : null
   ro?.observe(bar)
   const mo = typeof MutationObserver === 'function' ? new MutationObserver(again) : null
-  mo?.observe(bar, { childList: true, subtree: true, characterData: true })
+  mo?.observe(bar, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'hidden', 'class', 'data-ready'] }) // a button shown late, by style
   void document.fonts?.ready?.then(run)
   return () => {
     ro?.disconnect()

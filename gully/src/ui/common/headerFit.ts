@@ -3,7 +3,7 @@
 // step hides. It re-measures when the bar resizes or its content changes (a sign-in button drawn late, a wallet pill).
 export function fitHeader(bar: HTMLElement, steps: string[]): () => void {
   const root = document.documentElement
-  const over = () => bar.scrollWidth > bar.clientWidth + 1
+  const over = () => bar.scrollWidth > bar.clientWidth
   const run = () => {
     root.removeAttribute('data-hfit')
     const on: string[] = []

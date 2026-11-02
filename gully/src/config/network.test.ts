@@ -104,9 +104,14 @@ describe('mainnet build (VITE_NETWORK=mainnet)', () => {
     const rpcs = m.CHAINS.gullychaintestnet.rpcs;
     expect(rpcs).toEqual(['https://rpc.gullychain.xyz', 'https://rpc.gullyrpc.xyz/gullychain/evm/48559']);
     for (const u of [...rpcs, ...m.CHAINS.gullychaintestnet.walletRpcs, ...m.CHAINS.arbitrumsepolia.rpcs])
-      expect(u, u).not.toMatch(/testnet|sepolia|485590|rpc2\.|\/rpc$/);
+      expect(u, u).not.toMatch(/testnet|sepolia|485590|rpc2\.|bridge\.gullychain\.xyz\/rpc/);
     expect(m.LINKS.faucet).toBeNull();
     expect(m.LINKS.explorer).toBe('https://explorer.gullychain.xyz');
+    // on bridge.gullychain.xyz the same-origin /rpc still proxies to the testnet, so the mainnet list never uses it
+    const { gullyRpcList, GULLY_MAINNET_PUBLIC_RPCS } = await import('./rpc');
+    const host = { origin: 'https://bridge.gullychain.xyz', hostname: 'bridge.gullychain.xyz' };
+    expect(gullyRpcList('', host, GULLY_MAINNET_PUBLIC_RPCS, false)).toEqual([...GULLY_MAINNET_PUBLIC_RPCS]);
+    expect(gullyRpcList('', host)[0]).toBe('https://bridge.gullychain.xyz/rpc'); // testnet behaviour unchanged
   }, SLOW);
 
   it('offers no lane while the mainnet contracts are unset, and applies the Phase 1 caps', async () => {

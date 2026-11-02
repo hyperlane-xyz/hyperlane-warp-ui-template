@@ -8,7 +8,7 @@ import { Icon } from '../common/icons';
 import { Money, UsdLine, UsdNote } from '../common/money';
 import { asEth, ethN } from '../../bridge/usd';
 import { ActionButton, ActivityList, AmountField, ChainMark, Footer, LegacyNotice, MirrorNotice, MyTransfers, QuoteDetails, Stepper } from '../common/parts';
-import { Header } from '../common/shell';
+import { Header, AddUsdcRow } from '../common/shell';
 import { useActivity, useBridge, useHeads, type BridgeState, type UrlOptions } from '../useBridge';
 
 export function AppB({ url }: { url: UrlOptions }) {
@@ -203,6 +203,7 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
       <QuoteDetails b={b} />
       {b.stepDefs.length > 0 && <Stepper defs={b.stepDefs} state={b.steps} compact />}
       <ActionButton b={b} />
+      <AddUsdcRow />
       <UsdNote />
     </section>
   

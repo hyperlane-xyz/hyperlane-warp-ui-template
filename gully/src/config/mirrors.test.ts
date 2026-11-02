@@ -1,7 +1,7 @@
 import { getAddress } from 'viem';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { fetchMirrorRoutes, isMirrorRouteId, mirrorRouteId, mirrorRoutes, parseMirrorLink, pickMirrorRoute } from './mirrors';
+import { checkRecipient, fetchMirrorRoutes, isMirrorRouteId, mirrorRouteId, mirrorRoutes, parseMirrorLink, pickMirrorRoute } from './mirrors';
 import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, fastRoute, MIRROR_ROUTES, routeFor, setMirrorRoutes } from './routes';
 
 const TOKEN = '0x9665e20624f3a896067d75e51645e7e73fc35c48'; // gTFROG test coin
@@ -136,5 +136,14 @@ describe('mirror deep link ?token=<originToken>&to=<domain>', () => {
     expect(pickMirrorRoute(routes, parseMirrorLink(`?token=${TOKEN}`))?.id).toBe(routes[0].id);
     expect(pickMirrorRoute(routes, parseMirrorLink(`?token=${TOKEN}&to=8453`))).toBeUndefined();
     expect(pickMirrorRoute(routes, undefined)).toBeUndefined();
+  });
+});
+
+describe('warp transfer recipient', () => {
+  it('refuses the zero address and non-addresses, accepts a real address', () => {
+    expect(() => checkRecipient('0x0000000000000000000000000000000000000000')).toThrow(/zero address/);
+    expect(() => checkRecipient(undefined)).toThrow(/valid recipient/);
+    expect(() => checkRecipient('0x1234')).toThrow(/valid recipient/);
+    expect(checkRecipient('0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed')).toBe('0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed');
   });
 });

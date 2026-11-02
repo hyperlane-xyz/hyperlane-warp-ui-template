@@ -32,6 +32,7 @@ import {
   sentTransferEvent,
   warpRouterAbi,
 } from './abis';
+import { checkRecipient } from '../config/mirrors';
 import { pub } from './clients';
 import type { ActivityItem, Quote, QuoteRequest, StepDef, StepUpdate, TransferRecord } from './types';
 import { ensureChain, walletClient } from './wallet';
@@ -271,7 +272,7 @@ async function execute(q: Quote, onStep: (u: StepUpdate) => void): Promise<Trans
   await ensureChain(q.from);
   const wc = walletClient(q.from);
   const sender = wc.account!.address;
-  const recipient = req.recipient || sender;
+  const recipient = checkRecipient(req.recipient || sender);
   const client = pub(q.from);
   let hash: Hash;
   if (req.kind === 'fast') {

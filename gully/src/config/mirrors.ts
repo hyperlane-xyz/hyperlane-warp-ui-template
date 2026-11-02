@@ -13,6 +13,17 @@ import { CHAINS, CHILD, type ChainKey } from './chains';
 import type { FastRoute } from './routes';
 
 export const MIRRORS_URL = '/mirrors.json';
+
+/**
+ * The recipient of a warp transfer: a real 20-byte EVM address, never the zero address. GullyMirror and
+ * GullyCollateral.transferRemote revert ZeroRecipient (and the mirror NotAnEvmAddress) on those; the app refuses first
+ * so nobody pays gas for a transaction that cannot land. Pure.
+ */
+export function checkRecipient(r: string | undefined): Address {
+  if (!r || !isAddress(r, { strict: false })) throw new Error('Enter a valid recipient address');
+  if (/^0x0{40}$/i.test(r)) throw new Error('The zero address cannot receive a bridge transfer');
+  return getAddress(r);
+}
 export const MIRRORS_SCHEMA = 'gully-warp-mirrors/1';
 
 export interface MirrorPair {

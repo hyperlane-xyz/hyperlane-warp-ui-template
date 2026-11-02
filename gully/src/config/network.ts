@@ -120,7 +120,8 @@ export const canonicalReady = (m: Pick<MainnetConfig, 'inbox' | 'bridge' | 'outb
 export const fastReady = (m: MainnetConfig) =>
   isSet(m.parentMailbox) && isSet(m.childMailbox) && isSet(m.fastParentRouter) && isSet(m.fastChildRouter) && m.fastFromBlock !== null;
 
-const env = (import.meta as { env?: Record<string, string | undefined> }).env ?? {};
+// plain import.meta.env: Vite replaces it at build time and vitest's stubEnv patches it in tests
+const env = import.meta.env as unknown as Record<string, string | undefined>;
 
 export const NETWORK: Network = parseNetwork(env.VITE_NETWORK);
 export const IS_TESTNET = NETWORK === 'testnet';

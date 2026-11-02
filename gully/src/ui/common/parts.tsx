@@ -544,7 +544,7 @@ function stepDefsOf(t: TransferRecord): StepDef[] {
 }
 
 /** Footer links: every one carries a Lucide icon next to its label (owner rule 2026-10-30, icons on the whole stack). */
-const FOOT_ALL: { label: string; icon: IconName; href: string | null; newTab?: boolean }[] = [
+export const FOOT_LINKS_ALL: { label: string; icon: IconName; href: string | null; newTab?: boolean }[] = [
   { label: 'GullyChain', icon: 'house', href: LINKS.chain },
   { label: 'Explorer', icon: 'search', href: LINKS.explorer },
   { label: 'Faucet', icon: 'droplet', href: LINKS.faucet },
@@ -558,7 +558,7 @@ const FOOT_ALL: { label: string; icon: IconName; href: string | null; newTab?: b
   { label: 'X', icon: 'twitter', href: LINKS.x },
 ];
 /** The faucet is testnet only, so the mainnet build drops it (LINKS.faucet is null there). */
-export const FOOT_LINKS = FOOT_ALL.filter((l): l is { label: string; icon: IconName; href: string; newTab?: boolean } => !!l.href);
+export const FOOT_LINKS = FOOT_LINKS_ALL.filter((l): l is { label: string; icon: IconName; href: string; newTab?: boolean } => !!l.href);
 
 /** The bridge's own legal pages, in every footer (also the embed's minimal one). Same tab: they are this site. */
 export const LEGAL_LINKS: { label: string; icon: IconName; href: string }[] = [

@@ -307,7 +307,7 @@ export function WarpMirrorNotice({ b }: { b: BridgeState }) {
         </Ext>
         {' · '}
         <Ext href={m.kre8Url} newTab>
-          {m.coinSymbol} on kre8.fun
+          {m.coinSymbol} coin page
         </Ext>
         {' · '}
         <button className="link-btn" onClick={() => b.selectMirror(undefined)}>

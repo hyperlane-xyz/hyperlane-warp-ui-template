@@ -66,7 +66,7 @@ GullyMirror (`EvmHypSynthetic`). They live in `MIRROR_ROUTES` (`src/config/route
 the default ETH route, stats and the activity feed are unchanged; no file or a fetch error simply means no mirror routes.
 
 - The card shows an Asset picker (ETH + every mirror) and, on a mirror, "Trading on <chain> · Launched on Gully Chain ·
-  Liquidity on Gully Core" with links to the mirror on the destination explorer (provenance), the coin on kre8.fun and
+  Liquidity on Gully Core" with links to the mirror on the destination explorer (provenance), the coin page (kre8.fun/drop/<coin>) and
   Powered by Gully Core. Mirror routes are Fast only (the canonical bridge carries ETH only).
 - Deep link `?token=<originToken>&to=<domain|chainKey>` (kre8.fun Drop page): preselects that mirror, direction
   GullyChain -> destination; when the connected wallet holds the mirror the default flips to **Bridge back**

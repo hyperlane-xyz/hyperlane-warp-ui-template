@@ -1,6 +1,7 @@
 // Money on the bridge: USD first (compact, "$50K"), the ETH amount as the secondary line. Every amount the bridge
 // moves is ETH-backed (ETH, gETH, hypETH), so one ETH/USD price covers them. With no price, ETH only.
 import { asEth, ethN, fmtUsd, toUsd, useEthUsd, usdTitle, USD_NOTE } from '../../bridge/usd';
+import { IS_TESTNET } from '../../config/network';
 
 /**
  * - stack (lists, cards): "$12.40" over "0.0034 ETH".
@@ -47,7 +48,7 @@ export function UsdNote() {
   const p = useEthUsd();
   return (
     <p className="usd-note" role="note" title={usdTitle(p)}>
-      {p ? `${USD_NOTE}.` : 'Amounts show in ETH: no ETH/USD price right now. Testnet tokens have no real value.'}
+      {p ? `${USD_NOTE}.` : `Amounts show in ETH: no ETH/USD price right now.${IS_TESTNET ? ' Testnet tokens have no real value.' : ''}`}
     </p>
   );
 }

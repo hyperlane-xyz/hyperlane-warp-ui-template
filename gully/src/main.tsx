@@ -6,6 +6,7 @@ import { AppB } from './ui/b/AppB';
 import { AppC } from './ui/c/AppC';
 import { Toaster } from './ui/common/toasts';
 import { readUrl } from './ui/useBridge';
+import { LegalPage, legalKindOf } from './ui/legal/LegalPage';
 import './styles/night/tokens.css';
 import './styles/base.css';
 import './styles/a.css';
@@ -25,16 +26,23 @@ if (url.preview) document.documentElement.classList.add('is-preview');
 
 // Caddy serves index.html for every path. Only "/" (any query) is the indexable page: the embed widget and unknown
 // paths get noindex, and drop the canonical so noindex and a canonical to "/" do not send mixed signals.
-const indexable = !url.embed && ['/', '/index.html'].includes(location.pathname);
+// /terms and /privacy (the bridge's legal pages) are indexable too.
+const legal = legalKindOf(location.pathname);
+const indexable = !url.embed && (legal !== null || ['/', '/index.html'].includes(location.pathname));
 if (!indexable) {
   document.querySelector('meta[name="robots"]')?.setAttribute('content', 'noindex, follow');
   document.querySelector('link[rel="canonical"]')?.remove();
   document.querySelector('meta[property="og:url"]')?.remove();
 }
+if (legal) {
+  document.title = `${legal === 'terms' ? 'Terms of Service' : 'Privacy policy'} · Gully Bridge`;
+  document.querySelector('link[rel="canonical"]')?.setAttribute('href', new URL(`/${legal}`, location.origin).href);
+  document.querySelector('meta[property="og:url"]')?.setAttribute('content', new URL(`/${legal}`, location.origin).href);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {direction === 'a' ? <AppA url={url} /> : direction === 'b' ? <AppB url={url} /> : <AppC url={url} />}
+    {legal ? <LegalPage kind={legal} /> : direction === 'a' ? <AppA url={url} /> : direction === 'b' ? <AppB url={url} /> : <AppC url={url} />}
     <Toaster />
   </StrictMode>,
 );

@@ -1,0 +1,23 @@
+/* Phase 1 caps note under the bridge button (mainnet build only) */
+.caps-note { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--gc-line-2); border-radius: var(--r); font-size: 13px; color: var(--gn-text-2); }
+.caps-note b { color: var(--gn-text); font-size: 12px; letter-spacing: 0.02em; }
+.caps-note ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 2px; }
+
+/* footer legal links (every footer, also the embed's) */
+.foot-legal { display: flex; flex-wrap: wrap; gap: 0 18px; width: 100%; }
+.foot-legal a { color: var(--gn-text-3); font-size: 13px; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; gap: 6px; text-decoration: underline; }
+.foot-legal a svg { flex: none; color: var(--gn-text-3); }
+.foot-legal a:hover { color: var(--gn-text); }
+
+/* /terms and /privacy */
+.legal { max-width: 760px; margin: 0 auto; padding: 40px 16px 24px; display: grid; gap: 18px; min-width: 0; }
+.legal h1 { margin: 0; font-size: clamp(32px, 6vw, 48px); line-height: 1; }
+.legal h2 { margin: 0; font-size: 20px; }
+.legal-n { color: var(--gn-text-3); font-weight: 400; font-size: 15px; }
+.legal-s { display: grid; gap: 10px; scroll-margin-top: 96px; }
+.legal p, .legal li { margin: 0; color: var(--gn-text-2); line-height: 1.65; overflow-wrap: anywhere; }
+.legal ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.legal a { color: var(--gc-cyan); text-decoration: underline; }
+.legal-ver { font-size: 12px; color: var(--gn-text-3) !important; }
+.legal-draft { justify-self: start; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--gn-warn); color: var(--gn-warn) !important; font-size: 13px; font-weight: 600; }
+.legal-other a { display: inline-flex; min-height: 44px; align-items: center; }

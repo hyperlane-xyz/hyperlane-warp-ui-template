@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { CHAINS, LINKS, type ChainKey } from '../../config/chains';
+import { CHAINS, IS_TESTNET, LINKS, type ChainKey } from '../../config/chains';
 import { GullySignIn } from '../../gully-id/GullySignIn';
 import type { BridgeState } from '../useBridge';
 import { Icon, type IconName } from './icons';
@@ -10,13 +10,15 @@ import { addGullyChainUsdc, USDCE } from './addUsdc';
 import { fitHeader } from './headerFit';
 import { toast } from './toasts';
 
-const NAV: { label: string; icon: IconName; href: string; ext?: boolean }[] = [
+const NAV_ALL: { label: string; icon: IconName; href: string | null; ext?: boolean }[] = [
   { label: 'Bridge', icon: 'bridge', href: '#bridge' },
   { label: 'Activity', icon: 'activity', href: '#activity' },
   { label: 'Explorer', icon: 'search', href: LINKS.explorer, ext: true },
   { label: 'Faucet', icon: 'droplet', href: LINKS.faucet, ext: true },
   { label: 'Docs', icon: 'book', href: LINKS.docs, ext: true },
 ];
+/** no Faucet on the mainnet build (LINKS.faucet is null there) */
+export const NAV = NAV_ALL.filter((n): n is { label: string; icon: IconName; href: string; ext?: boolean } => !!n.href);
 // the one Gully Chain header action (gully-ops sites/_shared/gc-chrome.json)
 const START_BUILDING = 'https://dev.gullychain.xyz/quickstart/';
 
@@ -57,7 +59,7 @@ export function Header({ className = '' }: { className?: string }) {
         <div className="top-act">
           <span className="net-pill">
             <span className="live-dot" />
-            Testnet
+            {IS_TESTNET ? 'Testnet' : 'Mainnet'}
           </span>
           <Ext href={START_BUILDING} className="start-b">
             <Icon name="code" />
@@ -135,6 +137,8 @@ export function CountUp({ value }: { value?: number }) {
 // Add Gully Chain + USDC.e to a browser wallet in one click; the address stays as a small fallback (copy).
 export function AddUsdcRow() {
   const [busy, setBusy] = useState(false);
+  // USDC.e is the testnet token (485590); the mainnet build shows no add-token row until mainnet USDC exists
+  if (!IS_TESTNET) return null;
   const go = () => {
     setBusy(true);
     void addGullyChainUsdc((window as unknown as { ethereum?: Parameters<typeof addGullyChainUsdc>[0] }).ethereum, (kind, title, body) => toast({ kind: kind === 'ok' ? 'success' : 'error', title, body })).finally(() => setBusy(false));

@@ -14,8 +14,10 @@ import {
   type TransactionReceipt,
 } from 'viem';
 
-import { CANONICAL, CHAINS, CHILD, PARENT, type ChainKey } from '../config/chains';
-import { fastRoute, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
+import { CANONICAL, CANONICAL_READY, CHAINS, CHILD, PARENT, type ChainKey } from '../config/chains';
+import { CAPS } from '../config/network';
+import { fastRoute, FAST_ROUTES, LEGACY_ROUTES, routeFor, routeReady } from '../config/routes';
+import { checkCaps, needsParentLocked } from './caps';
 import {
   arbSysAbi,
   assertionConfirmedEvent,
@@ -81,7 +83,52 @@ export function stepsFor(kind: QuoteRequest['kind'], direction: QuoteRequest['di
   ];
 }
 
+/** A quote that only says why a lane is closed (not deployed yet, or over a Phase 1 cap). */
+function closedQuote(req: QuoteRequest, reason: string): Quote {
+  const { from, to } = ends(req.direction);
+  return {
+    req,
+    from,
+    to,
+    sendSymbol: 'ETH',
+    receiveSymbol: 'ETH',
+    receive: req.amount,
+    value: req.amount,
+    fees: [],
+    etaSeconds: 0,
+    steps: stepsFor(req.kind, req.direction, false),
+    needsApproval: false,
+    available: false,
+    reason,
+    notes: [],
+  };
+}
+
+/** ETH the parent-chain side holds for this lane (Fast: the route's Arbitrum router; Canonical: the Nitro bridge). */
+async function parentLocked(req: QuoteRequest): Promise<bigint | undefined> {
+  try {
+    if (req.kind === 'canonical') return await pub(PARENT).getBalance({ address: CANONICAL.bridge });
+    const t = routeFor(req.direction, req.fastRouteId).tokens[PARENT];
+    if (t.tokenType === 'native') return await pub(PARENT).getBalance({ address: t.address });
+    if (t.tokenType === 'collateral' && t.collateralAddress)
+      return await pub(PARENT).readContract({ address: t.collateralAddress, abi: erc20Abi, functionName: 'balanceOf', args: [t.address] });
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** quote() with the network gates: lanes that are not deployed are closed, and the Phase 1 caps apply (mainnet). */
 async function quote(req: QuoteRequest): Promise<Quote> {
+  if (req.kind === 'canonical' && !CANONICAL_READY) return closedQuote(req, 'Canonical bridge opens on launch day');
+  if (req.kind === 'fast' && !routeReady(routeFor(req.direction, req.fastRouteId))) return closedQuote(req, 'Fast lane opens on launch day');
+  const locked = needsParentLocked(CAPS, req.kind, req.direction) ? await parentLocked(req) : undefined;
+  const cap = checkCaps(CAPS, { kind: req.kind, direction: req.direction, amount: req.amount, parentLocked: locked });
+  const q = await laneQuote(req);
+  return cap.ok || !q.available ? q : { ...q, available: false, reason: cap.reason };
+}
+
+async function laneQuote(req: QuoteRequest): Promise<Quote> {
   const { from, to } = ends(req.direction);
   const notes: string[] = [];
   if (req.kind === 'fast') {
@@ -157,7 +204,7 @@ async function quote(req: QuoteRequest): Promise<Quote> {
   }
   const eta = req.direction === 'deposit' ? DEPOSIT_ETA : await withdrawEtaSeconds();
   if (req.direction === 'withdraw')
-    notes.push('After the challenge period, come back and claim on Arbitrum Sepolia (one more transaction).');
+    notes.push(`After the challenge period, come back and claim on ${CHAINS[PARENT].name} (one more transaction).`);
   else notes.push('You receive native ETH for gas on GullyChain.');
   return {
     req,
@@ -429,6 +476,7 @@ async function claim(rec: TransferRecord, onStep: (u: StepUpdate) => void): Prom
 
 /** Canonical withdrawals paying out to `address`, newest first. */
 async function withdrawalsOf(address: Address): Promise<TransferRecord[]> {
+  if (!CANONICAL_READY) return [];
   const logs = await pub(CHILD).getLogs({
     address: CANONICAL.arbSys,
     event: l2ToL1TxEvent,
@@ -518,7 +566,7 @@ async function recentActivity(limit = 24): Promise<ActivityItem[]> {
   const items: ActivityItem[] = [];
   const tasks: Promise<unknown>[] = [];
   const parentHead = await pub(PARENT).getBlockNumber();
-  const parentFrom = parentHead > 700_000n ? parentHead - 700_000n : 0n; // ~2 days of Arbitrum Sepolia blocks
+  const parentFrom = parentHead > 700_000n ? parentHead - 700_000n : 0n; // ~2 days of parent-chain blocks (0.25 s)
   for (const r of FAST_ROUTES) {
     for (const chain of [PARENT, CHILD] as ChainKey[]) {
       tasks.push(

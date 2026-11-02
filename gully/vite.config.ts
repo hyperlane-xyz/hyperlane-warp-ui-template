@@ -5,7 +5,12 @@ import { defineConfig, loadEnv } from 'vite';
 // base './' keeps every asset path relative, so the same files work at / or under a path prefix.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const site = env.VITE_SITE_URL || 'https://testnet-bridge.gullychain.xyz/';
+  const mainnet = (env.VITE_NETWORK || 'testnet').trim().toLowerCase() === 'mainnet';
+  const site = env.VITE_SITE_URL || (mainnet ? 'https://bridge.gullychain.xyz/' : 'https://testnet-bridge.gullychain.xyz/');
+  // index.html copy per network (VITE_NETWORK, src/config/network.ts); the testnet values are the page's old text
+  const net = mainnet
+    ? { parent: 'Arbitrum One', chain: 'Gully Chain', chainFull: 'Gully Chain', tag: 'Gully Chain' }
+    : { parent: 'Arbitrum Sepolia', chain: 'GullyChain', chainFull: 'GullyChain Testnet', tag: 'GullyChain Testnet' };
   return {
     base: './',
     // inline (empty) PostCSS config: stops Vite from picking up the parent template's Tailwind postcss.config.js
@@ -17,6 +22,10 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml: (html) =>
           html
             .replaceAll('%SITE_URL%', site)
+            .replaceAll('%NET_PARENT%', net.parent)
+            .replaceAll('%NET_CHAIN_FULL%', net.chainFull)
+            .replaceAll('%NET_CHAIN%', net.chain)
+            .replaceAll('%NET_TAG%', net.tag)
             .replaceAll('%ROBOTS%', env.VITE_ROBOTS || 'index, follow'),
       },
       {
@@ -28,7 +37,7 @@ export default defineConfig(({ mode }) => {
           this.emitFile({
             type: 'asset',
             fileName: 'sitemap.xml',
-            source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${site}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n</urlset>\n`,
+            source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${site}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n  <url><loc>${site}terms</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>\n  <url><loc>${site}privacy</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>\n</urlset>\n`,
           });
         },
       },

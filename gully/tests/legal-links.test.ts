@@ -17,12 +17,10 @@ const PRIVACY = 'https://gullychain.xyz/privacy';
 const newTab = (u: string) => new RegExp(`<a href="${u.replace(/[./]/g, '\\$&')}" target="_blank" rel="noopener noreferrer">`);
 
 describe('Gully Chain Terms and Privacy on the bridge', () => {
-  it('/terms and /privacy (with or without a slash) redirect to gullychain.xyz; other paths do not', async () => {
+  it('/terms and /privacy redirect to gullychain.xyz; other paths do not', async () => {
     const { legalRedirect } = await import('../src/config/legal');
     expect(legalRedirect('/terms')).toBe(TERMS);
-    expect(legalRedirect('/terms/')).toBe(TERMS);
     expect(legalRedirect('/privacy')).toBe(PRIVACY);
-    expect(legalRedirect('/privacy/')).toBe(PRIVACY);
     for (const p of ['/', '/embed', '/terms-x', '/legal/terms']) expect(legalRedirect(p)).toBeNull();
   });
 

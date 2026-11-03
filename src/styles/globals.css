@@ -228,6 +228,28 @@ Common animations
 =================
 */
 
+@keyframes message-progress-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .message-progress-active {
+    background-image: linear-gradient(
+      100deg,
+      transparent 30%,
+      rgb(255 255 255 / 80%) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: message-progress-shimmer 2s linear infinite;
+  }
+}
+
 @keyframes fadeOut {
   0% {
     opacity: 1;

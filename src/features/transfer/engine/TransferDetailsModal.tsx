@@ -14,7 +14,7 @@ import { logger } from '../../../utils/logger';
 import { formatDisplayAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
-import { TransferProgress } from '../../messages/TransferProgress';
+import { TransferProgress, type TransferDeliveryStatus } from '../../messages/TransferProgress';
 import { getTransferDeliveryMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
@@ -67,6 +67,7 @@ export function TransferDetailsModal() {
   if (!transfer || renderedId == null) return <Modal isOpen={false} close={close} />;
   return (
     <TransferDetailsModalInner
+      key={renderedId}
       isOpen={isOpen}
       close={close}
       transfer={transfer}
@@ -88,6 +89,7 @@ function TransferDetailsModalInner({
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
+  const [deliveryStatus, setDeliveryStatus] = useState<TransferDeliveryStatus>();
   const {
     status,
     srcChain,
@@ -140,6 +142,25 @@ function TransferDetailsModalInner({
   // Show timeline only for cross-chain transfers (msgIds present).
   const showTimeline = isSent && !isFailed && !!originTxHash && !!pollingMsgId;
 
+  const fundsAvailable = showTimeline
+    ? deliveryStatus?.messageId === pollingMsgId &&
+      deliveryStatus?.delivered &&
+      (deliveryStatus.fundsAvailable || isDelivered)
+    : isDelivered;
+  const outcome = isDestFailed
+    ? 'Origin succeeded and delivery completed, but destination execution reverted. Funds may remain in your ICA. Please contact support.'
+    : isFailedRecovered
+      ? 'Destination execution reverted and the intermediate token was automatically returned to your wallet on the destination chain.'
+      : isRevealFailed
+        ? 'The destination execution ran but both the transfer and fallback failed. The intermediate token remains in your ICA. Please contact support.'
+        : isFailed
+          ? 'Transfer failed. Check the transaction details before trying again.'
+          : fundsAvailable
+            ? `Funds are available to use on ${getChainDisplayName(multiProvider, destChain, true)}.`
+            : undefined;
+  const outcomeIsSuccess =
+    !!fundsAvailable && !isFailed && !isDestFailed && !isRevealFailed && !isFailedRecovered;
+
   const date = useMemo(
     () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(Date.now())),
     [timestamp],
@@ -182,7 +203,7 @@ function TransferDetailsModalInner({
   }, [multiProvider, originChain, destChain, originTxHash, destinationTxHash, sender, recipient]);
 
   return (
-    <Modal isOpen={isOpen} close={close} panelClassname="transfer-details-modal max-w-sm">
+    <Modal isOpen={isOpen} close={close} panelClassname="transfer-details-modal max-w-lg">
       <ModalHeader className="h-8 shadow-accent-glow" />
       <div data-testid="transfer-details" data-status={status} className="p-4">
         {isFinal && (
@@ -245,60 +266,68 @@ function TransferDetailsModalInner({
           </div>
         </div>
 
-        {showTimeline && <TransferProgress transfer={transfer} enabled={isOpen} />}
+        {showTimeline && (
+          <TransferProgress
+            transfer={transfer}
+            enabled={isOpen}
+            onDeliveryChange={setDeliveryStatus}
+          />
+        )}
 
         {isFinal ? (
-          <div className="mt-5 flex flex-col space-y-4">
-            {isDestFailed && (
-              <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                Origin succeeded and delivery completed, but destination execution reverted. Funds
-                may remain in your ICA. Please contact support.
-              </div>
+          <div className="mt-5 flex flex-col space-y-4 empty:hidden">
+            {!showTimeline && (
+              <>
+                <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
+                <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
+              </>
             )}
-            {isFailedRecovered && (
-              <div className="rounded border border-blue-300 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200">
-                Destination execution reverted and the intermediate token was automatically returned
-                to your wallet on the destination chain.
-              </div>
-            )}
-            {isRevealFailed && (
-              <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                The destination execution ran but both the transfer and fallback failed. The
-                intermediate token remains in your ICA. Please contact support.
-              </div>
-            )}
-            <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
-            <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
-            {originTxHash && (
+            {!showTimeline && originTxHash && (
               <TransferProperty
                 name="Origin Transaction Hash"
                 value={originTxHash}
                 url={originTxUrl}
               />
             )}
-            {destinationTxHash && (
+            {!showTimeline && destinationTxHash && (
               <TransferProperty
                 name="Destination Transaction Hash"
                 value={destinationTxHash}
                 url={destTxUrl}
               />
             )}
-            {displayMsgIds?.map(({ msgId: id, label }) => (
-              <TransferProperty
-                key={id}
-                name={LABEL_NAMES[label] ?? 'Message ID'}
-                value={id}
-                url={getHypExplorerLink(multiProvider, originChain, id) ?? undefined}
-              />
-            ))}
+            {!showTimeline &&
+              displayMsgIds?.map(({ msgId: id, label }) => (
+                <TransferProperty
+                  key={id}
+                  name={LABEL_NAMES[label] ?? 'Message ID'}
+                  value={id}
+                  url={getHypExplorerLink(multiProvider, originChain, id) ?? undefined}
+                />
+              ))}
           </div>
-        ) : (
+        ) : !showTimeline ? (
           <div className="flex flex-col items-center justify-center py-4">
             <SpinnerIcon width={60} height={60} className="transfer-details-spinner mt-3" />
             <div className="mt-5 text-center text-sm text-gray-600 dark:text-foreground-muted">
               {STATUS_DESCRIPTION[status]}
             </div>
             {status === TransferStatus.ConfirmingOrigin && <ConfirmingOriginHint />}
+          </div>
+        ) : null}
+        {outcome && (
+          <div
+            data-testid="transfer-outcome"
+            role={outcomeIsSuccess ? 'status' : 'alert'}
+            className={`mt-4 rounded-md border p-3 text-xs ${
+              outcomeIsSuccess
+                ? 'border-green-50/30 bg-green-50/10 text-green-600 dark:text-green-50'
+                : isFailedRecovered
+                  ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
+                  : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
+            }`}
+          >
+            {outcome}
           </div>
         )}
       </div>

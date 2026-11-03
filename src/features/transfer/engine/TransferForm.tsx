@@ -6,7 +6,7 @@ import {
   objLength,
   ProtocolType,
 } from '@hyperlane-xyz/utils';
-import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
+import { SpinnerIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
   getAccountAddressForChain,
@@ -1498,6 +1498,22 @@ function ButtonSection({
   needsRecipient: boolean;
 }) {
   const multiProvider = useMultiProvider();
+  const [isStartingSend, setIsStartingSend] = useState(false);
+  const sendInProgress = useRef(false);
+  const isSendPending = sendPending || isStartingSend;
+
+  async function handleSend() {
+    if (sendInProgress.current || sendPending) return;
+    sendInProgress.current = true;
+    setIsStartingSend(true);
+    try {
+      await onSendTransactions();
+    } finally {
+      sendInProgress.current = false;
+      setIsStartingSend(false);
+    }
+  }
+
   const dstMetadata = dstChainName ? multiProvider.tryGetChainMetadata(dstChainName) : undefined;
   const dstDisplay = dstMetadata?.displayName ?? dstMetadata?.name ?? dstChainName ?? 'destination';
 
@@ -1559,7 +1575,7 @@ function ButtonSection({
   }
 
   let sendText = `Send to ${dstDisplay}`;
-  if (sendPending) sendText = 'Sending…';
+  if (isSendPending) sendText = 'Preparing transfer…';
   if (hasExcessivePriceImpact) sendText = priceImpactBlockMessage;
   if (blockingRouteMessage) sendText = 'Route unavailable';
 
@@ -1569,6 +1585,7 @@ function ButtonSection({
         type="button"
         color="primary"
         onClick={() => setIsReview(false)}
+        disabled={isSendPending}
         className="px-6 py-1.5 font-secondary"
       >
         <span>Edit</span>
@@ -1577,12 +1594,14 @@ function ButtonSection({
         data-testid="transfer-send"
         type="button"
         color="accent"
-        onClick={onSendTransactions}
+        onClick={handleSend}
+        aria-busy={isSendPending}
         disabled={
-          sendPending || !recipientConfirmed || hasExcessivePriceImpact || !!blockingRouteMessage
+          isSendPending || !recipientConfirmed || hasExcessivePriceImpact || !!blockingRouteMessage
         }
         className="flex-1 px-3 py-1.5 font-secondary text-white"
       >
+        {isSendPending && <SpinnerIcon width={16} height={16} className="mr-2 shrink-0" />}
         {sendText}
       </SolidButton>
     </div>

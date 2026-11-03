@@ -5,7 +5,12 @@ import { useEffect, useRef } from 'react';
 import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageByIdQuery } from './queries/build';
-import { parseTimestamp, postgresByteaToTxHash, postgresByteaToString } from './queries/encoding';
+import {
+  parseTimestamp,
+  postgresByteaToTxHash,
+  postgresByteaToString,
+  postgresByteaToAddress,
+} from './queries/encoding';
 import type { MessageStubEntry } from './queries/fragments';
 
 const POLL_INTERVAL_MS = 10_000;
@@ -28,6 +33,8 @@ export interface MessageDeliveryResult {
     destinationDomain: number;
     body?: string;
     originTxHash: string;
+    sender: string;
+    recipient: string;
   };
 }
 
@@ -102,16 +109,16 @@ function parseDeliveryResult(
   multiProvider: MultiProtocolProvider,
 ): Omit<MessageDeliveryResult, 'isLoading'> {
   const destMetadata = multiProvider.tryGetChainMetadata(entry.destination_domain_id);
+  const originMetadata = multiProvider.tryGetChainMetadata(entry.origin_domain_id);
 
   return {
     message: {
       originDomain: entry.origin_domain_id,
       destinationDomain: entry.destination_domain_id,
       body: entry.message_body ? postgresByteaToString(entry.message_body) : undefined,
-      originTxHash: postgresByteaToTxHash(
-        entry.origin_tx_hash,
-        multiProvider.tryGetChainMetadata(entry.origin_domain_id),
-      ),
+      originTxHash: postgresByteaToTxHash(entry.origin_tx_hash, originMetadata),
+      sender: postgresByteaToAddress(entry.sender, originMetadata),
+      recipient: postgresByteaToAddress(entry.recipient, destMetadata),
     },
     isDelivered: entry.is_delivered,
     destinationTxHash:

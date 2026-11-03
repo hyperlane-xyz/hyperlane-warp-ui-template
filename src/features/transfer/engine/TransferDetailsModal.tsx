@@ -1,13 +1,12 @@
 import { DialogTitle } from '@headlessui/react';
 import { CopyButton, Modal, SpinnerIcon } from '@hyperlane-xyz/widgets';
+import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import LinkIcon from '../../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../../utils/date';
 import { getHypExplorerLink } from '../../../utils/links';
-import { logger } from '../../../utils/logger';
-import type { QuoteStep } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { TransferProgress, type TransferDeliveryStatus } from '../../messages/TransferProgress';
@@ -15,8 +14,8 @@ import { getTransferDeliveryMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
-import { getSwapStages, HyperswapProgress } from './HyperswapProgress';
 import { normalizeLabeledTransferMessages } from './messages';
+import { getSwapStages, TransferRouteProgress } from './TransferRouteProgress';
 import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from './types';
 
 const LABEL_NAMES: Record<string, string> = {
@@ -75,8 +74,11 @@ export function TransferDetailsModal() {
       key={transfer.timestamp}
       isOpen={isOpen}
       close={close}
-      transfer={transfer}
-      routeSteps={transfer.routeSteps ?? liveRouteSteps}
+      transfer={{
+        ...transfer,
+        routeSteps: transfer.routeSteps ?? liveRouteSteps,
+        msgIds: normalizeLabeledTransferMessages(transfer.msgIds),
+      }}
     />
   );
 }
@@ -85,12 +87,10 @@ function TransferDetailsModalInner({
   isOpen,
   close,
   transfer,
-  routeSteps,
 }: {
   isOpen: boolean;
   close: () => void;
   transfer: TransferHistoryItem;
-  routeSteps?: QuoteStep[];
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
@@ -119,7 +119,7 @@ function TransferDetailsModalInner({
 
   const srcToken = getTokenByKeyFromMap(tokenMap, tokenKey(srcChain, srcTokenAddr));
   const dstToken = getTokenByKeyFromMap(tokenMap, tokenKey(dstChain, dstTokenAddr));
-  const hasDetailedRoute = !!getSwapStages(routeSteps ?? [], srcChain, dstChain);
+  const hasDetailedRoute = !!getSwapStages(transfer.routeSteps ?? [], srcChain, dstChain);
   const isApproving =
     status === TransferStatus.SigningApprove || status === TransferStatus.ConfirmingApprove;
 
@@ -144,14 +144,11 @@ function TransferDetailsModalInner({
     (message) => message.label === 'bridge' || message.label === 'warp',
   )?.msgId;
   const bridgeDelivered = bridgeMsgId ? messageStatuses[bridgeMsgId]?.delivered : undefined;
-  const displayMsgIds = useMemo(() => normalizeLabeledTransferMessages(msgIds), [msgIds]);
 
   const showTimeline = !!originTxHash && !!pollingMsgId;
 
   const fundsAvailable = showTimeline
-    ? deliveryStatus?.messageId === pollingMsgId &&
-      deliveryStatus?.delivered &&
-      (deliveryStatus.fundsAvailable || isDelivered)
+    ? !!deliveryStatus?.delivered && (deliveryStatus.fundsAvailable || isDelivered)
     : isDelivered;
   const outcome = isDestFailed
     ? 'Origin succeeded and delivery completed, but destination execution reverted. Funds may remain in your ICA. Please contact support.'
@@ -167,7 +164,6 @@ function TransferDetailsModalInner({
   const outcomeIsSuccess =
     !!fundsAvailable && !isFailed && !isDestFailed && !isRevealFailed && !isFailedRecovered;
 
-  const messageStatus = deliveryStatus?.messageId === pollingMsgId ? deliveryStatus : undefined;
   const needsWallet =
     status === TransferStatus.SigningApprove || status === TransferStatus.SigningTransfer;
   const headline = outcomeIsSuccess
@@ -176,12 +172,12 @@ function TransferDetailsModalInner({
       ? STATUS_HEADLINE[status]
       : showApprovalFlow && status === TransferStatus.Preparing
         ? 'Checking token permission'
-        : showTimeline && messageStatus
-          ? messageStatus.delivered
+        : showTimeline && deliveryStatus
+          ? deliveryStatus.delivered
             ? 'Checking destination execution'
-            : messageStatus.status === 'Awaiting delivery'
+            : deliveryStatus.status === 'Awaiting delivery'
               ? 'Waiting for message delivery'
-              : messageStatus.status
+              : deliveryStatus.status
           : STATUS_HEADLINE[status];
   const description = outcomeIsSuccess
     ? showTimeline
@@ -197,8 +193,8 @@ function TransferDetailsModalInner({
             ? 'Waiting for the token permission to confirm on chain. Your transfer has not started yet.'
             : status === TransferStatus.SigningTransfer
               ? 'Token permissions are ready. Confirm this transaction to start your transfer.'
-              : showTimeline && messageStatus && !messageStatus.delivered
-                ? messageStatus.activity
+              : showTimeline && deliveryStatus && !deliveryStatus.delivered
+                ? deliveryStatus.activity
                 : status === TransferStatus.Preparing || status === TransferStatus.CreatingTxs
                   ? 'Checking the route and preparing your transaction.'
                   : 'No action needed. We’ll update this as the transaction progresses.';
@@ -208,41 +204,22 @@ function TransferDetailsModalInner({
     [timestamp],
   );
 
-  const [fromUrl, setFromUrl] = useState('');
-  const [toUrl, setToUrl] = useState('');
-  const [originTxUrl, setOriginTxUrl] = useState('');
-  const [destTxUrl, setDestTxUrl] = useState('');
-  useEffect(() => {
-    let cancelled = false;
-    setFromUrl('');
-    setToUrl('');
-    setOriginTxUrl('');
-    setDestTxUrl('');
-    (async () => {
-      try {
-        if (originTxHash) {
-          const url = multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash });
-          if (url && !cancelled) setOriginTxUrl(fixDoubleSlash(url));
-        }
-        if (destinationTxHash) {
-          const url = multiProvider.tryGetExplorerTxUrl(destChain, { hash: destinationTxHash });
-          if (url && !cancelled) setDestTxUrl(fixDoubleSlash(url));
-        }
-        const [f, t] = await Promise.all([
-          multiProvider.tryGetExplorerAddressUrl(originChain, sender),
-          multiProvider.tryGetExplorerAddressUrl(destChain, recipient),
-        ]);
-        if (cancelled) return;
-        if (f) setFromUrl(fixDoubleSlash(f));
-        if (t) setToUrl(fixDoubleSlash(t));
-      } catch (err) {
-        logger.error('Error fetching explorer URLs', err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [multiProvider, originChain, destChain, originTxHash, destinationTxHash, sender, recipient]);
+  const { data: addressUrls } = useQuery({
+    queryKey: ['transferAddressLinks', originChain, destChain, sender, recipient],
+    queryFn: () =>
+      Promise.all([
+        multiProvider.tryGetExplorerAddressUrl(originChain, sender),
+        multiProvider.tryGetExplorerAddressUrl(destChain, recipient),
+      ]),
+    enabled: isOpen && isFinal && !showTimeline,
+    staleTime: 60_000,
+  });
+  const originTxUrl = originTxHash
+    ? multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash })
+    : undefined;
+  const destTxUrl = destinationTxHash
+    ? multiProvider.tryGetExplorerTxUrl(destChain, { hash: destinationTxHash })
+    : undefined;
 
   return (
     <Modal
@@ -311,8 +288,8 @@ function TransferDetailsModalInner({
             </li>
           </ol>
         ) : (
-          <HyperswapProgress
-            transfer={routeSteps === transfer.routeSteps ? transfer : { ...transfer, routeSteps }}
+          <TransferRouteProgress
+            transfer={transfer}
             srcToken={srcToken}
             dstToken={dstToken}
             bridgeDelivered={bridgeDelivered}
@@ -343,39 +320,34 @@ function TransferDetailsModalInner({
           />
         )}
 
-        {isFinal ? (
-          <div className="mt-5 flex flex-col space-y-4 empty:hidden">
-            {!showTimeline && (
-              <>
-                <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
-                <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
-              </>
-            )}
-            {!showTimeline && originTxHash && (
+        {isFinal && !showTimeline && (
+          <div className="mt-5 flex flex-col space-y-4">
+            <TransferProperty name="Sender Address" value={sender} url={addressUrls?.[0]} />
+            <TransferProperty name="Recipient Address" value={recipient} url={addressUrls?.[1]} />
+            {originTxHash && (
               <TransferProperty
                 name="Origin Transaction Hash"
                 value={originTxHash}
                 url={originTxUrl}
               />
             )}
-            {!showTimeline && destinationTxHash && (
+            {destinationTxHash && (
               <TransferProperty
                 name="Destination Transaction Hash"
                 value={destinationTxHash}
                 url={destTxUrl}
               />
             )}
-            {!showTimeline &&
-              displayMsgIds?.map(({ msgId: id, label }) => (
-                <TransferProperty
-                  key={id}
-                  name={LABEL_NAMES[label] ?? 'Message ID'}
-                  value={id}
-                  url={getHypExplorerLink(multiProvider, originChain, id) ?? undefined}
-                />
-              ))}
+            {msgIds?.map(({ msgId: id, label }) => (
+              <TransferProperty
+                key={id}
+                name={LABEL_NAMES[label] ?? 'Message ID'}
+                value={id}
+                url={getHypExplorerLink(multiProvider, originChain, id) ?? undefined}
+              />
+            ))}
           </div>
-        ) : null}
+        )}
         <div className="mt-4 min-h-[52px]">
           {outcome && (
             <div
@@ -414,7 +386,15 @@ function TransferDetailsModalInner({
   );
 }
 
-function TransferProperty({ name, value, url }: { name: string; value: string; url?: string }) {
+function TransferProperty({
+  name,
+  value,
+  url,
+}: {
+  name: string;
+  value: string;
+  url?: string | null;
+}) {
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -423,7 +403,7 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
         </label>
         <div className="flex items-center space-x-2">
           {url && (
-            <a href={url} target="_blank" rel="noopener noreferrer">
+            <a href={fixDoubleSlash(url)} target="_blank" rel="noopener noreferrer">
               <Image src={LinkIcon} width={14} height={14} alt="" />
             </a>
           )}

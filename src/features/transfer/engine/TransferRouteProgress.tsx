@@ -36,7 +36,7 @@ export function getSwapStages(
   return swaps.origin || swaps.destination ? swaps : undefined;
 }
 
-interface HyperswapProgressProps {
+interface TransferRouteProgressProps {
   transfer: TransferHistoryItem;
   bridgeDelivered?: boolean;
   executionDelivered?: boolean;
@@ -45,12 +45,12 @@ interface HyperswapProgressProps {
   dstToken?: UiToken | null;
 }
 
-export function getHyperswapProgress({
+export function getTransferRouteProgress({
   transfer,
   bridgeDelivered,
   executionDelivered,
   fundsAvailable,
-}: HyperswapProgressProps): RouteStepProgress[] {
+}: TransferRouteProgressProps): RouteStepProgress[] {
   const swaps = getSwapStages(transfer.routeSteps ?? [], transfer.srcChain, transfer.dstChain);
   if (transfer.srcChain === transfer.dstChain) {
     const failed = transfer.status === TransferStatus.Failed;
@@ -133,7 +133,7 @@ export function getHyperswapProgress({
         ? 'Not completed'
         : failed
           ? 'Not started'
-          : fundsAvailable && transferDelivered
+          : fundsAvailable
             ? 'Complete'
             : !transferDelivered
               ? 'Waiting'
@@ -142,7 +142,7 @@ export function getHyperswapProgress({
                 : 'Awaiting authorization',
       state: destinationFailed
         ? ProgressState.Failed
-        : fundsAvailable && transferDelivered
+        : fundsAvailable
           ? ProgressState.Confirmed
           : ProgressState.Pending,
       active: !!transferDelivered && !fundsAvailable && !failed && !destinationFailed,
@@ -150,13 +150,13 @@ export function getHyperswapProgress({
   return stages;
 }
 
-export function HyperswapProgress(props: HyperswapProgressProps) {
+export function TransferRouteProgress(props: TransferRouteProgressProps) {
   const { transfer, srcToken, dstToken } = props;
   const steps = transfer.routeSteps ?? [];
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
   useRouteChainTokens(steps);
-  const stages = getHyperswapProgress(props);
+  const stages = getTransferRouteProgress(props);
   const nodes = steps.length
     ? buildFlowNodes(steps, { destinationTokenAddress: transfer.dstToken })
     : [

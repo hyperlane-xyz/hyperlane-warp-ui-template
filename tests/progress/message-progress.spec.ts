@@ -65,14 +65,14 @@ function routeStepsFor(originSwap: boolean, destinationSwap: boolean): QuoteStep
   return steps;
 }
 
-for (const kind of ['bridge', 'origin', 'destination', 'both']) {
+for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
   const directBridge = kind === 'bridge' || kind === 'origin';
   const swapStages =
     kind === 'bridge'
       ? undefined
       : {
           origin: kind === 'origin' || kind === 'both',
-          destination: kind === 'destination' || kind === 'both',
+          destination: kind === 'destination' || kind === 'both' || kind === 'legacy',
         };
   const routeSteps = routeStepsFor(!!swapStages?.origin, !!swapStages?.destination);
   test(`${kind}: tracks route stages, message delivery, and reloads`, async ({
@@ -83,7 +83,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
     let originConfirmed = directBridge;
     let destinationConfirmed = false;
     await page.addInitScript(
-      ({ ids, bodies, originTx, address, directBridge, routeSteps }) => {
+      ({ ids, bodies, originTx, address, directBridge, routeSteps, legacyLabels }) => {
         const existing = localStorage.getItem('app-state');
         if (existing) {
           const persisted = JSON.parse(existing);
@@ -128,7 +128,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
                         },
                     msgIds: (directBridge ? ids.slice(0, 1) : ids).map((msgId, i) => ({
                       msgId,
-                      label: directBridge ? 'warp' : ['bridge', 'commit', 'reveal'][i],
+                      label: directBridge
+                        ? 'warp'
+                        : [legacyLabels ? 'commit' : 'bridge', 'commit', 'reveal'][i],
                     })),
                   },
                 },
@@ -137,7 +139,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
           }),
         );
       },
-      { ids, bodies, originTx, address, directBridge, routeSteps },
+      { ids, bodies, originTx, address, directBridge, routeSteps, legacyLabels: kind === 'legacy' },
     );
     await page.route('**/*graphql*', async (route) => {
       const request = route.request().postDataJSON();

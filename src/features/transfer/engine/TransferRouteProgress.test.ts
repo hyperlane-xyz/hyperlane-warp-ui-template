@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { QuoteStep } from '../../api/types';
 import { ProgressState } from '../../messages/progress';
-import { getHyperswapProgress, getSwapStages } from './HyperswapProgress';
+import { getTransferRouteProgress, getSwapStages } from './TransferRouteProgress';
 import { TransferStatus, type TransferHistoryItem } from './types';
 
 const address = '0x1111111111111111111111111111111111111111';
@@ -52,7 +52,7 @@ function transfer(overrides: Partial<TransferHistoryItem> = {}): TransferHistory
   };
 }
 
-describe('Hyperswap stages', () => {
+describe('Transfer route stages', () => {
   test.each([
     { origin: false, destination: false },
     { origin: true, destination: false },
@@ -66,7 +66,7 @@ describe('Hyperswap stages', () => {
     ];
     const swapStages = getSwapStages(steps, 1, 2);
     expect(swapStages).toEqual(swaps.origin || swaps.destination ? swaps : undefined);
-    const stages = getHyperswapProgress({
+    const stages = getTransferRouteProgress({
       transfer: transfer({ routeSteps: steps }),
       fundsAvailable: false,
     });
@@ -84,7 +84,7 @@ describe('Hyperswap stages', () => {
   test('same-chain swaps show one swap', () => {
     expect(getSwapStages([swap(1)], 1, 1)).toBeUndefined();
     expect(
-      getHyperswapProgress({
+      getTransferRouteProgress({
         transfer: transfer({ dstChain: 1, routeSteps: [swap(1)] }),
         fundsAvailable: true,
       }).map((stage) => stage.label),
@@ -98,7 +98,10 @@ describe('Hyperswap stages', () => {
     TransferStatus.CreatingTxs,
     TransferStatus.SigningTransfer,
   ])('route execution stays idle before submission: %s', (status) => {
-    const stages = getHyperswapProgress({ transfer: transfer({ status }), fundsAvailable: false });
+    const stages = getTransferRouteProgress({
+      transfer: transfer({ status }),
+      fundsAvailable: false,
+    });
     expect(stages.every((stage) => stage.state === ProgressState.Pending && !stage.active)).toBe(
       true,
     );
@@ -106,7 +109,7 @@ describe('Hyperswap stages', () => {
   });
 
   test('origin swap stays incomplete until origin inclusion', () => {
-    const stages = getHyperswapProgress({
+    const stages = getTransferRouteProgress({
       transfer: transfer({ status: TransferStatus.ConfirmingOrigin }),
       fundsAvailable: false,
     });
@@ -116,16 +119,16 @@ describe('Hyperswap stages', () => {
 
   test('bridge delivery does not imply destination swap success', () => {
     const props = { transfer: transfer(), bridgeDelivered: true, fundsAvailable: false };
-    expect(getHyperswapProgress(props).map((stage) => stage.description)).toEqual([
+    expect(getTransferRouteProgress(props).map((stage) => stage.description)).toEqual([
       'Complete',
       'Delivered',
       'Awaiting authorization',
     ]);
-    expect(getHyperswapProgress({ ...props, executionDelivered: true })[2].description).toBe(
+    expect(getTransferRouteProgress({ ...props, executionDelivered: true })[2].description).toBe(
       'Checking outcome',
     );
     expect(
-      getHyperswapProgress({ ...props, executionDelivered: true, fundsAvailable: true })[2]
+      getTransferRouteProgress({ ...props, executionDelivered: true, fundsAvailable: true })[2]
         .description,
     ).toBe('Complete');
   });
@@ -135,7 +138,7 @@ describe('Hyperswap stages', () => {
     TransferStatus.DestTransferFailed,
     TransferStatus.FailedRecovered,
   ])('destination failure preserves successful earlier stages: %s', (status) => {
-    const stages = getHyperswapProgress({
+    const stages = getTransferRouteProgress({
       transfer: transfer({ status }),
       bridgeDelivered: true,
       executionDelivered: true,
@@ -149,7 +152,7 @@ describe('Hyperswap stages', () => {
   });
 
   test('failure before dispatch does not mark later stages successful', () => {
-    const stages = getHyperswapProgress({
+    const stages = getTransferRouteProgress({
       transfer: transfer({ status: TransferStatus.Failed }),
       fundsAvailable: false,
     });
@@ -161,7 +164,7 @@ describe('Hyperswap stages', () => {
   });
 
   test('verified funds availability completes the route even when bridge indexing lags', () => {
-    const stages = getHyperswapProgress({
+    const stages = getTransferRouteProgress({
       transfer: transfer(),
       executionDelivered: true,
       fundsAvailable: true,
@@ -170,7 +173,7 @@ describe('Hyperswap stages', () => {
   });
 
   test('losing delivery evidence clears completion', () => {
-    const stages = getHyperswapProgress({
+    const stages = getTransferRouteProgress({
       transfer: transfer(),
       bridgeDelivered: false,
       executionDelivered: false,
@@ -184,7 +187,7 @@ describe('Hyperswap stages', () => {
   });
 
   test('legacy records show a transfer without inventing swap details', () => {
-    const stages = getHyperswapProgress({
+    const stages = getTransferRouteProgress({
       transfer: transfer({
         routeSteps: undefined,
         destinationOutcome: { bridgeToken: address, dstToken: address },

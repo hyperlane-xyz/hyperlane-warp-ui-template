@@ -33,7 +33,7 @@ import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { trackTransferValidationFailed, trackUnsupportedRouteEvent } from '../../analytics/utils';
 import { useChains } from '../../api/hooks';
-import { isApprovalRouteTx } from '../../api/routeTx';
+import { getRouteTxs, isApprovalRouteTx } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useTokenBalance } from '../../balances/hooks';
 import { readBalance } from '../../balances/read';
@@ -635,7 +635,7 @@ function TransferFormContent() {
     const item: TransferHistoryItem = {
       status: TransferStatus.Preparing,
       approvalRequired:
-        approvalTransactionCount > 0 || getRouteTxs(bestRoute).some(isApprovalRouteTx),
+        approvalTransactionCount > 0 || getRouteTxs(bestRoute.raw).some(isApprovalRouteTx),
       routeSteps: bestRoute.raw.steps,
       timestamp,
       srcChain: values.srcChain,
@@ -702,7 +702,8 @@ function TransferFormContent() {
       const executionItem = {
         ...item,
         approvalRequired:
-          !!executionApprovalPlan?.needsApprove || getRouteTxs(bestRoute).some(isApprovalRouteTx),
+          !!executionApprovalPlan?.needsApprove ||
+          getRouteTxs(bestRoute.raw).some(isApprovalRouteTx),
       };
       if (useStore.getState().preparingTransfer === item) setPreparingTransfer(executionItem);
       const validationResult = await validateCurrentForm(
@@ -1004,7 +1005,7 @@ async function estimateStarknetExecutionFee({
   if (srcProtocol !== ProtocolType.Starknet || !route) return 0n;
   if (!account) return 0n;
 
-  const calls = getRouteTxs(route)
+  const calls = getRouteTxs(route.raw)
     .filter(isStarknetRouteTx)
     .map((tx) => tx.transaction);
   if (!calls.length) return 0n;
@@ -1016,10 +1017,6 @@ async function estimateStarknetExecutionFee({
     logger.warn('Failed to estimate Starknet execution fee', err as Error);
     return 0n;
   }
-}
-
-function getRouteTxs(route: AugmentedRoute): RouteTx[] {
-  return route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
 }
 
 function routeTxReviewLabel(tx: RouteTx, symbol: string, index: number, count: number): string {
@@ -1377,7 +1374,7 @@ function ReviewTransactions({
   const approvalSpender = approval?.spender;
   const dstDecimals = dstToken?.decimals ?? 18;
   const dstSymbol = dstToken?.symbol ?? '';
-  const routeTxs = getRouteTxs(route);
+  const routeTxs = getRouteTxs(route.raw);
 
   let txNum = 0;
   return (

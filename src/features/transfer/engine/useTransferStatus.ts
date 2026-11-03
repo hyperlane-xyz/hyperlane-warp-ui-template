@@ -35,19 +35,33 @@ export async function detectDestinationOutcome(
   const dstTokenLower = dstToken.toLowerCase();
 
   let destinationExecutionSucceeded = false;
-  let fallbackDelivered = false;
+  // Bridge-token senders, split by whether they paid the recipient or another address.
+  const bridgeSendersToRecipient = new Set<string>();
+  const bridgeSendersToOthers = new Set<string>();
 
   for (const log of receipt.logs) {
     if (log.topics[0] !== TRANSFER_TOPIC) continue;
-    if (log.topics.length < 3) continue;
+    const [, fromTopic, toTopic] = log.topics;
+    if (!fromTopic || !toTopic) continue;
 
     // Indexed addresses are 0x + 24 leading-zero chars + 40 address chars.
-    const to = `0x${log.topics[2]!.slice(26)}`.toLowerCase();
+    const from = `0x${fromTopic.slice(26)}`.toLowerCase();
+    const to = `0x${toTopic.slice(26)}`.toLowerCase();
     const addr = log.address.toLowerCase();
 
     if (addr === dstTokenLower && to === recipientLower) destinationExecutionSucceeded = true;
-    if (addr === bridgeTokenLower && to === recipientLower) fallbackDelivered = true;
+    if (addr === bridgeTokenLower) {
+      if (to === recipientLower) bridgeSendersToRecipient.add(from);
+      else bridgeSendersToOthers.add(from);
+    }
   }
+
+  // The fallback sub-plan sweeps the bridge token straight to the recipient. A
+  // sender that also moved the bridge token elsewhere is a swap leg returning
+  // leftover dust, not a fallback.
+  const fallbackDelivered = [...bridgeSendersToRecipient].some(
+    (from) => !bridgeSendersToOthers.has(from),
+  );
 
   if (isNativeOutput) {
     // Native payouts do not emit ERC20 Transfer logs, so this receipt

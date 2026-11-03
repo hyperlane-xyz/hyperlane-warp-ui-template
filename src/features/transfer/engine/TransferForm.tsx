@@ -33,6 +33,7 @@ import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { trackTransferValidationFailed, trackUnsupportedRouteEvent } from '../../analytics/utils';
 import { useChains } from '../../api/hooks';
+import { isApprovalRouteTx } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useTokenBalance } from '../../balances/hooks';
 import { readBalance } from '../../balances/read';
@@ -633,7 +634,8 @@ function TransferFormContent() {
     const timestamp = Date.now();
     const item: TransferHistoryItem = {
       status: TransferStatus.Preparing,
-      approvalRequired: approvalTransactionCount > 0,
+      approvalRequired:
+        approvalTransactionCount > 0 || getRouteTxs(bestRoute).some(isApprovalRouteTx),
       routeSteps: bestRoute.raw.steps,
       timestamp,
       srcChain: values.srcChain,
@@ -697,7 +699,11 @@ function TransferFormContent() {
         setIsReview(false);
         return;
       }
-      const executionItem = { ...item, approvalRequired: !!executionApprovalPlan?.needsApprove };
+      const executionItem = {
+        ...item,
+        approvalRequired:
+          !!executionApprovalPlan?.needsApprove || getRouteTxs(bestRoute).some(isApprovalRouteTx),
+      };
       if (useStore.getState().preparingTransfer === item) setPreparingTransfer(executionItem);
       const validationResult = await validateCurrentForm(
         getApprovalPlanTransactionCount(executionApprovalPlan),

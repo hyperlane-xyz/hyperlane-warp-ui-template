@@ -1,8 +1,11 @@
 import { SpinnerIcon } from '@hyperlane-xyz/widgets';
+import { formatUnits } from 'viem';
 
 import { ChainLogo } from '../../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
+import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
 import type { QuoteStep } from '../../api/types';
+import { formatDisplayAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { ProgressState } from '../../messages/progress';
@@ -161,10 +164,12 @@ export function HyperswapProgress(props: HyperswapProgressProps) {
         { tokenAddress: transfer.dstToken, chainId: transfer.dstChain },
       ];
 
+  const compact = nodes.length > 2;
+
   return (
     <section
       aria-label="Transfer route"
-      className="mt-6 flex flex-wrap items-center justify-center gap-x-1 gap-y-5"
+      className="mt-4 flex flex-wrap items-center justify-center gap-x-1 gap-y-3"
     >
       {nodes.map((node, index) => {
         // Native endpoints absorb wrapping/unwrapping; the status route shows the assets the user sends and receives.
@@ -186,6 +191,21 @@ export function HyperswapProgress(props: HyperswapProgressProps) {
               ? transfer.dstTokenMeta?.symbol
               : undefined) ??
           '?';
+        const showAmounts = index === 0 || index === nodes.length - 1;
+        const rawAmount = index === 0 ? transfer.amountIn : transfer.amountOut;
+        const decimals =
+          token?.decimals ??
+          (index === 0 ? transfer.srcTokenMeta?.decimals : transfer.dstTokenMeta?.decimals);
+        const amount = !showAmounts
+          ? undefined
+          : decimals == null
+            ? `${rawAmount} (atomic)`
+            : formatDisplayAmount(BigInt(rawAmount), decimals);
+        const fullAmount = !showAmounts
+          ? undefined
+          : decimals == null
+            ? `${rawAmount} (atomic)`
+            : formatUnits(BigInt(rawAmount), decimals);
         const step = index > 0 ? steps[index - 1] : undefined;
         const label =
           !step || step.type === 'bridge'
@@ -202,7 +222,7 @@ export function HyperswapProgress(props: HyperswapProgressProps) {
           <div key={index} className="hyperswap-leg flex items-center gap-1">
             {index > 0 && <RouteConnector label={label} progress={progress} />}
             <div
-              className="hyperswap-asset flex w-10 shrink-0 flex-col items-center gap-1.5 sm:w-11"
+              className={`hyperswap-asset flex shrink-0 flex-col items-center gap-1.5 ${compact ? 'w-12 sm:w-[3.25rem]' : 'w-28 sm:w-32'}`}
               title={`${symbol} on ${chainLabel}`}
             >
               {token ? (
@@ -210,7 +230,42 @@ export function HyperswapProgress(props: HyperswapProgressProps) {
               ) : (
                 <ChainLogo chainName={chainName} size={32} />
               )}
-              <span className="max-w-full truncate text-xs text-foreground-muted">{symbol}</span>
+              <div className="w-full text-center">
+                {compact && (
+                  <span className="block truncate text-xs text-foreground-muted">{symbol}</span>
+                )}
+                <div className={`flex flex-col items-center ${compact ? 'h-8' : ''}`}>
+                  {showAmounts && (
+                    <>
+                      <div className="max-w-full">
+                        <HoverTooltip
+                          tooltip={
+                            <span className="break-all font-secondary tabular-nums">
+                              {fullAmount} {symbol}
+                            </span>
+                          }
+                        >
+                          <span
+                            aria-label={
+                              index === 0 ? 'Amount to send' : 'Expected amount to receive'
+                            }
+                            title=""
+                            className={`block max-w-full cursor-help truncate font-secondary tabular-nums ${compact ? 'text-xxs' : 'text-sm'}`}
+                          >
+                            {amount}
+                            {!compact && ` ${symbol}`}
+                          </span>
+                        </HoverTooltip>
+                      </div>
+                      <span
+                        className={`font-secondary leading-tight text-foreground-muted ${compact ? 'text-[0.65rem]' : 'text-xxs'}`}
+                      >
+                        {index === 0 ? (transfer.originTxHash ? 'Sent' : 'Send') : 'Expected'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -230,7 +285,7 @@ function RouteConnector({ label, progress }: { label: string; progress?: RouteSt
       aria-current={progress?.active ? 'step' : undefined}
       data-state={progress?.state}
       title={`${label}: ${progress?.description ?? 'Waiting'}`}
-      className="hyperswap-step relative flex h-14 w-12 shrink-0 items-center text-gray-400/60 sm:w-24"
+      className="hyperswap-step relative flex h-12 w-12 shrink-0 items-center text-gray-400/60 sm:w-24"
     >
       <span className="absolute inset-x-0 top-0 whitespace-nowrap text-center text-xxs text-foreground-muted">
         <span className="sm:hidden">{label === 'Transfer' ? label : 'Swap'}</span>

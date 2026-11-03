@@ -1,4 +1,7 @@
 import type { Page, Route } from '@playwright/test';
+import { encodeFunctionData, erc20Abi, getAddress } from 'viem';
+
+import type { RouteTx } from '../../../src/features/api/types';
 
 export const E2E_ROUTE_TX_TO = '0x52dd779c1b5eeb54d5f218EfA72D52117ca04115'.toLowerCase();
 export const E2E_APPROVAL_SPENDER = E2E_ROUTE_TX_TO;
@@ -13,6 +16,7 @@ const E2E_WARP_ROUTER_BY_CHAIN_ID: Record<number, string> = {
 interface InstallQuoteMockOptions {
   approval?: 'erc20' | 'none';
   swapSide?: 'origin' | 'destination';
+  sdkBridge?: boolean;
   output?: string;
   outputMin?: string;
   txTo?: string;
@@ -81,6 +85,35 @@ export async function installQuoteMock(
             },
           ];
 
+    const sdkTransfer: RouteTx = {
+      protocol: 'ethereum',
+      type: 'ethers-v5',
+      category: 'transfer',
+      transaction: {
+        to: E2E_WARP_ROUTER_BY_CHAIN_ID[body.srcChain],
+        data: '0x12345678',
+        value: '0',
+      },
+      metadata: { warpRouteId: E2E_WARP_ROUTE_ID },
+    };
+    const sdkTransactions: RouteTx[] = [];
+    if (opts.sdkBridge && opts.approval === 'erc20') {
+      sdkTransactions.push({
+        ...sdkTransfer,
+        category: 'approval',
+        transaction: {
+          to: body.srcToken,
+          data: encodeFunctionData({
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: [getAddress(E2E_WARP_ROUTER_BY_CHAIN_ID[body.srcChain]), BigInt(body.amount)],
+          }),
+          value: '0',
+        },
+      });
+    }
+    sdkTransactions.push(sdkTransfer);
+
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -88,8 +121,9 @@ export async function installQuoteMock(
         expiresAt: Math.floor(Date.now() / 1000) + 60,
         routes: [
           {
-            steps:
-              opts.swapSide === 'destination' && body.srcChain !== body.dstChain
+            steps: opts.sdkBridge
+              ? steps.filter((step) => step.type === 'bridge')
+              : opts.swapSide === 'destination' && body.srcChain !== body.dstChain
                 ? [
                     steps[1],
                     {
@@ -103,26 +137,30 @@ export async function installQuoteMock(
                 : steps,
             output: opts.output ?? body.amount,
             outputMin: opts.outputMin ?? opts.output ?? body.amount,
-            executionKind: 'universalRouter',
+            executionKind: opts.sdkBridge ? 'sdkWarp' : 'universalRouter',
             connection: null,
             gas: {
               originGas: '100000',
               destGas: '0',
             },
-            tx: {
-              to: txTo,
-              data: '0x12345678',
-              value: '0',
-            },
-            txs: [
-              {
-                to: txTo,
-                data: '0x12345678',
-                value: '0',
-              },
-            ],
+            tx: opts.sdkBridge
+              ? sdkTransfer
+              : {
+                  to: txTo,
+                  data: '0x12345678',
+                  value: '0',
+                },
+            txs: opts.sdkBridge
+              ? sdkTransactions
+              : [
+                  {
+                    to: txTo,
+                    data: '0x12345678',
+                    value: '0',
+                  },
+                ],
             approval:
-              opts.approval === 'erc20'
+              !opts.sdkBridge && opts.approval === 'erc20'
                 ? {
                     token: body.srcToken,
                     spender: E2E_APPROVAL_SPENDER,

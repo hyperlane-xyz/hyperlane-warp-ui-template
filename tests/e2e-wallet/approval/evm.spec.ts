@@ -10,12 +10,14 @@ const APPROVE_SELECTOR = '0x095ea7b3';
 
 test.describe('EVM approval flow', () => {
   test.setTimeout(180_000);
-  for (const { closeDuringPreparation, approvalRequired } of [
-    { closeDuringPreparation: true, approvalRequired: true },
-    { closeDuringPreparation: false, approvalRequired: true },
-    { closeDuringPreparation: false, approvalRequired: false },
+  for (const { closeDuringPreparation, approvalRequired, sdkBridge } of [
+    { closeDuringPreparation: true, approvalRequired: true, sdkBridge: false },
+    { closeDuringPreparation: false, approvalRequired: true, sdkBridge: false },
+    { closeDuringPreparation: false, approvalRequired: true, sdkBridge: true },
+    { closeDuringPreparation: false, approvalRequired: false, sdkBridge: false },
+    { closeDuringPreparation: false, approvalRequired: false, sdkBridge: true },
   ]) {
-    test(`approval required: ${approvalRequired}, close during preparation: ${closeDuringPreparation}`, async ({
+    test(`SDK bridge: ${sdkBridge}, approval required: ${approvalRequired}, close during preparation: ${closeDuringPreparation}`, async ({
       page,
     }, testInfo) => {
       const { txs } = await installEvmRpcMock(page, {
@@ -50,6 +52,7 @@ test.describe('EVM approval flow', () => {
       });
       await installQuoteMock(page, {
         approval: approvalRequired ? 'erc20' : 'none',
+        sdkBridge,
         swapSide: approvalRequired ? 'origin' : 'destination',
       });
 
@@ -65,7 +68,8 @@ test.describe('EVM approval flow', () => {
         await expect(page.locator('.transfer-review-panel').first()).toContainText(/Approve/i, {
           timeout: 45_000,
         });
-        await expect(page.locator('.transfer-review-panel').first()).toContainText(/Spender:/i);
+        if (!sdkBridge)
+          await expect(page.locator('.transfer-review-panel').first()).toContainText(/Spender:/i);
       }
       const sendButton = page.getByRole('button', { name: /^Send to/i });
       await sendButton.waitFor({ state: 'visible', timeout: 30_000 });
@@ -106,7 +110,9 @@ test.describe('EVM approval flow', () => {
         await sendButton.click({ timeout: 30_000 });
         if (approvalRequired) {
           await expect(page.getByTestId('transfer-headline')).toHaveText(
-            'Checking token permission',
+            sdkBridge
+              ? /Checking token permission|Approve in your wallet/
+              : 'Checking token permission',
           );
           await expect(page.getByRole('list', { name: 'Before sending' })).toBeVisible();
           await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
@@ -115,7 +121,7 @@ test.describe('EVM approval flow', () => {
             () =>
               JSON.parse(localStorage.getItem('app-state') ?? '{}').state?.transactionHistory ?? [],
           );
-          expect(history).toHaveLength(0);
+          if (!sdkBridge) expect(history).toHaveLength(0);
           await expect(page.getByRole('region', { name: 'Transfer route' })).toHaveCount(0);
           if (closeDuringPreparation)
             await page.getByRole('button', { name: 'Close', exact: true }).click();
@@ -135,9 +141,11 @@ test.describe('EVM approval flow', () => {
           await expect(
             route.getByRole('group', { name: 'Transfer: Waiting', exact: true }),
           ).toBeVisible();
-          await expect(
-            route.getByRole('group', { name: 'Destination swap: Waiting', exact: true }),
-          ).toBeVisible();
+          if (!sdkBridge)
+            await expect(
+              route.getByRole('group', { name: 'Destination swap: Waiting', exact: true }),
+            ).toBeVisible();
+          else await expect(route.locator('.hyperswap-step')).toHaveCount(1);
           await expect(route.locator('.message-status-spinner')).toHaveCount(0);
           await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
           await page.screenshot({
@@ -169,6 +177,13 @@ test.describe('EVM approval flow', () => {
           await expect(page.getByTestId('transfer-details')).toContainText(
             'Your transfer has not started yet.',
           );
+          const history = await page.evaluate(
+            () => JSON.parse(localStorage.getItem('app-state') ?? '{}').state.transactionHistory,
+          );
+          expect(history).toHaveLength(1);
+          expect(history[0].data.status).toBe('confirming-approve');
+          expect(history[0].data.originTxHash).toBeUndefined();
+          expect(txs).toHaveLength(1);
           await page.screenshot({ path: testInfo.outputPath('approval.png'), fullPage: true });
           releaseReceipt();
           await expect(page.getByTestId('transfer-headline')).toHaveText(

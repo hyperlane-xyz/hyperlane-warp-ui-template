@@ -58,7 +58,7 @@ function routeStepsFor(originSwap: boolean, destinationSwap: boolean): QuoteStep
       tokenIn: bscUsdc,
       tokenOut: bscWbnb,
       amountIn: '1000000',
-      amountOut: '1600000000000000',
+      amountOut: '1600000000000123',
       path: [bscUsdc, bscWbnb],
       poolCount: 1,
     });
@@ -115,7 +115,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
                     srcTokenMeta: { symbol: 'ETH', decimals: 18, chainName: 'base' },
                     dstTokenMeta: { symbol: 'BNB', decimals: 18, chainName: 'bsc' },
                     amountIn: '500000000000000',
-                    amountOut: '1600000000000000',
+                    amountOut: '1600000000000123',
                     sender: address,
                     recipient: address,
                     originTxHash: originTx,
@@ -231,6 +231,18 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
     await expect(progress).toBeVisible({ timeout: 60_000 });
     await expect(progress.locator('article')).toHaveCount(directBridge ? 1 : 3);
     const stages = page.getByRole('region', { name: 'Transfer route' });
+    await expect(stages.getByLabel('Amount to send', { exact: true })).toHaveText(
+      swapStages ? '0.0005' : '0.0005 ETH',
+    );
+    await expect(stages.getByLabel('Expected amount to receive', { exact: true })).toHaveText(
+      swapStages ? '0.0016' : '0.0016 BNB',
+    );
+    await stages.getByLabel('Amount to send', { exact: true }).hover();
+    await expect(page.getByRole('tooltip')).toHaveText('0.0005 ETH');
+    await page.mouse.move(0, 0);
+    await stages.getByLabel('Expected amount to receive', { exact: true }).hover();
+    await expect(page.getByRole('tooltip')).toHaveText('0.001600000000000123 BNB');
+    await page.mouse.move(0, 0);
     if (swapStages) {
       await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
       await expect(stages.locator('.hyperswap-step')).toHaveCount(
@@ -287,6 +299,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
       }
     } else {
       await expect(stages.locator('.hyperswap-step')).toHaveCount(1);
+      await expect(stages.getByLabel('Amount to send', { exact: true })).toHaveText('0.0005 ETH');
+      await expect(stages.getByLabel('Expected amount to receive', { exact: true })).toHaveText(
+        '0.0016 BNB',
+      );
       await expect(
         stages.getByRole('group', { name: 'Transfer: Delivered', exact: true }),
       ).toBeVisible();

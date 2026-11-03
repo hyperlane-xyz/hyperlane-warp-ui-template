@@ -321,7 +321,7 @@ function TransferDetailsModalInner({
           />
         )}
         <div
-          className="mt-5 min-h-[76px] border-t border-gray-400/25 pt-4"
+          className="mt-3 min-h-[76px] border-t border-gray-400/25 pt-4"
           aria-live="polite"
           aria-atomic="true"
         >

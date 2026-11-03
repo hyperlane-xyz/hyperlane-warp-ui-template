@@ -16,7 +16,7 @@ import { logger } from '../../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../../analytics/refiner';
 import { EVENT_NAME } from '../../analytics/types';
 import { getAnalyticsChains, getAnalyticsToken, trackEvent } from '../../analytics/utils';
-import { getRouteTxs } from '../../api/routeTx';
+import { getRouteTxs, isApprovalRouteTx } from '../../api/routeTx';
 import { useMultiProvider } from '../../chains/hooks';
 import { isBridgeOnlyRoute } from '../../routeSecurity/validateWarpRoute';
 import { useStore } from '../../store';
@@ -170,7 +170,11 @@ export function useTransfer() {
         let hash: string | undefined;
         let receipt: TypedTransactionReceipt | undefined;
         for (const routeTx of routeTxs) {
-          updateTransferTransactionStatus(transactionId, TransferStatus.SigningTransfer);
+          const isApproval = isApprovalRouteTx(routeTx);
+          updateTransferTransactionStatus(
+            transactionId,
+            isApproval ? TransferStatus.SigningApprove : TransferStatus.SigningTransfer,
+          );
           const sent = await fns.sendTransaction({
             tx: (await prepareRouteTransaction(routeTx, {
               protocol: protocol as ProtocolType,
@@ -180,6 +184,15 @@ export function useTransfer() {
             })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
             chainName: srcChainName,
           });
+          // SDK routes include approval/revoke transactions in the route itself.
+          // They must confirm before sending, without starting origin progress.
+          if (isApproval) {
+            updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmingApprove);
+            if (isReverted(await sent.confirm())) {
+              throw new Error('Approve transaction reverted on chain');
+            }
+            continue;
+          }
           hash = sent.hash;
 
           updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmingOrigin, {

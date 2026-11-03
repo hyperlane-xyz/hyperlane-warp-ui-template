@@ -230,7 +230,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
     const progress = page.getByRole('region', { name: 'Transfer progress' });
     await expect(progress).toBeVisible({ timeout: 60_000 });
     await expect(progress.locator('article')).toHaveCount(directBridge ? 1 : 3);
-    const stages = page.getByRole('region', { name: 'Hyperswap route' });
+    const stages = page.getByRole('region', { name: 'Transfer route' });
     if (swapStages) {
       await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
       await expect(stages.locator('.hyperswap-step')).toHaveCount(
@@ -286,7 +286,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
         );
       }
     } else {
-      await expect(stages).toHaveCount(0);
+      await expect(stages.locator('.hyperswap-step')).toHaveCount(1);
+      await expect(
+        stages.getByRole('group', { name: 'Transfer: Delivered', exact: true }),
+      ).toBeVisible();
     }
     const outcome = page.getByTestId('transfer-outcome');
     if (directBridge) {
@@ -298,8 +301,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
       ).toHaveCount(0);
       await expect(bridge).not.toContainText('Funds are available to use');
       await expect(page.getByTestId('transfer-headline')).toHaveText('Transfer complete');
-      if (!swapStages)
-        await expect(page.getByTestId('transfer-motion')).toHaveAttribute('data-active', 'false');
+      await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
       await page.screenshot({
         path: testInfo.outputPath('desktop-collapsed.png'),
         fullPage: true,

@@ -12,6 +12,7 @@ const E2E_WARP_ROUTER_BY_CHAIN_ID: Record<number, string> = {
 
 interface InstallQuoteMockOptions {
   approval?: 'erc20' | 'none';
+  swapSide?: 'origin' | 'destination';
   output?: string;
   outputMin?: string;
   txTo?: string;
@@ -87,7 +88,19 @@ export async function installQuoteMock(
         expiresAt: Math.floor(Date.now() / 1000) + 60,
         routes: [
           {
-            steps,
+            steps:
+              opts.swapSide === 'destination' && body.srcChain !== body.dstChain
+                ? [
+                    steps[1],
+                    {
+                      ...steps[0],
+                      chain: body.dstChain,
+                      tokenIn: body.dstToken,
+                      tokenOut: body.dstToken,
+                      path: [body.dstToken],
+                    },
+                  ]
+                : steps,
             output: opts.output ?? body.amount,
             outputMin: opts.outputMin ?? opts.output ?? body.amount,
             executionKind: 'universalRouter',

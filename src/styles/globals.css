@@ -228,26 +228,6 @@ Common animations
 =================
 */
 
-/* Only the route moves while waiting; message rows remain stable. */
-@keyframes transfer-route-flow {
-  0%,
-  100% {
-    opacity: 0.25;
-  }
-  45% {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .transfer-route[data-active='true'] svg {
-    animation: transfer-route-flow 1.8s ease-in-out infinite;
-  }
-  .transfer-route[data-active='true'] svg + svg {
-    animation-delay: 0.25s;
-  }
-}
-
 @keyframes fadeOut {
   0% {
     opacity: 1;
@@ -752,24 +732,6 @@ html[data-theme-mode='dark'] .sidebar-menu-list > :not([hidden]) ~ :not([hidden]
 
 html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
   background: rgba(255, 255, 255, 0.12) !important;
-}
-
-/* Keep each operation with its output token when a route spans multiple rows. */
-.route-step > div {
-  min-width: 0;
-}
-.route-step-badge {
-  height: 26px;
-}
-.route-step-badge > :not(:last-child) {
-  flex-shrink: 0;
-}
-.route-step-badge > span:last-child {
-  min-width: 0;
-  max-width: 7rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Status routes show completion on the connectors, keeping assets unchanged. */

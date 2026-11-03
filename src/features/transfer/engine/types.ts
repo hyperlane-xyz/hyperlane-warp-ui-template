@@ -70,6 +70,8 @@ export interface TransferHistoryItem {
   destinationOutcome?: TransferDestinationOutcome;
   /** Displayed route steps, retained across reloads without transaction calldata. */
   routeSteps?: QuoteStep[];
+  /** Whether this transfer needs token permission before submission. */
+  approvalRequired?: boolean;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
   /** Unix seconds when origin tx was confirmed and delivery polling started. */

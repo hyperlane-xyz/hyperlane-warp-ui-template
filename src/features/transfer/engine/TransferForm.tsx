@@ -633,6 +633,7 @@ function TransferFormContent() {
     const timestamp = Date.now();
     const item: TransferHistoryItem = {
       status: TransferStatus.Preparing,
+      approvalRequired: approvalTransactionCount > 0,
       routeSteps: bestRoute.raw.steps,
       timestamp,
       srcChain: values.srcChain,
@@ -696,6 +697,8 @@ function TransferFormContent() {
         setIsReview(false);
         return;
       }
+      const executionItem = { ...item, approvalRequired: !!executionApprovalPlan?.needsApprove };
+      if (useStore.getState().preparingTransfer === item) setPreparingTransfer(executionItem);
       const validationResult = await validateCurrentForm(
         getApprovalPlanTransactionCount(executionApprovalPlan),
       );
@@ -724,8 +727,9 @@ function TransferFormContent() {
       setIsReview(false);
       setTransferLoading(true);
 
-      const transactionId = addTransferTransaction(item);
-      if (useStore.getState().preparingTransfer === item) setSelectedTransactionId(transactionId);
+      const transactionId = addTransferTransaction(executionItem);
+      if (useStore.getState().preparingTransfer === executionItem)
+        setSelectedTransactionId(transactionId);
       setPreparingTransfer(null);
       setActiveTransferTransactionId(transactionId);
 
@@ -781,6 +785,7 @@ function TransferFormContent() {
     effectiveRecipient,
     validateCurrentForm,
     approvalArgs,
+    approvalTransactionCount,
     multiProvider,
     approval,
     approvalAmount,

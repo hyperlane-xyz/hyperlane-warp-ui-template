@@ -77,15 +77,32 @@ describe('Hyperswap stages', () => {
             'Transfer',
             ...(swaps.destination ? ['Destination swap'] : []),
           ]
-        : [],
+        : ['Transfer'],
     );
   });
 
-  test('same-chain swaps have no cross-chain summary', () => {
+  test('same-chain swaps show one swap', () => {
     expect(getSwapStages([swap(1)], 1, 1)).toBeUndefined();
     expect(
-      getHyperswapProgress({ transfer: transfer({ dstChain: 1 }), fundsAvailable: true }),
-    ).toEqual([]);
+      getHyperswapProgress({
+        transfer: transfer({ dstChain: 1, routeSteps: [swap(1)] }),
+        fundsAvailable: true,
+      }).map((stage) => stage.label),
+    ).toEqual(['Swap']);
+  });
+
+  test.each([
+    TransferStatus.Preparing,
+    TransferStatus.SigningApprove,
+    TransferStatus.ConfirmingApprove,
+    TransferStatus.CreatingTxs,
+    TransferStatus.SigningTransfer,
+  ])('route execution stays idle before submission: %s', (status) => {
+    const stages = getHyperswapProgress({ transfer: transfer({ status }), fundsAvailable: false });
+    expect(stages.every((stage) => stage.state === ProgressState.Pending && !stage.active)).toBe(
+      true,
+    );
+    expect(stages.every((stage) => stage.description === 'Waiting')).toBe(true);
   });
 
   test('origin swap stays incomplete until origin inclusion', () => {
@@ -166,7 +183,7 @@ describe('Hyperswap stages', () => {
     ]);
   });
 
-  test('legacy records without steps do not invent a route', () => {
+  test('legacy records show a transfer without inventing swap details', () => {
     const stages = getHyperswapProgress({
       transfer: transfer({
         routeSteps: undefined,
@@ -174,6 +191,6 @@ describe('Hyperswap stages', () => {
       }),
       fundsAvailable: false,
     });
-    expect(stages).toEqual([]);
+    expect(stages.map((stage) => stage.label)).toEqual(['Transfer']);
   });
 });

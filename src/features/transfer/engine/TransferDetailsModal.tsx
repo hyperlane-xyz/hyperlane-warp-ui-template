@@ -1,16 +1,13 @@
 import { DialogTitle } from '@headlessui/react';
-import { CopyButton, Modal } from '@hyperlane-xyz/widgets';
+import { CopyButton, Modal, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ChainLogo } from '../../../components/icons/ChainLogo';
-import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
 import LinkIcon from '../../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../../utils/date';
 import { getHypExplorerLink } from '../../../utils/links';
 import { logger } from '../../../utils/logger';
 import type { QuoteStep } from '../../api/types';
-import { formatDisplayAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { TransferProgress, type TransferDeliveryStatus } from '../../messages/TransferProgress';
@@ -31,10 +28,10 @@ const LABEL_NAMES: Record<string, string> = {
 
 const STATUS_HEADLINE: Record<TransferStatus, string> = {
   [TransferStatus.Preparing]: 'Preparing transfer',
-  [TransferStatus.CreatingTxs]: 'Preparing swap',
+  [TransferStatus.CreatingTxs]: 'Preparing transfer',
   [TransferStatus.SigningApprove]: 'Approve in your wallet',
   [TransferStatus.ConfirmingApprove]: 'Confirming token approval',
-  [TransferStatus.SigningTransfer]: 'Confirm in your wallet',
+  [TransferStatus.SigningTransfer]: 'Confirm transfer in your wallet',
   [TransferStatus.ConfirmingOrigin]: 'Confirming origin transaction',
   [TransferStatus.Bridging]: 'Waiting for message delivery',
   [TransferStatus.ConfirmingDestination]: 'Checking destination execution',
@@ -109,8 +106,6 @@ function TransferDetailsModalInner({
     dstChain,
     srcToken: srcTokenAddr,
     dstToken: dstTokenAddr,
-    amountIn,
-    amountOut,
     sender,
     recipient,
     originTxHash,
@@ -124,12 +119,9 @@ function TransferDetailsModalInner({
 
   const srcToken = getTokenByKeyFromMap(tokenMap, tokenKey(srcChain, srcTokenAddr));
   const dstToken = getTokenByKeyFromMap(tokenMap, tokenKey(dstChain, dstTokenAddr));
-  const srcSymbol = srcToken?.symbol ?? transfer.srcTokenMeta?.symbol ?? '';
-  const dstSymbol = dstToken?.symbol ?? transfer.dstTokenMeta?.symbol ?? '';
-  const srcDecimals = srcToken?.decimals ?? transfer.srcTokenMeta?.decimals;
-  const dstDecimals = dstToken?.decimals ?? transfer.dstTokenMeta?.decimals;
-
-  const showDetailedRoute = !!getSwapStages(routeSteps ?? [], srcChain, dstChain);
+  const hasDetailedRoute = !!getSwapStages(routeSteps ?? [], srcChain, dstChain);
+  const isApproving =
+    status === TransferStatus.SigningApprove || status === TransferStatus.ConfirmingApprove;
 
   const isFailed = status === TransferStatus.Failed;
   const isDestFailed = status === TransferStatus.DestTransferFailed;
@@ -137,6 +129,10 @@ function TransferDetailsModalInner({
   const isFailedRecovered = status === TransferStatus.FailedRecovered;
   const isRevealFailed = status === TransferStatus.DestFailed;
   const isFinal = FinalTransferStatuses.includes(status);
+  const showApprovalFlow =
+    isApproving || (!!transfer.approvalRequired && !originTxHash && !isFinal);
+  const approvalComplete =
+    status === TransferStatus.CreatingTxs || status === TransferStatus.SigningTransfer;
 
   // Poll the reveal message when present — its delivery tx IS the ICA
   // execution on the destination chain, which is what actually completes
@@ -178,27 +174,34 @@ function TransferDetailsModalInner({
     ? 'Transfer complete'
     : outcome
       ? STATUS_HEADLINE[status]
-      : showTimeline && messageStatus
-        ? messageStatus.delivered
-          ? 'Checking destination execution'
-          : messageStatus.status === 'Awaiting delivery'
-            ? 'Waiting for message delivery'
-            : messageStatus.status
-        : STATUS_HEADLINE[status];
+      : showApprovalFlow && status === TransferStatus.Preparing
+        ? 'Checking token permission'
+        : showTimeline && messageStatus
+          ? messageStatus.delivered
+            ? 'Checking destination execution'
+            : messageStatus.status === 'Awaiting delivery'
+              ? 'Waiting for message delivery'
+              : messageStatus.status
+          : STATUS_HEADLINE[status];
   const description = outcomeIsSuccess
     ? showTimeline
       ? 'Delivered. Confirmation details are available below.'
       : 'Your transfer has been delivered.'
     : outcome
       ? 'See the outcome below for details.'
-      : needsWallet
-        ? 'Review the request in your wallet to continue.'
-        : showTimeline && messageStatus && !messageStatus.delivered
-          ? messageStatus.activity
-          : status === TransferStatus.Preparing || status === TransferStatus.CreatingTxs
-            ? 'Checking the route and preparing your transaction.'
-            : 'No action needed. We’ll update this as the transaction progresses.';
-  const isProcessing = !outcome && !needsWallet;
+      : showApprovalFlow && status === TransferStatus.Preparing
+        ? 'Checking token permissions before opening your wallet.'
+        : status === TransferStatus.SigningApprove
+          ? 'Review the token permission in your wallet. You’ll confirm the transfer separately afterward.'
+          : status === TransferStatus.ConfirmingApprove
+            ? 'Waiting for the token permission to confirm on chain. Your transfer has not started yet.'
+            : status === TransferStatus.SigningTransfer
+              ? 'Token permissions are ready. Confirm this transaction to start your transfer.'
+              : showTimeline && messageStatus && !messageStatus.delivered
+                ? messageStatus.activity
+                : status === TransferStatus.Preparing || status === TransferStatus.CreatingTxs
+                  ? 'Checking the route and preparing your transaction.'
+                  : 'No action needed. We’ll update this as the transaction progresses.';
 
   const date = useMemo(
     () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(Date.now())),
@@ -245,7 +248,7 @@ function TransferDetailsModalInner({
     <Modal
       isOpen={isOpen}
       close={close}
-      panelClassname={`transfer-details-modal ${showDetailedRoute ? 'max-w-xl' : 'max-w-lg'}`}
+      panelClassname={`transfer-details-modal ${hasDetailedRoute ? 'max-w-xl' : 'max-w-lg'}`}
     >
       <div className="h-1 bg-accent-gradient" />
       <div data-testid="transfer-details" data-status={status} className="p-5 sm:p-6">
@@ -253,7 +256,61 @@ function TransferDetailsModalInner({
           <span>Transfer details</span>
           <span>{date}</span>
         </div>
-        {showDetailedRoute ? (
+        {showApprovalFlow ? (
+          <ol
+            aria-label="Before sending"
+            className="mt-6 flex items-center justify-center gap-4 text-xs"
+          >
+            <li
+              aria-current={!approvalComplete ? 'step' : undefined}
+              className="flex items-center gap-2"
+            >
+              <span
+                aria-hidden="true"
+                className={`flex h-7 w-7 items-center justify-center rounded-full ${approvalComplete ? 'bg-green-50/10 text-green-600 dark:text-green-50' : 'bg-primary-500/10 text-primary-500'}`}
+              >
+                {approvalComplete ? (
+                  '✓'
+                ) : status === TransferStatus.Preparing ||
+                  status === TransferStatus.ConfirmingApprove ? (
+                  <SpinnerIcon
+                    width={14}
+                    height={14}
+                    color="currentColor"
+                    className="message-status-spinner"
+                  />
+                ) : (
+                  '1'
+                )}
+              </span>
+              <span>Token permission</span>
+            </li>
+            <li
+              aria-current={approvalComplete ? 'step' : undefined}
+              className={`flex items-center gap-2 ${approvalComplete ? 'text-foreground-primary' : 'text-foreground-muted'}`}
+            >
+              <span aria-hidden="true" className="mr-2">
+                →
+              </span>
+              <span
+                aria-hidden="true"
+                className={`flex h-7 w-7 items-center justify-center rounded-full ${approvalComplete ? 'bg-primary-500/10 text-primary-500' : 'border border-gray-400/25'}`}
+              >
+                {status === TransferStatus.CreatingTxs ? (
+                  <SpinnerIcon
+                    width={14}
+                    height={14}
+                    color="currentColor"
+                    className="message-status-spinner"
+                  />
+                ) : (
+                  '2'
+                )}
+              </span>
+              <span>Send transfer</span>
+            </li>
+          </ol>
+        ) : (
           <HyperswapProgress
             transfer={routeSteps === transfer.routeSteps ? transfer : { ...transfer, routeSteps }}
             srcToken={srcToken}
@@ -262,67 +319,6 @@ function TransferDetailsModalInner({
             executionDelivered={deliveryStatus?.delivered}
             fundsAvailable={!!fundsAvailable}
           />
-        ) : (
-          <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                {srcToken ? (
-                  <TokenChainIcon token={srcToken} size={28} />
-                ) : (
-                  <ChainLogo chainName={originChain} size={28} />
-                )}
-                <span className="truncate text-xs text-foreground-muted">
-                  {getChainDisplayName(multiProvider, originChain, true)}
-                </span>
-              </div>
-              <p className="mt-2 break-words font-secondary text-base tabular-nums">
-                {formatAmount(amountIn, srcDecimals)} {srcSymbol}
-              </p>
-            </div>
-            <div
-              aria-hidden="true"
-              data-testid="transfer-motion"
-              data-active={isProcessing && isOpen}
-              className="transfer-route flex gap-0.5 text-primary-500"
-            >
-              <svg width="10" height="18" viewBox="0 0 10 18" fill="none">
-                <path
-                  d="m2 3 5 6-5 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <svg width="10" height="18" viewBox="0 0 10 18" fill="none">
-                <path
-                  d="m2 3 5 6-5 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className="min-w-0 text-right">
-              <div className="flex items-center justify-end gap-2">
-                <span className="truncate text-xs text-foreground-muted">
-                  {getChainDisplayName(multiProvider, destChain, true)}
-                </span>
-                {dstToken ? (
-                  <TokenChainIcon token={dstToken} size={28} />
-                ) : (
-                  <ChainLogo chainName={destChain} size={28} />
-                )}
-              </div>
-              <p
-                title="Expected output"
-                className="mt-2 break-words font-secondary text-base tabular-nums"
-              >
-                {formatAmount(amountOut, dstDecimals)} {dstSymbol}
-              </p>
-            </div>
-          </div>
         )}
         <div
           className="mt-5 min-h-[76px] border-t border-gray-400/25 pt-4"
@@ -443,13 +439,4 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
 
 function fixDoubleSlash(url: string) {
   return url.replace(/([^:]\/)\/+/g, '$1');
-}
-
-function formatAmount(amount: string, decimals: number | undefined): string {
-  if (decimals == null) return `${amount} (atomic)`;
-  try {
-    return formatDisplayAmount(BigInt(amount), decimals);
-  } catch {
-    return amount;
-  }
 }

@@ -49,8 +49,28 @@ export function getHyperswapProgress({
   fundsAvailable,
 }: HyperswapProgressProps): RouteStepProgress[] {
   const swaps = getSwapStages(transfer.routeSteps ?? [], transfer.srcChain, transfer.dstChain);
-  if (!swaps || (!swaps.origin && !swaps.destination) || transfer.srcChain === transfer.dstChain)
-    return [];
+  if (transfer.srcChain === transfer.dstChain) {
+    const failed = transfer.status === TransferStatus.Failed;
+    const started = !!transfer.originTxHash;
+    return [
+      {
+        label: transfer.routeSteps?.some((step) => step.type === 'swap') ? 'Swap' : 'Transfer',
+        description: fundsAvailable
+          ? 'Complete'
+          : failed
+            ? 'Not completed'
+            : started
+              ? 'Confirming'
+              : 'Waiting',
+        state: fundsAvailable
+          ? ProgressState.Confirmed
+          : failed
+            ? ProgressState.Failed
+            : ProgressState.Pending,
+        active: started && !fundsAvailable && !failed,
+      },
+    ];
+  }
   // A verified final payout also proves transfer completion if message indexing lags.
   const transferDelivered = fundsAvailable || !!bridgeDelivered;
   const status = transfer.status;
@@ -71,15 +91,10 @@ export function getHyperswapProgress({
       TransferStatus.DestTransferFailed,
       TransferStatus.FailedRecovered,
     ].includes(status);
-  const originDescription = failed
-    ? 'Not completed'
-    : status === TransferStatus.SigningTransfer
-      ? 'Awaiting wallet'
-      : status === TransferStatus.ConfirmingOrigin
-        ? 'Confirming'
-        : 'Preparing';
+  const originStarted = !!transfer.originTxHash || status === TransferStatus.ConfirmingOrigin;
+  const originDescription = failed ? 'Not completed' : originStarted ? 'Confirming' : 'Waiting';
   const stages: RouteStepProgress[] = [];
-  if (swaps.origin)
+  if (swaps?.origin)
     stages.push({
       label: 'Origin swap',
       description: originDone ? 'Complete' : originDescription,
@@ -88,7 +103,7 @@ export function getHyperswapProgress({
         : failed
           ? ProgressState.Failed
           : ProgressState.Pending,
-      active: !originDone && !failed,
+      active: originStarted && !originDone && !failed,
     });
   stages.push({
     label: 'Transfer',
@@ -98,7 +113,7 @@ export function getHyperswapProgress({
         ? 'Stopped'
         : originDone
           ? 'Awaiting delivery'
-          : swaps.origin
+          : swaps?.origin
             ? 'Waiting'
             : originDescription,
     state: transferDelivered
@@ -106,9 +121,9 @@ export function getHyperswapProgress({
       : failed
         ? ProgressState.Failed
         : ProgressState.Pending,
-    active: !transferDelivered && !failed && (originDone || !swaps.origin),
+    active: !transferDelivered && !failed && (originDone || (!swaps?.origin && originStarted)),
   });
-  if (swaps.destination)
+  if (swaps?.destination)
     stages.push({
       label: 'Destination swap',
       description: destinationFailed
@@ -139,12 +154,16 @@ export function HyperswapProgress(props: HyperswapProgressProps) {
   const multiProvider = useMultiProvider();
   useRouteChainTokens(steps);
   const stages = getHyperswapProgress(props);
-  if (!steps.length || !stages.length) return null;
-  const nodes = buildFlowNodes(steps, { destinationTokenAddress: transfer.dstToken });
+  const nodes = steps.length
+    ? buildFlowNodes(steps, { destinationTokenAddress: transfer.dstToken })
+    : [
+        { tokenAddress: transfer.srcToken, chainId: transfer.srcChain },
+        { tokenAddress: transfer.dstToken, chainId: transfer.dstChain },
+      ];
 
   return (
     <section
-      aria-label="Hyperswap route"
+      aria-label="Transfer route"
       className="mt-6 flex flex-wrap items-center justify-center gap-x-1 gap-y-5"
     >
       {nodes.map((node, index) => {
@@ -169,17 +188,19 @@ export function HyperswapProgress(props: HyperswapProgressProps) {
           '?';
         const step = index > 0 ? steps[index - 1] : undefined;
         const label =
-          step?.type === 'bridge'
+          !step || step.type === 'bridge'
             ? 'Transfer'
-            : step?.chain === transfer.srcChain
-              ? 'Origin swap'
-              : step?.chain === transfer.dstChain
-                ? 'Destination swap'
-                : 'Swap';
+            : transfer.srcChain === transfer.dstChain
+              ? 'Swap'
+              : step?.chain === transfer.srcChain
+                ? 'Origin swap'
+                : step?.chain === transfer.dstChain
+                  ? 'Destination swap'
+                  : 'Swap';
         const progress = stages.find((stage) => stage.label === label);
         return (
           <div key={index} className="hyperswap-leg flex items-center gap-1">
-            {step && <RouteConnector label={label} progress={progress} />}
+            {index > 0 && <RouteConnector label={label} progress={progress} />}
             <div
               className="hyperswap-asset flex w-10 shrink-0 flex-col items-center gap-1.5 sm:w-11"
               title={`${symbol} on ${chainLabel}`}

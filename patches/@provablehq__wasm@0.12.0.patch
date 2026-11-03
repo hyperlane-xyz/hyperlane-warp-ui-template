@@ -1,0 +1,20 @@
+diff --git a/dist/mainnet/index.js b/dist/mainnet/index.js
+--- a/dist/mainnet/index.js
++++ b/dist/mainnet/index.js
+@@ -19727 +19727,5 @@
+-                    await __wbg_init({ module_or_path: module$1 });
++const shouldAutoInit = (typeof window !== "undefined" && typeof document !== "undefined") || (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope);
++
++if (shouldAutoInit) {
++    await __wbg_init({ module_or_path: module$1 });
++}
+diff --git a/dist/testnet/index.js b/dist/testnet/index.js
+--- a/dist/testnet/index.js
++++ b/dist/testnet/index.js
+@@ -19727 +19727,5 @@
+-                    await __wbg_init({ module_or_path: module$1 });
++const shouldAutoInit = (typeof window !== "undefined" && typeof document !== "undefined") || (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope);
++
++if (shouldAutoInit) {
++    await __wbg_init({ module_or_path: module$1 });
++}

@@ -1,13 +1,4 @@
-import {
-  CopyButton,
-  MessageStage,
-  MessageStatus,
-  MessageTimeline,
-  Modal,
-  SpinnerIcon,
-  type StageTimings,
-  WideChevronIcon,
-} from '@hyperlane-xyz/widgets';
+import { CopyButton, Modal, SpinnerIcon, WideChevronIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -23,18 +14,13 @@ import { logger } from '../../../utils/logger';
 import { formatDisplayAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
+import { TransferProgress } from '../../messages/TransferProgress';
 import { getTransferDeliveryMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
 import { normalizeLabeledTransferMessages } from './messages';
 import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from './types';
-
-const DEFAULT_TIMINGS: StageTimings = {
-  [MessageStage.Finalized]: null,
-  [MessageStage.Validated]: null,
-  [MessageStage.Relayed]: null,
-};
 
 const LABEL_NAMES: Record<string, string> = {
   warp: 'Bridge Message ID',
@@ -151,22 +137,6 @@ function TransferDetailsModalInner({
     isFailedRecovered ||
     isRevealFailed;
 
-  const stage = useMemo<MessageStage>(() => {
-    if (isDelivered || isDestFailed || isFailedRecovered || isRevealFailed) {
-      return MessageStage.Relayed;
-    }
-    if (status === TransferStatus.ConfirmingDestination) return MessageStage.Validated;
-    if (status === TransferStatus.Bridging) return MessageStage.Finalized;
-    if (status === TransferStatus.ConfirmingOrigin) return MessageStage.Sent;
-    return MessageStage.Preparing;
-  }, [status, isDelivered, isDestFailed, isFailedRecovered, isRevealFailed]);
-
-  const messageStatus = isDelivered
-    ? MessageStatus.Delivered
-    : isFailed || isDestFailed || isFailedRecovered || isRevealFailed
-      ? MessageStatus.Failing
-      : MessageStatus.Pending;
-
   // Show timeline only for cross-chain transfers (msgIds present).
   const showTimeline = isSent && !isFailed && !!originTxHash && !!pollingMsgId;
 
@@ -275,24 +245,7 @@ function TransferDetailsModalInner({
           </div>
         </div>
 
-        {showTimeline && (
-          <div className="mt-4 rounded border border-gray-400/25 bg-card-gradient p-3 shadow-card">
-            <h4 className="mb-1 font-secondary text-sm text-gray-900 dark:text-foreground-primary">
-              Status
-            </h4>
-            <div className="flex w-full flex-col items-center justify-center [&_h4]:text-[clamp(0.625rem,0.7rem,0.75rem)]">
-              <MessageTimeline
-                status={messageStatus}
-                stage={stage}
-                timings={DEFAULT_TIMINGS}
-                timestampSent={timestamp}
-                hideDescriptions={true}
-                iconPosition="inline"
-                barClassName="bg-accent-gradient"
-              />
-            </div>
-          </div>
-        )}
+        {showTimeline && <TransferProgress transfer={transfer} enabled={isOpen} />}
 
         {isFinal ? (
           <div className="mt-5 flex flex-col space-y-4">

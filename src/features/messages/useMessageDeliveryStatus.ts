@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageByIdQuery } from './queries/build';
-import { parseTimestamp, postgresByteaToTxHash } from './queries/encoding';
+import { parseTimestamp, postgresByteaToTxHash, postgresByteaToString } from './queries/encoding';
 import type { MessageStubEntry } from './queries/fragments';
 
 const POLL_INTERVAL_MS = 10_000;
@@ -22,6 +22,13 @@ export interface MessageDeliveryResult {
   originBlockHeight?: number;
   /** Loading state */
   isLoading: boolean;
+  error?: Error | null;
+  message?: {
+    originDomain: number;
+    destinationDomain: number;
+    body?: string;
+    originTxHash: string;
+  };
 }
 
 /**
@@ -32,6 +39,7 @@ export function useMessageDeliveryStatus(
   msgId: string | undefined,
   isOpen: boolean,
   multiProvider: MultiProtocolProvider,
+  recheckDelivered = false,
 ): MessageDeliveryResult {
   const deliveredWithoutHashFirstSeenAt = useRef<number | undefined>(undefined);
   const isMultiProviderReady = multiProvider.getKnownChainNames().length > 0;
@@ -40,7 +48,7 @@ export function useMessageDeliveryStatus(
     deliveredWithoutHashFirstSeenAt.current = undefined;
   }, [msgId]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable, adding it causes unnecessary refetches
     queryKey: ['messageDelivery', msgId, isMultiProviderReady],
     queryFn: async () => {
@@ -52,7 +60,7 @@ export function useMessageDeliveryStatus(
       );
       if (result.type === 'error') {
         logger.error('Failed to query message delivery status', result.error);
-        return null;
+        throw result.error;
       }
       const entry = result.data.message_view?.[0];
       if (!entry) return null;
@@ -61,6 +69,7 @@ export function useMessageDeliveryStatus(
     enabled: !!msgId && isOpen && isMultiProviderReady,
     staleTime: 30_000,
     refetchInterval: (query) => {
+      if (recheckDelivered) return POLL_INTERVAL_MS;
       const result = query.state.data;
       if (!result?.isDelivered) {
         deliveredWithoutHashFirstSeenAt.current = undefined;
@@ -83,6 +92,8 @@ export function useMessageDeliveryStatus(
     originTimestamp: data?.originTimestamp,
     originBlockHeight: data?.originBlockHeight,
     isLoading,
+    error,
+    message: data?.message,
   };
 }
 
@@ -93,6 +104,15 @@ function parseDeliveryResult(
   const destMetadata = multiProvider.tryGetChainMetadata(entry.destination_domain_id);
 
   return {
+    message: {
+      originDomain: entry.origin_domain_id,
+      destinationDomain: entry.destination_domain_id,
+      body: entry.message_body ? postgresByteaToString(entry.message_body) : undefined,
+      originTxHash: postgresByteaToTxHash(
+        entry.origin_tx_hash,
+        multiProvider.tryGetChainMetadata(entry.origin_domain_id),
+      ),
+    },
     isDelivered: entry.is_delivered,
     destinationTxHash:
       entry.is_delivered && entry.destination_tx_hash

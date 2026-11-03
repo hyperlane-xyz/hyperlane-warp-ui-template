@@ -1,9 +1,8 @@
 diff --git a/dist/mainnet/browser.js b/dist/mainnet/browser.js
-index fdebeabf18428d29f4cb57d99cbc7534298972c5..393c815e22495916e877781f26e72c0011a6c31c 100644
 --- a/dist/mainnet/browser.js
 +++ b/dist/mainnet/browser.js
-@@ -1379,7 +1379,29 @@ function isProveApiErrorBody(value) {
-         "message" in value);
+@@ -1435,7 +1435,29 @@
+     throw new Error("retryWithBackoff: unreachable");
  }
  
 -const KEY_STORE = Metadata.baseUrl();
@@ -33,7 +32,7 @@ index fdebeabf18428d29f4cb57d99cbc7534298972c5..393c815e22495916e877781f26e72c00
  function convert(metadata) {
      // This looks up the method name in VerifyingKey
      const verifyingKey = VerifyingKey[metadata.verifyingKey];
-@@ -1394,7 +1416,7 @@ function convert(metadata) {
+@@ -1450,7 +1472,7 @@
          verifyingKey,
      };
  }
@@ -42,7 +41,7 @@ index fdebeabf18428d29f4cb57d99cbc7534298972c5..393c815e22495916e877781f26e72c00
      bond_public: convert(Metadata.bond_public()),
      bond_validator: convert(Metadata.bond_validator()),
      claim_unbond_public: convert(Metadata.claim_unbond_public()),
-@@ -1418,7 +1440,7 @@ const CREDITS_PROGRAM_KEYS = {
+@@ -1474,7 +1496,7 @@
              throw new Error(`Key "${key}" not found.`);
          }
      }
@@ -51,7 +50,7 @@ index fdebeabf18428d29f4cb57d99cbc7534298972c5..393c815e22495916e877781f26e72c00
  const PRIVATE_TRANSFER_TYPES = new Set([
      "transfer_private",
      "private",
-@@ -5437,7 +5459,13 @@ class RecordScanner {
+@@ -5688,7 +5710,13 @@
   * ```
   */
  class SealanceMerkleTree {
@@ -67,11 +66,10 @@ index fdebeabf18428d29f4cb57d99cbc7534298972c5..393c815e22495916e877781f26e72c00
      * Converts an Aleo blockchain address to a field element.
      *
 diff --git a/dist/testnet/browser.js b/dist/testnet/browser.js
-index 8a868da9d26a703f6b5373ad011679eb9822b2a9..c1f0970c906ca42fe1acc81f52e49f7e565cae5c 100644
 --- a/dist/testnet/browser.js
 +++ b/dist/testnet/browser.js
-@@ -1379,7 +1379,29 @@ function isProveApiErrorBody(value) {
-         "message" in value);
+@@ -1435,7 +1435,29 @@
+     throw new Error("retryWithBackoff: unreachable");
  }
  
 -const KEY_STORE = Metadata.baseUrl();
@@ -101,7 +99,7 @@ index 8a868da9d26a703f6b5373ad011679eb9822b2a9..c1f0970c906ca42fe1acc81f52e49f7e
  function convert(metadata) {
      // This looks up the method name in VerifyingKey
      const verifyingKey = VerifyingKey[metadata.verifyingKey];
-@@ -1394,7 +1416,7 @@ function convert(metadata) {
+@@ -1450,7 +1472,7 @@
          verifyingKey,
      };
  }
@@ -110,7 +108,7 @@ index 8a868da9d26a703f6b5373ad011679eb9822b2a9..c1f0970c906ca42fe1acc81f52e49f7e
      bond_public: convert(Metadata.bond_public()),
      bond_validator: convert(Metadata.bond_validator()),
      claim_unbond_public: convert(Metadata.claim_unbond_public()),
-@@ -1418,7 +1440,7 @@ const CREDITS_PROGRAM_KEYS = {
+@@ -1474,7 +1496,7 @@
              throw new Error(`Key "${key}" not found.`);
          }
      }
@@ -119,7 +117,7 @@ index 8a868da9d26a703f6b5373ad011679eb9822b2a9..c1f0970c906ca42fe1acc81f52e49f7e
  const PRIVATE_TRANSFER_TYPES = new Set([
      "transfer_private",
      "private",
-@@ -5437,7 +5459,13 @@ class RecordScanner {
+@@ -5688,7 +5710,13 @@
   * ```
   */
  class SealanceMerkleTree {

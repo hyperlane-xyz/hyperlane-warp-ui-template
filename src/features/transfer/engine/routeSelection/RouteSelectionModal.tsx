@@ -1,6 +1,6 @@
 import { IToken } from '@hyperlane-xyz/sdk';
 import { CopyButton, HyperlaneLogo, Modal, RefreshIcon } from '@hyperlane-xyz/widgets';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { ChainLogo } from '../../../../components/icons/ChainLogo';
 import { TokenIcon } from '../../../../components/icons/TokenIcon';
@@ -8,7 +8,6 @@ import { HoverTooltip } from '../../../../components/tooltip/HoverTooltip';
 import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../../api/types';
 import { formatDisplayAmount, formatFeeAmount } from '../../../balances/utils';
 import { useMultiProvider } from '../../../chains/hooks';
-import { ProgressState } from '../../../messages/progress';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../../tokens/hooks';
 import type { UiToken } from '../../../tokens/types';
 import { tokenKey } from '../../../tokens/utils';
@@ -157,27 +156,14 @@ function RouteCard({
   );
 }
 
-export interface RouteStepProgress {
-  label: string;
-  description: string;
-  state: ProgressState;
-  active?: boolean;
-}
-
-export function RouteFlowDiagram({
+function RouteFlowDiagram({
   steps,
   srcToken,
   dstToken,
-  progress,
 }: {
   steps: QuoteStep[];
   srcToken?: UiToken | null;
   dstToken?: UiToken | null;
-  progress?: {
-    steps: (RouteStepProgress | undefined)[];
-    wrap?: RouteStepProgress;
-    unwrap?: RouteStepProgress;
-  };
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
@@ -205,11 +191,7 @@ export function RouteFlowDiagram({
   });
 
   return (
-    <div
-      role={progress ? 'region' : undefined}
-      aria-label={progress ? 'Hyperswap route' : undefined}
-      className="pb-2"
-    >
+    <div className="pb-2">
       <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-4">
         {nodes.map((node, i) => {
           const step = i > 0 ? steps[i - 1] : undefined;
@@ -219,25 +201,21 @@ export function RouteFlowDiagram({
               {i === 0 && showWrap && (
                 <>
                   <TokenNode token={srcToken ?? null} chainName={srcToken?.chainName} />
-                  <ProgressEdge progress={progress?.wrap}>
-                    <WrapEdge
-                      action="wrap"
-                      fromToken={srcToken ?? null}
-                      toToken={resolvedTokens[0]}
-                    />
-                  </ProgressEdge>
+                  <WrapEdge
+                    action="wrap"
+                    fromToken={srcToken ?? null}
+                    toToken={resolvedTokens[0]}
+                  />
                 </>
               )}
               {step && (
-                <ProgressEdge progress={progress?.steps[i - 1]}>
-                  <StepEdge
-                    step={step}
-                    tokenMap={tokenMap}
-                    tokenOut={resolvedTokens[i]}
-                    stepIndex={i - 1}
-                    steps={steps}
-                  />
-                </ProgressEdge>
+                <StepEdge
+                  step={step}
+                  tokenMap={tokenMap}
+                  tokenOut={resolvedTokens[i]}
+                  stepIndex={i - 1}
+                  steps={steps}
+                />
               )}
               <TokenNode token={resolvedTokens[i]} chainName={chainName} />
             </div>
@@ -245,39 +223,16 @@ export function RouteFlowDiagram({
         })}
         {showUnwrap && lastNode && (
           <div className="route-flow-leg flex min-w-0 max-w-full items-center gap-1.5">
-            <ProgressEdge progress={progress?.unwrap}>
-              <WrapEdge
-                action="unwrap"
-                fromToken={resolvedTokens[lastIdx]}
-                toToken={dstToken ?? null}
-              />
-            </ProgressEdge>
+            <WrapEdge
+              action="unwrap"
+              fromToken={resolvedTokens[lastIdx]}
+              toToken={dstToken ?? null}
+            />
+
             <TokenNode token={dstToken ?? null} chainName={dstToken?.chainName} />
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function ProgressEdge({
-  progress,
-  children,
-}: {
-  progress?: RouteStepProgress;
-  children: ReactNode;
-}) {
-  if (!progress) return <>{children}</>;
-  return (
-    <div
-      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- A graph edge is a group, not a form fieldset or disclosure.
-      role="group"
-      aria-label={`${progress.label}: ${progress.description}`}
-      aria-current={progress.active ? 'step' : undefined}
-      data-state={progress.state}
-      className="route-progress-edge min-w-0"
-    >
-      {children}
     </div>
   );
 }

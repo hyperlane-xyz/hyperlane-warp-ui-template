@@ -1,8 +1,24 @@
+import { SpinnerIcon } from '@hyperlane-xyz/widgets';
+
+import { ChainLogo } from '../../../components/icons/ChainLogo';
+import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
 import type { QuoteStep } from '../../api/types';
+import { useMultiProvider } from '../../chains/hooks';
+import { getChainDisplayName } from '../../chains/utils';
 import { ProgressState } from '../../messages/progress';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import type { UiToken } from '../../tokens/types';
-import { RouteFlowDiagram, type RouteStepProgress } from './routeSelection/RouteSelectionModal';
+import { tokenKey } from '../../tokens/utils';
+import { useRouteChainTokens } from './routeSelection/hooks';
+import { buildFlowNodes } from './routeSelection/utils';
 import { TransferStatus, type TransferHistoryItem } from './types';
+
+interface RouteStepProgress {
+  label: string;
+  description: string;
+  state: ProgressState;
+  active?: boolean;
+}
 
 export function getSwapStages(
   steps: QuoteStep[],
@@ -117,48 +133,121 @@ export function getHyperswapProgress({
 }
 
 export function HyperswapProgress(props: HyperswapProgressProps) {
-  const { transfer } = props;
-  const steps = transfer.routeSteps;
+  const { transfer, srcToken, dstToken } = props;
+  const steps = transfer.routeSteps ?? [];
+  const tokenMap = useTokenByKeyMap();
+  const multiProvider = useMultiProvider();
+  useRouteChainTokens(steps);
   const stages = getHyperswapProgress(props);
-  if (!steps?.length || !stages.length) return null;
-  const origin = stages.find((stage) => stage.label === 'Origin swap');
-  const destination = stages.find((stage) => stage.label === 'Destination swap');
-  const bridge = stages.find((stage) => stage.label === 'Transfer');
-  // Wrapping is part of the successful origin transaction, even on routes with no origin swap.
-  const originIncluded =
-    !!transfer.msgIds?.length ||
-    !!transfer.originTxTimestamp ||
-    !!props.bridgeDelivered ||
-    !!props.executionDelivered ||
-    props.fundsAvailable;
+  if (!steps.length || !stages.length) return null;
+  const nodes = buildFlowNodes(steps, { destinationTokenAddress: transfer.dstToken });
+
   return (
-    <div className="mt-4">
-      <RouteFlowDiagram
-        steps={steps}
-        srcToken={props.srcToken}
-        dstToken={props.dstToken}
-        progress={{
-          steps: steps.map((step) =>
-            step.type === 'bridge'
-              ? bridge
-              : step.chain === transfer.srcChain
-                ? origin
-                : step.chain === transfer.dstChain
-                  ? destination
-                  : undefined,
-          ),
-          wrap: {
-            label: 'Wrap',
-            description: originIncluded ? 'Complete' : 'Waiting',
-            state: originIncluded ? ProgressState.Confirmed : ProgressState.Pending,
-          },
-          unwrap: {
-            label: 'Unwrap',
-            description: props.fundsAvailable ? 'Complete' : 'Waiting',
-            state: props.fundsAvailable ? ProgressState.Confirmed : ProgressState.Pending,
-          },
-        }}
-      />
+    <section
+      aria-label="Hyperswap route"
+      className="mt-6 flex flex-wrap items-center justify-center gap-x-1 gap-y-5"
+    >
+      {nodes.map((node, index) => {
+        // Native endpoints absorb wrapping/unwrapping; the status route shows the assets the user sends and receives.
+        const token =
+          index === 0
+            ? srcToken
+            : index === nodes.length - 1
+              ? dstToken
+              : getTokenByKeyFromMap(tokenMap, tokenKey(node.chainId, node.tokenAddress));
+        const chainName = multiProvider.tryGetChainName(node.chainId) ?? undefined;
+        const chainLabel = chainName
+          ? getChainDisplayName(multiProvider, chainName, true)
+          : String(node.chainId);
+        const symbol =
+          token?.symbol ??
+          (index === 0
+            ? transfer.srcTokenMeta?.symbol
+            : index === nodes.length - 1
+              ? transfer.dstTokenMeta?.symbol
+              : undefined) ??
+          '?';
+        const step = index > 0 ? steps[index - 1] : undefined;
+        const label =
+          step?.type === 'bridge'
+            ? 'Transfer'
+            : step?.chain === transfer.srcChain
+              ? 'Origin swap'
+              : step?.chain === transfer.dstChain
+                ? 'Destination swap'
+                : 'Swap';
+        const progress = stages.find((stage) => stage.label === label);
+        return (
+          <div key={index} className="hyperswap-leg flex items-center gap-1">
+            {step && <RouteConnector label={label} progress={progress} />}
+            <div
+              className="hyperswap-asset flex w-10 shrink-0 flex-col items-center gap-1.5 sm:w-11"
+              title={`${symbol} on ${chainLabel}`}
+            >
+              {token ? (
+                <TokenChainIcon token={token} size={32} />
+              ) : (
+                <ChainLogo chainName={chainName} size={32} />
+              )}
+              <span className="max-w-full truncate text-xs text-foreground-muted">{symbol}</span>
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function RouteConnector({ label, progress }: { label: string; progress?: RouteStepProgress }) {
+  const complete = progress?.state === ProgressState.Confirmed;
+  const failed = progress?.state === ProgressState.Failed;
+  return (
+    <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- A route operation is a group, not a form fieldset or disclosure.
+      role="group"
+      aria-label={`${label}: ${progress?.description ?? 'Waiting'}`}
+      aria-current={progress?.active ? 'step' : undefined}
+      data-state={progress?.state}
+      title={`${label}: ${progress?.description ?? 'Waiting'}`}
+      className="hyperswap-step relative flex h-14 w-12 shrink-0 items-center text-gray-400/60 sm:w-24"
+    >
+      <span className="absolute inset-x-0 top-0 whitespace-nowrap text-center text-xxs text-foreground-muted">
+        <span className="sm:hidden">{label === 'Transfer' ? label : 'Swap'}</span>
+        <span className="hidden sm:inline">{label}</span>
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute bottom-0 left-1/2 flex h-2.5 w-2.5 -translate-x-1/2 items-center justify-center"
+      >
+        {complete ? (
+          '✓'
+        ) : failed ? (
+          '!'
+        ) : progress?.active ? (
+          <SpinnerIcon
+            width={10}
+            height={10}
+            color="currentColor"
+            className="message-status-spinner"
+          />
+        ) : null}
+      </span>
+      <svg
+        aria-hidden="true"
+        className="hyperswap-arrow w-full"
+        height="14"
+        viewBox="0 0 100 14"
+        fill="none"
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M1 7h96m-5-5 5 5-5 5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </div>
   );
 }

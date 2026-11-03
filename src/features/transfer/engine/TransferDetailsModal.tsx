@@ -242,7 +242,11 @@ function TransferDetailsModalInner({
   }, [multiProvider, originChain, destChain, originTxHash, destinationTxHash, sender, recipient]);
 
   return (
-    <Modal isOpen={isOpen} close={close} panelClassname="transfer-details-modal max-w-lg">
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      panelClassname={`transfer-details-modal ${showDetailedRoute ? 'max-w-xl' : 'max-w-lg'}`}
+    >
       <div className="h-1 bg-accent-gradient" />
       <div data-testid="transfer-details" data-status={status} className="p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3 text-xxs text-foreground-muted">

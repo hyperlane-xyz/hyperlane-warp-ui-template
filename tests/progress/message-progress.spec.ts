@@ -233,9 +233,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
     const stages = page.getByRole('region', { name: 'Hyperswap route' });
     if (swapStages) {
       await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
-      await expect(
-        stages.locator('.route-progress-edge').filter({ hasNotText: /Wrap|Unwrap/ }),
-      ).toHaveCount(1 + Number(swapStages.origin) + Number(swapStages.destination));
+      await expect(stages.locator('.hyperswap-step')).toHaveCount(
+        1 + Number(swapStages.origin) + Number(swapStages.destination),
+      );
       if (swapStages.origin)
         await expect(
           stages.getByRole('group', { name: 'Origin swap: Complete', exact: true }),
@@ -252,53 +252,36 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
             exact: true,
           }),
         ).toBeVisible();
-      const deliveredEdge = stages.getByRole('group', { name: 'Transfer: Delivered', exact: true });
-      await expect(deliveredEdge.locator('.route-step-badge')).toHaveCSS(
-        'border-top-color',
-        'rgb(60, 131, 94)',
-      );
-      const routeLabel = deliveredEdge.locator('.route-step-badge > span').last();
-      await expect(routeLabel).toHaveCSS('white-space', 'nowrap');
-      await expect(routeLabel).not.toHaveCSS('color', 'rgb(60, 131, 94)');
-      const bridgeLeg = deliveredEdge.locator('..');
-      await expect(bridgeLeg.locator('.route-asset > span')).not.toHaveCSS(
-        'color',
-        'rgb(60, 131, 94)',
-      );
-      const badgeBox = await deliveredEdge.locator('.route-step-badge').boundingBox();
-      const assetBox = await bridgeLeg.locator('.route-asset').boundingBox();
-      expect(badgeBox).not.toBeNull();
-      expect(assetBox).not.toBeNull();
-      if (badgeBox && assetBox)
-        expect(
-          Math.abs(badgeBox.y + badgeBox.height / 2 - assetBox.y - assetBox.height / 2),
-        ).toBeLessThan(1);
-      expect(
-        await routeLabel.evaluate((element) => element.scrollWidth > element.clientWidth),
-      ).toBe(true);
-      await routeLabel.hover();
-      await expect(page.getByRole('tooltip')).toContainText('USDC/mainnet-cctp-v2-fast');
-      await page.mouse.move(0, 0);
-      await expect(deliveredEdge.locator('.route-step-arrow').first()).toHaveCSS(
-        'color',
-        'rgb(60, 131, 94)',
-      );
-      if (swapStages.origin) {
-        const wrap = stages.getByRole('group', { name: 'Wrap: Complete', exact: true });
-        await expect(wrap).toBeVisible();
-        await expect(wrap.locator('.route-step-badge')).toHaveCSS(
-          'border-top-color',
-          'rgb(60, 131, 94)',
+      const spacing = await stages.evaluate((element) => {
+        const widths = Array.from(element.querySelectorAll('.hyperswap-step')).map(
+          (step) => step.getBoundingClientRect().width,
         );
-      }
+        const centers = Array.from(element.querySelectorAll('.hyperswap-asset')).map((asset) => {
+          const rect = asset.getBoundingClientRect();
+          return rect.left + rect.width / 2;
+        });
+        return { widths, gaps: centers.slice(1).map((center, index) => center - centers[index]) };
+      });
+      expect(new Set(spacing.widths)).toEqual(new Set([96]));
+      expect(new Set(spacing.gaps).size).toBe(1);
+      const deliveredEdge = stages.getByRole('group', { name: 'Transfer: Delivered', exact: true });
+      await expect(deliveredEdge.locator('.hyperswap-arrow')).toHaveCSS(
+        'color',
+        'rgb(60, 131, 94)',
+      );
+      await expect(stages).not.toContainText(/Wrap|Unwrap|PancakeSwap|Uniswap/);
+      await expect(stages.locator('.hyperswap-leg')).toHaveCount(
+        2 + Number(swapStages.origin) + Number(swapStages.destination),
+      );
       if (swapStages.destination) {
         const destination = stages.getByRole('group', {
           name: 'Destination swap: Awaiting authorization',
           exact: true,
         });
-        await expect(destination).toHaveAttribute('data-state', 'pending');
-        await expect(destination.locator('.route-step-badge')).not.toHaveCSS(
-          'border-top-color',
+        await expect(destination).toHaveAttribute('aria-current', 'step');
+        await expect(destination.locator('.message-status-spinner')).toBeVisible();
+        await expect(destination.locator('.hyperswap-arrow')).not.toHaveCSS(
+          'color',
           'rgb(60, 131, 94)',
         );
       }
@@ -359,7 +342,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
         );
         const layout = await stages.evaluate((element) => {
           const region = element.getBoundingClientRect();
-          return Array.from(element.querySelectorAll('.route-flow-leg')).map((leg) => {
+          return Array.from(element.querySelectorAll('.hyperswap-leg')).map((leg) => {
             const rect = leg.getBoundingClientRect();
             return {
               top: Math.round(rect.top),
@@ -368,7 +351,14 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
           });
         });
         expect(layout.every((leg) => leg.inside)).toBe(true);
-        expect(new Set(layout.map((leg) => leg.top)).size).toBeGreaterThan(1);
+        expect(new Set(layout.map((leg) => leg.top)).size).toBe(1);
+        expect(
+          new Set(
+            await stages
+              .locator('.hyperswap-step')
+              .evaluateAll((steps) => steps.map((step) => step.getBoundingClientRect().width)),
+          ).size,
+        ).toBe(1);
       }
       await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
       await page.reload();
@@ -454,7 +444,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
       );
       const layout = await stages.evaluate((element) => {
         const region = element.getBoundingClientRect();
-        return Array.from(element.querySelectorAll('.route-flow-leg')).map((leg) => {
+        return Array.from(element.querySelectorAll('.hyperswap-leg')).map((leg) => {
           const rect = leg.getBoundingClientRect();
           return {
             top: Math.round(rect.top),
@@ -463,7 +453,14 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
         });
       });
       expect(layout.every((leg) => leg.inside)).toBe(true);
-      expect(new Set(layout.map((leg) => leg.top)).size).toBeGreaterThan(1);
+      expect(new Set(layout.map((leg) => leg.top)).size).toBe(1);
+      expect(
+        new Set(
+          await stages
+            .locator('.hyperswap-step')
+            .evaluateAll((steps) => steps.map((step) => step.getBoundingClientRect().width)),
+        ).size,
+      ).toBe(1);
     }
     await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
     const panelTop = (await page.getByTestId('transfer-details').boundingBox())?.y;
@@ -492,9 +489,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both']) {
     });
     await page.reload();
     await expect(progress.locator('article')).toHaveCount(3);
-    await expect(
-      stages.locator('.route-progress-edge').filter({ hasNotText: /Wrap|Unwrap/ }),
-    ).toHaveCount(kind === 'both' ? 3 : 2);
+    await expect(stages.locator('.hyperswap-step')).toHaveCount(kind === 'both' ? 3 : 2);
     await expect(bridge.getByRole('status')).toHaveText('Confirmed');
     reorg = true;
     await expect(bridge.getByRole('status')).not.toHaveText('Confirmed', { timeout: 25_000 });

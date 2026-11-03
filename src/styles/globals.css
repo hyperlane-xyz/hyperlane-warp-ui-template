@@ -772,44 +772,15 @@ html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
   white-space: nowrap;
 }
 
-/* Route previews retain their normal palette; only observed outcomes recolor steps. */
-.route-progress-edge .route-step-badge::before {
-  content: '';
-  display: inline-block;
-  width: 0.65rem;
-  flex-shrink: 0;
+/* Status routes show completion on the connectors, keeping assets unchanged. */
+.hyperswap-step[data-state='confirmed'] {
+  color: #3c835e;
 }
-.route-progress-edge[data-state='confirmed'] .route-step-badge {
-  border-color: #3c835e !important;
+.hyperswap-step[data-state='failed'] {
+  color: #ef4444;
 }
-.route-progress-edge[data-state='confirmed'] .route-step-arrow,
-.route-progress-edge[data-state='confirmed'] .route-step-badge::before {
-  color: #3c835e !important;
-}
-.route-progress-edge[data-state='confirmed'] .route-step-badge::before {
-  content: '✓';
-  font-size: 0.7rem;
-}
-.route-progress-edge[data-state='failed'] .route-step-badge {
-  border-color: #ef4444 !important;
-}
-
-.route-progress-edge[aria-current='step'] .route-step-badge::before {
-  height: 0.65rem;
-  border: 1.5px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
+.hyperswap-step[aria-current='step'] {
   color: var(--color-primary-500, #9a0dff);
-}
-@keyframes route-step-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .route-progress-edge[aria-current='step'] .route-step-badge::before {
-    animation: route-step-spin 1.2s linear infinite;
-  }
 }
 .message-status-spinner {
   color: inherit !important;

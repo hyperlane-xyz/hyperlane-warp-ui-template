@@ -2,7 +2,6 @@ import type { ChainAddresses } from '@hyperlane-xyz/registry';
 import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk';
 import type { MutableRefObject } from 'react';
 import { useEffect, useMemo, useRef } from 'react';
-import { toast } from 'react-toastify';
 
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
@@ -11,7 +10,7 @@ import {
   TransferStatus,
   type TransferHistoryItem,
 } from '../transfer/engine/types';
-import { useTransferStatus } from '../transfer/engine/useTransferStatus';
+import { notifyTransferOutcome, useTransferStatus } from '../transfer/engine/useTransferStatus';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
 import { type OriginTxMessagesResult, useOriginTxMessages } from './useOriginTxMessages';
@@ -193,7 +192,7 @@ function DeliveryTargetWatcher({
         !hasToasted.current
       ) {
         hasToasted.current = true;
-        toast.success('Transfer complete! Funds have arrived.');
+        notifyTransferOutcome(target.id, TransferStatus.ConfirmedDestination);
       }
       return;
     }
@@ -220,7 +219,7 @@ function DeliveryTargetWatcher({
         !hasToasted.current
       ) {
         hasToasted.current = true;
-        toast.success('Transfer complete! Funds have arrived.');
+        notifyTransferOutcome(target.id, TransferStatus.ConfirmedDestination);
       }
       return;
     }
@@ -251,7 +250,7 @@ function DeliveryTargetWatcher({
         !hasToasted.current
       ) {
         hasToasted.current = true;
-        toast.success('Transfer complete! Funds have arrived.');
+        notifyTransferOutcome(target.id, TransferStatus.ConfirmedDestination);
       }
     }
   }, [
@@ -278,7 +277,7 @@ function DeliveryTargetWatcher({
     updateTransferTransactionStatus(target.id, TransferStatus.ConfirmedDestination);
     if (target.status !== TransferStatus.ConfirmedDestination && !hasToasted.current) {
       hasToasted.current = true;
-      toast.success('Transfer complete! Funds have arrived.');
+      notifyTransferOutcome(target.id, TransferStatus.ConfirmedDestination);
     }
   }, [solanaDestSwap.isDone, target, updateTransferTransactionStatus]);
 

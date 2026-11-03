@@ -334,6 +334,7 @@ function TransferFormContent() {
   useToastError(transfer.error, 'Transfer failed');
   const addTransferTransaction = useStore((s) => s.addTransferTransaction);
   const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
+  const setPreparingTransfer = useStore((s) => s.setPreparingTransfer);
   const setActiveTransferTransactionId = useStore((s) => s.setActiveTransferTransactionId);
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
   const setTransferLoading = useStore((s) => s.setTransferLoading);
@@ -623,60 +624,6 @@ function TransferFormContent() {
       return;
     }
 
-    // Re-validate before broadcasting. Review mode pauses useQuote, so a
-    // user can sit on review past expiresAt with a stale quote — without
-    // this check we'd happily submit it. Same call as Continue plus the
-    // current quote.expiresAt so the staleness check fires.
-    const snapshot = values;
-    let executionApprovalPlan: ApprovalPlan | null;
-    try {
-      executionApprovalPlan = await readApprovalPlan(approvalArgs, multiProvider);
-    } catch (err) {
-      logger.warn('Unable to verify token approval before transfer', err as Error);
-      const validationResult = {
-        form: 'Could not verify token approval. Please try again.',
-      };
-      trackTransferValidationFailed({
-        errors: validationResult,
-        values,
-        srcToken,
-        dstToken,
-        sender,
-        recipient: effectiveRecipient,
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setErrors(validationResult as any);
-      setIsReview(false);
-      return;
-    }
-    const validationResult = await validateCurrentForm(
-      getApprovalPlanTransactionCount(executionApprovalPlan),
-    );
-    // Same race as onContinue — if the form changed mid-validation,
-    // discard the result. In practice the inputs are disabled in review
-    // mode, but the wallet dropdown can still change the recipient.
-    if (latestValuesRef.current !== snapshot) return;
-    if (validationResult) {
-      trackTransferValidationFailed({
-        errors: validationResult,
-        values,
-        srcToken,
-        dstToken,
-        sender,
-        recipient: effectiveRecipient,
-      });
-      // Bail back to edit mode so the user sees the error and the form
-      // unpauses useQuote to refresh.
-      setErrors(validationResult);
-      setIsReview(false);
-      return;
-    }
-
-    // Drop review immediately so the form stays editable while the
-    // broadcast chain runs. Modal carries the live status.
-    setIsReview(false);
-    setTransferLoading(true);
-
     const initialStep = bestRoute.raw.steps[0];
     const finalStep = bestRoute.raw.steps[bestRoute.raw.steps.length - 1];
     const destinationSwapStep = bestRoute.raw.steps.find(
@@ -686,6 +633,7 @@ function TransferFormContent() {
     const timestamp = Date.now();
     const item: TransferHistoryItem = {
       status: TransferStatus.Preparing,
+      routeSteps: bestRoute.raw.steps,
       timestamp,
       srcChain: values.srcChain,
       dstChain: values.dstChain,
@@ -719,47 +667,108 @@ function TransferFormContent() {
             }
           : undefined,
     };
-    const transactionId = addTransferTransaction(item);
-    setSelectedTransactionId(transactionId);
-    setActiveTransferTransactionId(transactionId);
-
+    setSelectedTransactionId(null);
+    setPreparingTransfer(item);
     try {
-      // useTransfer.execute handles revoke / approve / transfer sequencing
-      // internally based on the params below.
-      await transfer.execute({
-        transactionId,
-        route: bestRoute,
-        srcChainId: values.srcChain,
-        dstChainId: values.dstChain,
-        srcToken: srcToken.address,
-        dstToken: dstToken.address,
-        amount: values.amount,
-        srcTokenSymbol: srcToken.symbol,
-        dstTokenSymbol: dstToken.symbol,
-        sender,
-        recipient: effectiveRecipient,
-        approvalToken: approval?.token,
-        spender: approval?.spender as Address | undefined,
-        approvalAmount,
-        isNative: !approval,
-        approvalPlan: executionApprovalPlan,
-      });
-    } catch {
-      // Read latest Zustand state after execute's async failure handling.
-      // This catch is only a final safety net and must not downgrade a
-      // transfer that already reached a final status.
-      const cur = useStore
-        .getState()
-        .transactionHistory.find((historyItem) => historyItem.id === transactionId);
-      if (
-        cur?.type === TransactionHistoryItemType.Transfer &&
-        !FinalTransferStatuses.includes(cur.data.status)
-      ) {
-        updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
+      // Re-validate before broadcasting. Review mode pauses useQuote, so a
+      // user can sit on review past expiresAt with a stale quote — without
+      // this check we'd happily submit it. Same call as Continue plus the
+      // current quote.expiresAt so the staleness check fires.
+      const snapshot = values;
+      let executionApprovalPlan: ApprovalPlan | null;
+      try {
+        executionApprovalPlan = await readApprovalPlan(approvalArgs, multiProvider);
+      } catch (err) {
+        logger.warn('Unable to verify token approval before transfer', err as Error);
+        const validationResult = {
+          form: 'Could not verify token approval. Please try again.',
+        };
+        trackTransferValidationFailed({
+          errors: validationResult,
+          values,
+          srcToken,
+          dstToken,
+          sender,
+          recipient: effectiveRecipient,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setErrors(validationResult as any);
+        setIsReview(false);
+        return;
+      }
+      const validationResult = await validateCurrentForm(
+        getApprovalPlanTransactionCount(executionApprovalPlan),
+      );
+      // Same race as onContinue — if the form changed mid-validation,
+      // discard the result. In practice the inputs are disabled in review
+      // mode, but the wallet dropdown can still change the recipient.
+      if (latestValuesRef.current !== snapshot) return;
+      if (validationResult) {
+        trackTransferValidationFailed({
+          errors: validationResult,
+          values,
+          srcToken,
+          dstToken,
+          sender,
+          recipient: effectiveRecipient,
+        });
+        // Bail back to edit mode so the user sees the error and the form
+        // unpauses useQuote to refresh.
+        setErrors(validationResult);
+        setIsReview(false);
+        return;
+      }
+
+      // Drop review immediately so the form stays editable while the
+      // broadcast chain runs. Modal carries the live status.
+      setIsReview(false);
+      setTransferLoading(true);
+
+      const transactionId = addTransferTransaction(item);
+      if (useStore.getState().preparingTransfer === item) setSelectedTransactionId(transactionId);
+      setPreparingTransfer(null);
+      setActiveTransferTransactionId(transactionId);
+
+      try {
+        // useTransfer.execute handles revoke / approve / transfer sequencing
+        // internally based on the params below.
+        await transfer.execute({
+          transactionId,
+          route: bestRoute,
+          srcChainId: values.srcChain,
+          dstChainId: values.dstChain,
+          srcToken: srcToken.address,
+          dstToken: dstToken.address,
+          amount: values.amount,
+          srcTokenSymbol: srcToken.symbol,
+          dstTokenSymbol: dstToken.symbol,
+          sender,
+          recipient: effectiveRecipient,
+          approvalToken: approval?.token,
+          spender: approval?.spender as Address | undefined,
+          approvalAmount,
+          isNative: !approval,
+          approvalPlan: executionApprovalPlan,
+        });
+      } catch {
+        // Read latest Zustand state after execute's async failure handling.
+        // This catch is only a final safety net and must not downgrade a
+        // transfer that already reached a final status.
+        const cur = useStore
+          .getState()
+          .transactionHistory.find((historyItem) => historyItem.id === transactionId);
+        if (
+          cur?.type === TransactionHistoryItemType.Transfer &&
+          !FinalTransferStatuses.includes(cur.data.status)
+        ) {
+          updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
+        }
+      } finally {
+        setActiveTransferTransactionId(null);
+        setTransferLoading(false);
       }
     } finally {
-      setActiveTransferTransactionId(null);
-      setTransferLoading(false);
+      setPreparingTransfer(null);
     }
   }, [
     sender,
@@ -778,6 +787,7 @@ function TransferFormContent() {
     transfer,
     addTransferTransaction,
     setSelectedTransactionId,
+    setPreparingTransfer,
     setActiveTransferTransactionId,
     updateTransferTransactionStatus,
     setTransferLoading,

@@ -1,4 +1,4 @@
-import { CopyButton } from '@hyperlane-xyz/widgets';
+import { CopyButton, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import { useEffect } from 'react';
@@ -13,7 +13,6 @@ import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
 import { useSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
 import { useTransactionConfirmations } from './useTransactionConfirmations';
-import { getTransferDeliveryMsgId } from './utils';
 
 const MESSAGE_LABELS: Record<LabeledMsgId['label'], string> = {
   warp: 'Bridge funds',
@@ -26,6 +25,8 @@ export interface TransferDeliveryStatus {
   messageId: string;
   delivered: boolean;
   fundsAvailable: boolean;
+  status: string;
+  activity: string;
 }
 
 export function TransferProgress({
@@ -45,11 +46,7 @@ export function TransferProgress({
           message={message}
           transfer={transfer}
           enabled={enabled}
-          onDeliveryChange={
-            message.msgId === getTransferDeliveryMsgId(transfer.msgIds)
-              ? onDeliveryChange
-              : undefined
-          }
+          onDeliveryChange={onDeliveryChange}
         />
       ))}
     </section>
@@ -65,7 +62,7 @@ function MessageProgressRow({
   message: LabeledMsgId;
   transfer: TransferHistoryItem;
   enabled: boolean;
-  onDeliveryChange?: (status: TransferDeliveryStatus) => void;
+  onDeliveryChange: (status: TransferDeliveryStatus) => void;
 }) {
   const multiProvider = useMultiProvider();
   const chainAddresses = useStore((s) => s.chainAddresses);
@@ -115,25 +112,17 @@ function MessageProgressRow({
     !transfer.destinationOutcome &&
     !transfer.solanaDestSwapPda;
   const fundsAvailable = isDirectBridge && delivered && !deliveryMissing;
-  useEffect(() => {
-    onDeliveryChange?.({
-      messageId: message.msgId,
-      delivered: delivered && !deliveryMissing,
-      fundsAvailable,
-    });
-  }, [onDeliveryChange, message.msgId, delivered, deliveryMissing, fundsAvailable]);
   const confirmed =
     delivered &&
     !deliveryMissing &&
-    !destinationConfirmation.isError &&
     destinationConfirmation.data?.state === ProgressState.Confirmed;
-  const originState = originConfirmation.isError
-    ? ProgressState.Unavailable
-    : (originConfirmation.data?.state ?? ProgressState.Pending);
+  const originState =
+    originConfirmation.data?.state ??
+    (originConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);
   const originConfirmed = originState === ProgressState.Confirmed;
-  const destinationState = destinationConfirmation.isError
-    ? ProgressState.Unavailable
-    : (destinationConfirmation.data?.state ?? ProgressState.Pending);
+  const destinationState =
+    destinationConfirmation.data?.state ??
+    (destinationConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);
   const steps = [
     {
       label: 'Origin confirmed',
@@ -145,7 +134,7 @@ function MessageProgressRow({
       state:
         delivered && !deliveryMissing
           ? ProgressState.Confirmed
-          : indexed.error
+          : indexed.error && !indexed.message
             ? ProgressState.Unavailable
             : ProgressState.Pending,
       active:
@@ -168,7 +157,7 @@ function MessageProgressRow({
           : 'Confirming destination'
         : originState === ProgressState.Failed
           ? 'Origin transaction failed'
-          : indexed.error
+          : indexed.error && !indexed.message
             ? 'Status unavailable'
             : !originConfirmed && originState === ProgressState.Pending
               ? 'Confirming origin'
@@ -184,6 +173,23 @@ function MessageProgressRow({
         : originConfirmed
           ? 'Waiting for the destination to receive this message'
           : confirmationText(originConfirmation);
+  useEffect(() => {
+    onDeliveryChange({
+      messageId: message.msgId,
+      delivered: delivered && !deliveryMissing,
+      fundsAvailable,
+      status,
+      activity,
+    });
+  }, [
+    onDeliveryChange,
+    message.msgId,
+    delivered,
+    deliveryMissing,
+    fundsAvailable,
+    status,
+    activity,
+  ]);
   const body = indexed.message?.body;
   const token = decodeTransferBody({ label: message.label, body });
   const authorization = decodeAuthorizationBody(body);
@@ -226,85 +232,97 @@ function MessageProgressRow({
   return (
     <article
       aria-label={MESSAGE_LABELS[message.label]}
-      className="rounded-md border border-gray-400/25 bg-surface px-3 py-2 text-xs"
+      className="rounded-lg border border-gray-400/25 bg-surface text-xs"
     >
-      <div>
-        <span className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-          <span className="font-medium">{MESSAGE_LABELS[message.label]}</span>
-          <output
-            className={`rounded-full px-2 py-0.5 text-xxs ${confirmed || fundsAvailable ? 'bg-green-50/10 text-green-600 dark:text-green-50' : 'bg-primary-500/10 text-primary-700 dark:text-primary-200'}`}
-          >
-            {status}
-          </output>
-        </span>
-        <ol aria-label="Message milestones" className="mt-2 grid grid-cols-3 gap-2">
-          {steps.map(({ label, state, active }) => (
-            <MessageMilestone key={label} label={label} state={state} active={active} />
-          ))}
-        </ol>
-        {!confirmed && (
-          <span className="mt-1.5 block text-xxs text-foreground-muted">
-            {fundsAvailable && 'Destination confirmations: '}
-            {activity}
-          </span>
-        )}
-      </div>
       <details className="group">
-        <summary className="mt-1 flex cursor-pointer list-none items-center justify-end gap-1 text-xxs text-foreground-muted [&::-webkit-details-marker]:hidden">
-          Message details
+        <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 [&::-webkit-details-marker]:hidden">
           <span
             aria-hidden="true"
-            className="inline-block transition-transform group-open:rotate-90"
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${delivered && !deliveryMissing ? 'bg-green-50/10 text-green-600 dark:text-green-50' : 'bg-primary-500/10 text-primary-700 dark:text-primary-200'}`}
+          >
+            {delivered && !deliveryMissing ? (
+              '✓'
+            ) : originState === ProgressState.Failed ? (
+              '!'
+            ) : status === 'Status unavailable' ? (
+              '?'
+            ) : (
+              <SpinnerIcon
+                width={14}
+                height={14}
+                color="currentColor"
+                className="message-status-spinner"
+              />
+            )}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-medium">{MESSAGE_LABELS[message.label]}</span>
+            <output className="pointer-events-none block text-xxs text-foreground-muted">
+              {status}
+            </output>
+          </span>
+          <span
+            aria-hidden="true"
+            className="text-lg text-foreground-muted transition-transform group-open:rotate-90 motion-reduce:transition-none"
           >
             ›
           </span>
+          <span className="sr-only">Message details</span>
         </summary>
-        <dl className="mt-3 space-y-2 border-t border-gray-400/25 pt-3">
-          {Object.entries(fields).map(([label, value]) =>
-            value == null ? null : (
-              <div key={label} className="flex justify-between gap-3">
-                <dt className="shrink-0 text-gray-500">{label}</dt>
-                <dd className="min-w-0 break-all text-right">{value}</dd>
+        <div className="border-t border-gray-400/25 px-3 pb-3 pt-3">
+          <ol aria-label="Message milestones" className="grid grid-cols-3 gap-2">
+            {steps.map(({ label, state, active }) => (
+              <MessageMilestone key={label} label={label} state={state} active={active} />
+            ))}
+          </ol>
+          <p className="mt-2 text-xxs text-foreground-muted">{activity}</p>
+          <dl className="mt-3 space-y-2 border-t border-gray-400/25 pt-3">
+            {Object.entries(fields).map(([label, value]) =>
+              value == null ? null : (
+                <div key={label} className="flex justify-between gap-3">
+                  <dt className="shrink-0 text-foreground-muted">{label}</dt>
+                  <dd className="min-w-0 break-all text-right">{value}</dd>
+                </div>
+              ),
+            )}
+            {Object.entries(links).map(([label, { hash, url }]) =>
+              !hash ? null : (
+                <div
+                  key={label}
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
+                >
+                  <dt className="text-foreground-muted">{label}</dt>
+                  <dd className="flex min-w-0 items-center gap-2">
+                    {url ? (
+                      <a
+                        className="inline-flex items-center gap-1 underline"
+                        href={url}
+                        title={hash}
+                        aria-label={`${label} (opens in new tab)`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {hash.slice(0, 8)}…{hash.slice(-6)}
+                        <Image src={LinkIcon} width={12} height={12} alt="" />
+                      </a>
+                    ) : (
+                      <span title={hash}>
+                        {hash.slice(0, 8)}…{hash.slice(-6)}
+                      </span>
+                    )}
+                    <CopyButton copyValue={hash} width={12} height={12} />
+                  </dd>
+                </div>
+              ),
+            )}
+            {body && (
+              <div>
+                <dt className="text-foreground-muted">Message body</dt>
+                <dd className="font-mono mt-1 max-h-24 overflow-auto break-all text-xxs">{body}</dd>
               </div>
-            ),
-          )}
-          {Object.entries(links).map(([label, { hash, url }]) =>
-            !hash ? null : (
-              <div
-                key={label}
-                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
-              >
-                <dt className="text-gray-500">{label}</dt>
-                <dd className="flex min-w-0 items-center gap-2">
-                  {url ? (
-                    <a
-                      className="inline-flex items-center gap-1 underline"
-                      href={url}
-                      title={hash}
-                      aria-label={`${label} (opens in new tab)`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {hash.slice(0, 8)}…{hash.slice(-6)}
-                      <Image src={LinkIcon} width={12} height={12} alt="" />
-                    </a>
-                  ) : (
-                    <span title={hash}>
-                      {hash.slice(0, 8)}…{hash.slice(-6)}
-                    </span>
-                  )}
-                  <CopyButton copyValue={hash} width={12} height={12} />
-                </dd>
-              </div>
-            ),
-          )}
-          {body && (
-            <div>
-              <dt className="text-gray-500">Message body</dt>
-              <dd className="font-mono mt-1 max-h-24 overflow-auto break-all text-xxs">{body}</dd>
-            </div>
-          )}
-        </dl>
+            )}
+          </dl>
+        </div>
       </details>
     </article>
   );
@@ -314,8 +332,7 @@ function confirmationText({
   data,
   isError,
 }: ReturnType<typeof useTransactionConfirmations>): string {
-  if (isError) return 'Temporarily unavailable';
-  if (!data) return 'Checking…';
+  if (!data) return isError ? 'Temporarily unavailable' : 'Checking…';
   if (data.confirmations != null && data.required != null)
     return data.state === ProgressState.Confirmed
       ? `Confirmed (${data.required}/${data.required})`
@@ -358,11 +375,26 @@ function MessageMilestone({
     >
       <span
         aria-hidden="true"
-        className={`mb-1 block h-1 rounded-full ${complete ? 'bg-primary-500' : current ? 'message-progress-active bg-primary-300' : 'bg-gray-400/25'}`}
+        className={`mb-1 block h-1 rounded-full ${complete ? 'bg-primary-500' : current ? 'bg-primary-300' : 'bg-gray-400/25'}`}
       />
       <span className="flex items-start gap-1 text-xxs leading-tight">
         <span aria-hidden="true">
-          {complete ? '✓' : unavailable ? '?' : failed ? '!' : current ? '◉' : '○'}
+          {current ? (
+            <SpinnerIcon
+              width={10}
+              height={10}
+              color="currentColor"
+              className="message-status-spinner mt-0.5"
+            />
+          ) : complete ? (
+            '✓'
+          ) : unavailable ? (
+            '?'
+          ) : failed ? (
+            '!'
+          ) : (
+            '○'
+          )}
         </span>
         <span>{label}</span>
       </span>

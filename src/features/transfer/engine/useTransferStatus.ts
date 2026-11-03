@@ -61,6 +61,24 @@ export async function detectDestinationOutcome(
   return 'dest_failed';
 }
 
+// The open receipt owns outcome feedback. Background transfers still notify.
+export function notifyTransferOutcome(
+  transactionId: string,
+  status:
+    | TransferStatus.ConfirmedDestination
+    | TransferStatus.FailedRecovered
+    | TransferStatus.DestFailed,
+) {
+  if (useStore.getState().selectedTransactionId === transactionId) return;
+  if (status === TransferStatus.ConfirmedDestination) {
+    toast.success('Transfer complete! Funds have arrived.');
+  } else if (status === TransferStatus.FailedRecovered) {
+    toast.info('Transfer failed — intermediate token returned to your wallet.');
+  } else {
+    toast.error('Transfer failed — please contact support, your funds may be in your ICA.');
+  }
+}
+
 // Fires once when the REVEAL tx hash lands on a transfer. Reads the receipt
 // directly from the destination chain RPC to determine outcome without polling
 // the engine.
@@ -113,7 +131,7 @@ export function useTransferStatus(
       (!route?.callCommitment || !destinationSwapStep || destinationSwapStep.type !== 'swap')
     ) {
       updateStatus(transactionId, TransferStatus.ConfirmedDestination);
-      toast.success('Transfer complete! Funds have arrived.');
+      notifyTransferOutcome(transactionId, TransferStatus.ConfirmedDestination);
       return undefined;
     }
 
@@ -151,13 +169,13 @@ export function useTransferStatus(
         if (cancelled) return;
         if (outcome === 'success') {
           updateStatus(transactionId, TransferStatus.ConfirmedDestination);
-          toast.success('Transfer complete! Funds have arrived.');
+          notifyTransferOutcome(transactionId, TransferStatus.ConfirmedDestination);
         } else if (outcome === 'failed_recovered') {
           updateStatus(transactionId, TransferStatus.FailedRecovered);
-          toast.success('Transfer failed — intermediate token returned to your wallet.');
+          notifyTransferOutcome(transactionId, TransferStatus.FailedRecovered);
         } else {
           updateStatus(transactionId, TransferStatus.DestFailed);
-          toast.error('Transfer failed — please contact support, your funds may be in your ICA.');
+          notifyTransferOutcome(transactionId, TransferStatus.DestFailed);
         }
       })
       .catch(() => {

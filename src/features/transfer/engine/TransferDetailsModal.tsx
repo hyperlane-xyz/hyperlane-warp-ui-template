@@ -1,16 +1,15 @@
-import { CopyButton, Modal, SpinnerIcon, WideChevronIcon } from '@hyperlane-xyz/widgets';
+import { DialogTitle } from '@headlessui/react';
+import { CopyButton, Modal } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChainLogo } from '../../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
-import { ModalHeader } from '../../../components/layout/ModalHeader';
-import ArrowRightIcon from '../../../images/icons/arrow-right.svg';
 import LinkIcon from '../../../images/icons/external-link-icon.svg';
-import { Color } from '../../../styles/Color';
 import { formatTimestamp } from '../../../utils/date';
 import { getHypExplorerLink } from '../../../utils/links';
 import { logger } from '../../../utils/logger';
+import type { QuoteStep } from '../../api/types';
 import { formatDisplayAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
@@ -19,6 +18,7 @@ import { getTransferDeliveryMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
+import { getSwapStages, HyperswapProgress } from './HyperswapProgress';
 import { normalizeLabeledTransferMessages } from './messages';
 import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from './types';
 
@@ -29,49 +29,57 @@ const LABEL_NAMES: Record<string, string> = {
   reveal: 'Reveal Message ID',
 };
 
-const STATUS_DESCRIPTION: Record<TransferStatus, string> = {
-  [TransferStatus.Preparing]: 'Preparing transaction…',
-  [TransferStatus.CreatingTxs]: 'Submitting commitment to CCS…',
-  [TransferStatus.SigningApprove]: 'Awaiting approval signature in your wallet…',
-  [TransferStatus.ConfirmingApprove]: 'Confirming approval on origin chain…',
-  [TransferStatus.SigningTransfer]: 'Awaiting transfer signature in your wallet…',
-  [TransferStatus.ConfirmingOrigin]: 'Confirming on origin chain…',
-  [TransferStatus.Bridging]: 'Transferring via Hyperlane…',
-  [TransferStatus.ConfirmingDestination]: 'Confirming on destination chain…',
-  [TransferStatus.ConfirmedDestination]: 'Delivered',
-  [TransferStatus.DestTransferFailed]: 'Destination transfer reverted',
-  [TransferStatus.FailedRecovered]: 'Transfer reverted — intermediate token returned',
-  [TransferStatus.DestFailed]: 'Destination execution failed — funds stranded in ICA',
+const STATUS_HEADLINE: Record<TransferStatus, string> = {
+  [TransferStatus.Preparing]: 'Preparing transfer',
+  [TransferStatus.CreatingTxs]: 'Preparing swap',
+  [TransferStatus.SigningApprove]: 'Approve in your wallet',
+  [TransferStatus.ConfirmingApprove]: 'Confirming token approval',
+  [TransferStatus.SigningTransfer]: 'Confirm in your wallet',
+  [TransferStatus.ConfirmingOrigin]: 'Confirming origin transaction',
+  [TransferStatus.Bridging]: 'Waiting for message delivery',
+  [TransferStatus.ConfirmingDestination]: 'Checking destination execution',
+  [TransferStatus.ConfirmedDestination]: 'Checking delivery',
+  [TransferStatus.DestTransferFailed]: 'Destination execution failed',
+  [TransferStatus.FailedRecovered]: 'Funds recovered',
+  [TransferStatus.DestFailed]: 'Funds need recovery',
   [TransferStatus.Failed]: 'Transfer failed',
 };
-
-const CONFIRMING_ORIGIN_HINT_DELAY_MS = 60_000;
 
 export function TransferDetailsModal() {
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
   const transactionHistory = useStore((s) => s.transactionHistory);
   const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
-  const close = () => setSelectedTransactionId(null);
+  const preparingTransfer = useStore((s) => s.preparingTransfer);
+  const setPreparingTransfer = useStore((s) => s.setPreparingTransfer);
+  const close = () => {
+    setSelectedTransactionId(null);
+    setPreparingTransfer(null);
+  };
 
-  const isOpen = selectedTransactionId != null;
+  const isOpen = selectedTransactionId != null || preparingTransfer != null;
 
-  // Keep the last id alive after close so delivery polling continues in background.
+  // Keep the last transfer mounted during the closing transition.
   const lastIdRef = useRef<string | null>(null);
   if (selectedTransactionId != null) lastIdRef.current = selectedTransactionId;
 
   const renderedId = lastIdRef.current;
+  const liveRouteSteps = useStore((s) =>
+    renderedId ? s.transferRouteByTransactionId.get(renderedId)?.steps : undefined,
+  );
   const item =
     renderedId != null ? transactionHistory.find((entry) => entry.id === renderedId) : undefined;
-  const transfer = item?.type === TransactionHistoryItemType.Transfer ? item.data : undefined;
+  const transfer =
+    preparingTransfer ??
+    (item?.type === TransactionHistoryItemType.Transfer ? item.data : undefined);
 
-  if (!transfer || renderedId == null) return <Modal isOpen={false} close={close} />;
+  if (!transfer) return <Modal isOpen={false} close={close} />;
   return (
     <TransferDetailsModalInner
-      key={renderedId}
+      key={transfer.timestamp}
       isOpen={isOpen}
       close={close}
       transfer={transfer}
-      transactionId={renderedId}
+      routeSteps={transfer.routeSteps ?? liveRouteSteps}
     />
   );
 }
@@ -80,16 +88,21 @@ function TransferDetailsModalInner({
   isOpen,
   close,
   transfer,
-  transactionId,
+  routeSteps,
 }: {
   isOpen: boolean;
   close: () => void;
   transfer: TransferHistoryItem;
-  transactionId: string;
+  routeSteps?: QuoteStep[];
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const [deliveryStatus, setDeliveryStatus] = useState<TransferDeliveryStatus>();
+  const [messageStatuses, setMessageStatuses] = useState<Record<string, TransferDeliveryStatus>>(
+    {},
+  );
+  const onDeliveryChange = useCallback((message: TransferDeliveryStatus) => {
+    setMessageStatuses((previous) => ({ ...previous, [message.messageId]: message }));
+  }, []);
   const {
     status,
     srcChain,
@@ -116,6 +129,8 @@ function TransferDetailsModalInner({
   const srcDecimals = srcToken?.decimals ?? transfer.srcTokenMeta?.decimals;
   const dstDecimals = dstToken?.decimals ?? transfer.dstTokenMeta?.decimals;
 
+  const showDetailedRoute = !!getSwapStages(routeSteps ?? [], srcChain, dstChain);
+
   const isFailed = status === TransferStatus.Failed;
   const isDestFailed = status === TransferStatus.DestTransferFailed;
   const isDelivered = status === TransferStatus.ConfirmedDestination;
@@ -128,19 +143,14 @@ function TransferDetailsModalInner({
   // the transfer. Direct bridge routes fall back to the bridge/warp
   // message. Same-chain transfers have no msgIds.
   const pollingMsgId = getTransferDeliveryMsgId(msgIds);
+  const deliveryStatus = pollingMsgId ? messageStatuses[pollingMsgId] : undefined;
+  const bridgeMsgId = msgIds?.find(
+    (message) => message.label === 'bridge' || message.label === 'warp',
+  )?.msgId;
+  const bridgeDelivered = bridgeMsgId ? messageStatuses[bridgeMsgId]?.delivered : undefined;
   const displayMsgIds = useMemo(() => normalizeLabeledTransferMessages(msgIds), [msgIds]);
 
-  const isSent =
-    status === TransferStatus.ConfirmingOrigin ||
-    status === TransferStatus.Bridging ||
-    status === TransferStatus.ConfirmingDestination ||
-    status === TransferStatus.ConfirmedDestination ||
-    isDestFailed ||
-    isFailedRecovered ||
-    isRevealFailed;
-
-  // Show timeline only for cross-chain transfers (msgIds present).
-  const showTimeline = isSent && !isFailed && !!originTxHash && !!pollingMsgId;
+  const showTimeline = !!originTxHash && !!pollingMsgId;
 
   const fundsAvailable = showTimeline
     ? deliveryStatus?.messageId === pollingMsgId &&
@@ -160,6 +170,35 @@ function TransferDetailsModalInner({
             : undefined;
   const outcomeIsSuccess =
     !!fundsAvailable && !isFailed && !isDestFailed && !isRevealFailed && !isFailedRecovered;
+
+  const messageStatus = deliveryStatus?.messageId === pollingMsgId ? deliveryStatus : undefined;
+  const needsWallet =
+    status === TransferStatus.SigningApprove || status === TransferStatus.SigningTransfer;
+  const headline = outcomeIsSuccess
+    ? 'Transfer complete'
+    : outcome
+      ? STATUS_HEADLINE[status]
+      : showTimeline && messageStatus
+        ? messageStatus.delivered
+          ? 'Checking destination execution'
+          : messageStatus.status === 'Awaiting delivery'
+            ? 'Waiting for message delivery'
+            : messageStatus.status
+        : STATUS_HEADLINE[status];
+  const description = outcomeIsSuccess
+    ? showTimeline
+      ? 'Delivered. Confirmation details are available below.'
+      : 'Your transfer has been delivered.'
+    : outcome
+      ? 'See the outcome below for details.'
+      : needsWallet
+        ? 'Review the request in your wallet to continue.'
+        : showTimeline && messageStatus && !messageStatus.delivered
+          ? messageStatus.activity
+          : status === TransferStatus.Preparing || status === TransferStatus.CreatingTxs
+            ? 'Checking the route and preparing your transaction.'
+            : 'No action needed. We’ll update this as the transaction progresses.';
+  const isProcessing = !outcome && !needsWallet;
 
   const date = useMemo(
     () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(Date.now())),
@@ -204,73 +243,103 @@ function TransferDetailsModalInner({
 
   return (
     <Modal isOpen={isOpen} close={close} panelClassname="transfer-details-modal max-w-lg">
-      <ModalHeader className="h-8 shadow-accent-glow" />
-      <div data-testid="transfer-details" data-status={status} className="p-4">
-        {isFinal && (
-          <div className="flex justify-between">
-            <h2 className="text-xs font-normal text-gray-900 dark:text-foreground-primary">
-              {date}
-            </h2>
-            <div className="flex items-center text-xs font-normal">
-              {isDelivered ? (
-                <h3 className="text-green-50">Delivered</h3>
-              ) : isFailedRecovered ? (
-                <h3 className="text-blue-400">Recovered</h3>
-              ) : isDestFailed || isRevealFailed ? (
-                <h3 className="text-amber-600">Stranded</h3>
-              ) : (
-                <h3 className="text-red-500">Failed</h3>
-              )}
+      <div className="h-1 bg-accent-gradient" />
+      <div data-testid="transfer-details" data-status={status} className="p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-3 text-xxs text-foreground-muted">
+          <span>Transfer details</span>
+          <span>{date}</span>
+        </div>
+        {showDetailedRoute ? (
+          <HyperswapProgress
+            transfer={routeSteps === transfer.routeSteps ? transfer : { ...transfer, routeSteps }}
+            srcToken={srcToken}
+            dstToken={dstToken}
+            bridgeDelivered={bridgeDelivered}
+            executionDelivered={deliveryStatus?.delivered}
+            fundsAvailable={!!fundsAvailable}
+          />
+        ) : (
+          <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                {srcToken ? (
+                  <TokenChainIcon token={srcToken} size={28} />
+                ) : (
+                  <ChainLogo chainName={originChain} size={28} />
+                )}
+                <span className="truncate text-xs text-foreground-muted">
+                  {getChainDisplayName(multiProvider, originChain, true)}
+                </span>
+              </div>
+              <p className="mt-2 break-words font-secondary text-base tabular-nums">
+                {formatAmount(amountIn, srcDecimals)} {srcSymbol}
+              </p>
+            </div>
+            <div
+              aria-hidden="true"
+              data-testid="transfer-motion"
+              data-active={isProcessing && isOpen}
+              className="transfer-route flex gap-0.5 text-primary-500"
+            >
+              <svg width="10" height="18" viewBox="0 0 10 18" fill="none">
+                <path
+                  d="m2 3 5 6-5 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <svg width="10" height="18" viewBox="0 0 10 18" fill="none">
+                <path
+                  d="m2 3 5 6-5 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0 text-right">
+              <div className="flex items-center justify-end gap-2">
+                <span className="truncate text-xs text-foreground-muted">
+                  {getChainDisplayName(multiProvider, destChain, true)}
+                </span>
+                {dstToken ? (
+                  <TokenChainIcon token={dstToken} size={28} />
+                ) : (
+                  <ChainLogo chainName={destChain} size={28} />
+                )}
+              </div>
+              <p
+                title="Expected output"
+                className="mt-2 break-words font-secondary text-base tabular-nums"
+              >
+                {formatAmount(amountOut, dstDecimals)} {dstSymbol}
+              </p>
             </div>
           </div>
         )}
-
-        <div>
-          <div className="mt-4 flex w-full items-center justify-center rounded-sm border border-gray-400/25 bg-card-gradient py-2 shadow-card">
-            <div className="flex items-center font-secondary text-sm font-normal">
-              <span>{formatAmount(amountIn, srcDecimals)}</span>
-              <span className="ml-1">{srcSymbol}</span>
-              <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
-              <span>{formatAmount(amountOut, dstDecimals)}</span>
-              <span className="ml-1">{dstSymbol}</span>
-            </div>
-          </div>
-
-          <div className="-mt-2 grid grid-cols-[1fr_auto_1fr] items-center rounded-sm border border-gray-400/25 bg-card-gradient py-5 shadow-card">
-            <div className="flex flex-col items-center">
-              {srcToken ? (
-                <TokenChainIcon token={srcToken} size={36} />
-              ) : (
-                <ChainLogo chainName={originChain} size={36} />
-              )}
-              <span className="mt-1 text-xs font-medium tracking-wider">{srcSymbol}</span>
-              <span className="text-xxs font-normal tracking-wider text-gray-500">
-                {getChainDisplayName(multiProvider, originChain, true)}
-              </span>
-            </div>
-            <div className="mb-6 flex justify-center sm:space-x-1.5">
-              <WideChevron />
-              <WideChevron />
-            </div>
-            <div className="flex flex-col items-center">
-              {dstToken ? (
-                <TokenChainIcon token={dstToken} size={36} />
-              ) : (
-                <ChainLogo chainName={destChain} size={36} />
-              )}
-              <span className="mt-1 text-xs font-medium tracking-wider">{dstSymbol}</span>
-              <span className="text-xxs font-normal tracking-wider text-gray-500">
-                {getChainDisplayName(multiProvider, destChain, true)}
-              </span>
-            </div>
-          </div>
+        <div
+          className="mt-5 min-h-[76px] border-t border-gray-400/25 pt-4"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <DialogTitle
+            as="h2"
+            data-testid="transfer-headline"
+            className={`text-base font-medium transition-colors duration-200 motion-reduce:transition-none ${outcomeIsSuccess ? 'text-green-600 dark:text-green-50' : 'text-foreground-primary'}`}
+          >
+            {headline}
+          </DialogTitle>
+          <p className="mt-1 text-xs leading-relaxed text-foreground-muted">{description}</p>
         </div>
 
         {showTimeline && (
           <TransferProgress
             transfer={transfer}
             enabled={isOpen}
-            onDeliveryChange={setDeliveryStatus}
+            onDeliveryChange={onDeliveryChange}
           />
         )}
 
@@ -306,30 +375,40 @@ function TransferDetailsModalInner({
                 />
               ))}
           </div>
-        ) : !showTimeline ? (
-          <div className="flex flex-col items-center justify-center py-4">
-            <SpinnerIcon width={60} height={60} className="transfer-details-spinner mt-3" />
-            <div className="mt-5 text-center text-sm text-gray-600 dark:text-foreground-muted">
-              {STATUS_DESCRIPTION[status]}
-            </div>
-            {status === TransferStatus.ConfirmingOrigin && <ConfirmingOriginHint />}
-          </div>
         ) : null}
-        {outcome && (
-          <div
-            data-testid="transfer-outcome"
-            role={outcomeIsSuccess ? 'status' : 'alert'}
-            className={`mt-4 rounded-md border p-3 text-xs ${
-              outcomeIsSuccess
-                ? 'border-green-50/30 bg-green-50/10 text-green-600 dark:text-green-50'
-                : isFailedRecovered
-                  ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
-                  : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
-            }`}
+        <div className="mt-4 min-h-[52px]">
+          {outcome && (
+            <div
+              data-testid="transfer-outcome"
+              role={outcomeIsSuccess ? 'status' : 'alert'}
+              className={`rounded-lg border p-3 text-xs leading-relaxed ${
+                outcomeIsSuccess
+                  ? 'border-green-50/30 bg-green-50/10 text-green-600 dark:text-green-50'
+                  : isFailedRecovered
+                    ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
+                    : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
+              }`}
+            >
+              {outcome}
+            </div>
+          )}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-4 border-t border-gray-400/25 pt-3">
+          <span className="text-xxs text-foreground-muted">
+            {originTxHash && !isFinal && !fundsAvailable
+              ? 'You can close this. Your transfer will continue.'
+              : needsWallet
+                ? 'Your wallet needs your confirmation.'
+                : ''}
+          </span>
+          <button
+            type="button"
+            onClick={close}
+            className="shrink-0 rounded-lg border border-gray-400/25 px-4 py-2 text-xs font-medium transition-colors hover:bg-primary-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 motion-reduce:transition-none"
           >
-            {outcome}
-          </div>
-        )}
+            Close
+          </button>
+        </div>
       </div>
     </Modal>
   );
@@ -339,7 +418,9 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
   return (
     <div>
       <div className="flex items-center justify-between">
-        <label className="text-xs leading-normal tracking-wider text-gray-350">{name}</label>
+        <label className="text-xs leading-normal tracking-wider text-foreground-muted">
+          {name}
+        </label>
         <div className="flex items-center space-x-2">
           {url && (
             <a href={url} target="_blank" rel="noopener noreferrer">
@@ -356,18 +437,6 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
   );
 }
 
-function WideChevron() {
-  return (
-    <WideChevronIcon
-      width="16"
-      height="100%"
-      direction="e"
-      color={Color.gray['300']}
-      rounded={true}
-    />
-  );
-}
-
 function fixDoubleSlash(url: string) {
   return url.replace(/([^:]\/)\/+/g, '$1');
 }
@@ -379,23 +448,4 @@ function formatAmount(amount: string, decimals: number | undefined): string {
   } catch {
     return amount;
   }
-}
-
-function ConfirmingOriginHint() {
-  const [showHint, setShowHint] = useState(false);
-
-  useEffect(() => {
-    const hintTimer = setTimeout(() => setShowHint(true), CONFIRMING_ORIGIN_HINT_DELAY_MS);
-    return () => {
-      clearTimeout(hintTimer);
-    };
-  }, []);
-
-  if (!showHint) return null;
-  return (
-    <div className="mt-4 max-w-[24rem] text-center text-xs text-gray-500 dark:text-foreground-muted">
-      If your transaction hasn&apos;t been confirmed by now, it has most likely failed in your
-      wallet.
-    </div>
-  );
 }

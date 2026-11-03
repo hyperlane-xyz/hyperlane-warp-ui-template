@@ -1,6 +1,6 @@
 import { IToken } from '@hyperlane-xyz/sdk';
 import { CopyButton, HyperlaneLogo, Modal, RefreshIcon } from '@hyperlane-xyz/widgets';
-import { Fragment, useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 
 import { ChainLogo } from '../../../../components/icons/ChainLogo';
 import { TokenIcon } from '../../../../components/icons/TokenIcon';
@@ -8,6 +8,7 @@ import { HoverTooltip } from '../../../../components/tooltip/HoverTooltip';
 import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../../api/types';
 import { formatDisplayAmount, formatFeeAmount } from '../../../balances/utils';
 import { useMultiProvider } from '../../../chains/hooks';
+import { ProgressState } from '../../../messages/progress';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../../tokens/hooks';
 import type { UiToken } from '../../../tokens/types';
 import { tokenKey } from '../../../tokens/utils';
@@ -156,14 +157,27 @@ function RouteCard({
   );
 }
 
-function RouteFlowDiagram({
+export interface RouteStepProgress {
+  label: string;
+  description: string;
+  state: ProgressState;
+  active?: boolean;
+}
+
+export function RouteFlowDiagram({
   steps,
   srcToken,
   dstToken,
+  progress,
 }: {
   steps: QuoteStep[];
   srcToken?: UiToken | null;
   dstToken?: UiToken | null;
+  progress?: {
+    steps: (RouteStepProgress | undefined)[];
+    wrap?: RouteStepProgress;
+    unwrap?: RouteStepProgress;
+  };
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
@@ -191,46 +205,79 @@ function RouteFlowDiagram({
   });
 
   return (
-    <div className="-mx-1 overflow-x-auto px-1 pb-2">
-      <div className="flex min-w-max flex-nowrap items-end gap-1.5">
-        {showWrap && firstNode && (
-          <>
-            <TokenNode token={srcToken ?? null} chainName={srcToken?.chainName} />
-            <WrapEdge action="wrap" fromToken={srcToken ?? null} toToken={resolvedTokens[0]} />
-          </>
-        )}
+    <div
+      role={progress ? 'region' : undefined}
+      aria-label={progress ? 'Hyperswap route' : undefined}
+      className="pb-2"
+    >
+      <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-4">
         {nodes.map((node, i) => {
-          const step = i < steps.length ? steps[i] : undefined;
-          const token = resolvedTokens[i];
-          const tokenOut = i + 1 <= lastIdx ? resolvedTokens[i + 1] : null;
+          const step = i > 0 ? steps[i - 1] : undefined;
           const chainName = multiProvider.tryGetChainName(node.chainId) ?? undefined;
-
           return (
-            <Fragment key={i}>
-              <TokenNode token={token} chainName={chainName} />
-              {step && (
-                <StepEdge
-                  step={step}
-                  tokenMap={tokenMap}
-                  tokenOut={tokenOut}
-                  stepIndex={i}
-                  steps={steps}
-                />
+            <div key={i} className="route-flow-leg flex min-w-0 max-w-full items-center gap-1.5">
+              {i === 0 && showWrap && (
+                <>
+                  <TokenNode token={srcToken ?? null} chainName={srcToken?.chainName} />
+                  <ProgressEdge progress={progress?.wrap}>
+                    <WrapEdge
+                      action="wrap"
+                      fromToken={srcToken ?? null}
+                      toToken={resolvedTokens[0]}
+                    />
+                  </ProgressEdge>
+                </>
               )}
-            </Fragment>
+              {step && (
+                <ProgressEdge progress={progress?.steps[i - 1]}>
+                  <StepEdge
+                    step={step}
+                    tokenMap={tokenMap}
+                    tokenOut={resolvedTokens[i]}
+                    stepIndex={i - 1}
+                    steps={steps}
+                  />
+                </ProgressEdge>
+              )}
+              <TokenNode token={resolvedTokens[i]} chainName={chainName} />
+            </div>
           );
         })}
         {showUnwrap && lastNode && (
-          <>
-            <WrapEdge
-              action="unwrap"
-              fromToken={resolvedTokens[lastIdx]}
-              toToken={dstToken ?? null}
-            />
+          <div className="route-flow-leg flex min-w-0 max-w-full items-center gap-1.5">
+            <ProgressEdge progress={progress?.unwrap}>
+              <WrapEdge
+                action="unwrap"
+                fromToken={resolvedTokens[lastIdx]}
+                toToken={dstToken ?? null}
+              />
+            </ProgressEdge>
             <TokenNode token={dstToken ?? null} chainName={dstToken?.chainName} />
-          </>
+          </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ProgressEdge({
+  progress,
+  children,
+}: {
+  progress?: RouteStepProgress;
+  children: ReactNode;
+}) {
+  if (!progress) return <>{children}</>;
+  return (
+    <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- A graph edge is a group, not a form fieldset or disclosure.
+      role="group"
+      aria-label={`${progress.label}: ${progress.description}`}
+      aria-current={progress.active ? 'step' : undefined}
+      data-state={progress.state}
+      className="route-progress-edge min-w-0"
+    >
+      {children}
     </div>
   );
 }
@@ -263,7 +310,7 @@ const CHAIN_BADGE_CONTAINER = CHAIN_BADGE_SIZE + 2;
 
 function TokenNode({ token, chainName }: { token: UiToken | null; chainName?: string }) {
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="route-asset flex shrink-0 flex-col items-center gap-1">
       <div className="relative" style={{ width: 26, height: 26 }}>
         <TokenIcon token={token as unknown as IToken} size={26} />
         {chainName && (
@@ -275,7 +322,10 @@ function TokenNode({ token, chainName }: { token: UiToken | null; chainName?: st
           </div>
         )}
       </div>
-      <span className="mt-1 max-w-[3.5rem] truncate font-secondary text-xxs text-gray-500 dark:text-foreground-secondary">
+      <span
+        title={token?.symbol}
+        className="h-4 max-w-[3.5rem] truncate font-secondary text-xxs leading-4 text-gray-500 dark:text-foreground-secondary"
+      >
         {token?.symbol ?? '?'}
       </span>
     </div>
@@ -322,12 +372,14 @@ function WrapEdge({
   const label = action === 'wrap' ? 'Wrap' : 'Unwrap';
 
   return (
-    <div className="flex items-center gap-1 pb-4">
-      <span className="text-sm text-gray-400">→</span>
+    <div className="route-step flex min-w-0 items-center gap-1">
+      <span aria-hidden="true" className="route-step-arrow shrink-0 text-sm text-gray-400">
+        →
+      </span>
       <HoverTooltip
         tooltip={<WrapEdgeTooltip label={label} fromToken={fromToken} toToken={toToken} />}
       >
-        <div className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 dark:border-white/15 dark:bg-white/10">
+        <div className="route-step-badge flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 dark:border-white/15 dark:bg-white/10">
           <RefreshIcon
             width={13}
             height={13}
@@ -339,7 +391,9 @@ function WrapEdge({
           </span>
         </div>
       </HoverTooltip>
-      <span className="text-sm text-gray-400">→</span>
+      <span aria-hidden="true" className="route-step-arrow shrink-0 text-sm text-gray-400">
+        →
+      </span>
     </div>
   );
 }
@@ -456,17 +510,21 @@ function SwapEdge({
   );
 
   return (
-    <div className="flex items-center gap-1 pb-4">
-      <span className="text-sm text-gray-400">→</span>
+    <div className="route-step flex min-w-0 items-center gap-1">
+      <span aria-hidden="true" className="route-step-arrow shrink-0 text-sm text-gray-400">
+        →
+      </span>
       <HoverTooltip tooltip={tooltip}>
-        <div className="flex items-center gap-1 rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 dark:border-purple-800/30 dark:bg-purple-900/15">
+        <div className="route-step-badge flex items-center gap-1 rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 dark:border-purple-800/30 dark:bg-purple-900/15">
           <DexLogo meta={meta} dexKey={step.dex} size={13} />
           <span className="font-secondary text-xxs text-purple-700 dark:text-purple-300">
             {meta?.name ?? step.dex}
           </span>
         </div>
       </HoverTooltip>
-      <span className="text-sm text-gray-400">→</span>
+      <span aria-hidden="true" className="route-step-arrow shrink-0 text-sm text-gray-400">
+        →
+      </span>
     </div>
   );
 }
@@ -558,17 +616,21 @@ function CrossChainEdge({
   );
 
   return (
-    <div className="flex items-center gap-1 pb-4">
-      <span className="text-sm text-gray-400">→</span>
+    <div className="route-step flex min-w-0 items-center gap-1">
+      <span aria-hidden="true" className="route-step-arrow shrink-0 text-sm text-gray-400">
+        →
+      </span>
       <HoverTooltip tooltip={tooltip}>
-        <div className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 dark:border-blue-800/30 dark:bg-blue-900/15">
+        <div className="route-step-badge flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 dark:border-blue-800/30 dark:bg-blue-900/15">
           <HyperlaneLogo width={13} height={13} color="currentColor" />
           <span className="max-w-[7rem] truncate font-secondary text-xxs text-blue-700 dark:text-blue-300">
             {routeLabel}
           </span>
         </div>
       </HoverTooltip>
-      <span className="text-sm text-gray-400">→</span>
+      <span aria-hidden="true" className="route-step-arrow shrink-0 text-sm text-gray-400">
+        →
+      </span>
     </div>
   );
 }

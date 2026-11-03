@@ -228,25 +228,23 @@ Common animations
 =================
 */
 
-@keyframes message-progress-shimmer {
-  from {
-    background-position: 200% 0;
+/* Only the route moves while waiting; message rows remain stable. */
+@keyframes transfer-route-flow {
+  0%,
+  100% {
+    opacity: 0.25;
   }
-  to {
-    background-position: -200% 0;
+  45% {
+    opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .message-progress-active {
-    background-image: linear-gradient(
-      100deg,
-      transparent 30%,
-      rgb(255 255 255 / 80%) 50%,
-      transparent 70%
-    );
-    background-size: 200% 100%;
-    animation: message-progress-shimmer 2s linear infinite;
+  .transfer-route[data-active='true'] svg {
+    animation: transfer-route-flow 1.8s ease-in-out infinite;
+  }
+  .transfer-route[data-active='true'] svg + svg {
+    animation-delay: 0.25s;
   }
 }
 
@@ -756,120 +754,96 @@ html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
   background: rgba(255, 255, 255, 0.12) !important;
 }
 
+/* Keep each operation with its output token when a route spans multiple rows. */
+.route-step > div {
+  min-width: 0;
+}
+.route-step-badge {
+  height: 26px;
+}
+.route-step-badge > :not(:last-child) {
+  flex-shrink: 0;
+}
+.route-step-badge > span:last-child {
+  min-width: 0;
+  max-width: 7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Route previews retain their normal palette; only observed outcomes recolor steps. */
+.route-progress-edge .route-step-badge::before {
+  content: '';
+  display: inline-block;
+  width: 0.65rem;
+  flex-shrink: 0;
+}
+.route-progress-edge[data-state='confirmed'] .route-step-badge {
+  border-color: #3c835e !important;
+}
+.route-progress-edge[data-state='confirmed'] .route-step-arrow,
+.route-progress-edge[data-state='confirmed'] .route-step-badge::before {
+  color: #3c835e !important;
+}
+.route-progress-edge[data-state='confirmed'] .route-step-badge::before {
+  content: '✓';
+  font-size: 0.7rem;
+}
+.route-progress-edge[data-state='failed'] .route-step-badge {
+  border-color: #ef4444 !important;
+}
+
+.route-progress-edge[aria-current='step'] .route-step-badge::before {
+  height: 0.65rem;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  color: var(--color-primary-500, #9a0dff);
+}
+@keyframes route-step-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .route-progress-edge[aria-current='step'] .route-step-badge::before {
+    animation: route-step-spin 1.2s linear infinite;
+  }
+}
+.message-status-spinner {
+  color: inherit !important;
+  animation-duration: 1.2s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .message-status-spinner {
+    animation: none !important;
+  }
+}
+
+/* Anchor the receipt so expanding messages never recenters the dialog. */
+.transfer-details-modal {
+  align-self: flex-start;
+  transition-property: opacity, transform, translate, scale;
+  margin-top: clamp(0rem, 8vh, 5rem);
+  max-height: calc(100dvh - clamp(0rem, 8vh, 5rem) - 2rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transfer-details-modal {
+    transition: none;
+  }
+}
+
 html[data-theme-mode='dark'] .transfer-details-modal {
   border: 1px solid rgba(185, 89, 255, 0.42) !important;
-  background: var(--dark-surface) !important;
+  background: var(--color-surface) !important;
   color: var(--dark-text-primary) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme-mode='dark'] .transfer-details-modal .bg-primary-200 {
-  background: rgba(185, 89, 255, 0.2) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-900,
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-800 {
-  color: var(--dark-text-primary) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-600,
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-500,
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-350 {
-  color: var(--dark-text-secondary) !important;
-}
-
-/* Card gradient and shadow — dark surface variant */
-html[data-theme-mode='dark'] .transfer-details-modal .bg-card-gradient {
-  background: linear-gradient(
-    180deg,
-    var(--dark-surface-card) 0%,
-    rgba(20, 10, 30, 0.8) 100%
-  ) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-modal .shadow-card {
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3) !important;
-}
-
 html[data-theme-mode='dark'] .transfer-details-modal .border-gray-400\/25 {
   border-color: var(--dark-border) !important;
-}
-
-/* Timeline section — text and icons */
-html[data-theme-mode='dark'] .transfer-details-modal h4 {
-  color: var(--dark-text-primary) !important;
-}
-
-/* Timeline stage labels (Sent, Finalized, Validated, Relayed) */
-html[data-theme-mode='dark'] .transfer-details-modal .htw-text-gray-700 {
-  color: var(--dark-text-primary) !important;
-}
-
-/* Timeline bar and icon circles — accent purple instead of blue */
-html[data-theme-mode='dark'] .transfer-details-modal .htw-bg-blue-500 {
-  background-color: rgb(var(--dark-accent-rgb)) !important;
-}
-
-/* Timeline — arrow-shaped segments via clip-path [=> >=> >=> >=] */
-/* Middle segments: V-notch left, point right */
-.transfer-details-modal .htw-bg-blue-500 {
-  clip-path: polygon(
-    0 0,
-    calc(100% - 10px) 0,
-    100% 50%,
-    calc(100% - 10px) 100%,
-    0 100%,
-    10px 50%
-  ) !important;
-}
-
-/* First segment: flat left, point right */
-.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 {
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%) !important;
-}
-
-/* Last segment: V-notch left, flat right */
-.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 {
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%) !important;
-}
-
-/* Hide widget chevrons — clip-path handles the shape */
-.transfer-details-modal .htw-bg-blue-500 > :not(:first-child) {
-  opacity: 0 !important;
-}
-
-/* Center icons within clip-path chevron shapes */
-/* First segment (flat left, arrow right): visual center is ~5px left of CSS center */
-.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 > :first-child {
-  transform: translateX(-5px);
-}
-
-/* Middle segments: cancel widget's htw-pl-2 that pushes icons right */
-.transfer-details-modal
-  .htw-flex-1:not(:first-child):not(:last-child)
-  .htw-bg-blue-500
-  > :first-child {
-  padding-left: 0 !important;
-}
-
-/* Last segment (V-notch left, flat right): visual center is ~5px right of CSS center */
-.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 > :first-child {
-  transform: translateX(5px);
-}
-
-/* Close gaps between arrow segments */
-.transfer-details-modal .htw-flex-0 {
-  width: 0 !important;
-}
-
-/* Arrow between amount/ticker pairs (e.g. "1 USDC → 1 USDC") */
-html[data-theme-mode='dark'] .transfer-details-modal .font-secondary img {
-  filter: brightness(0) invert(1) opacity(0.85);
-}
-
-/* Wide chevrons between origin/dest token icons */
-html[data-theme-mode='dark'] .transfer-details-modal .mb-6 svg path {
-  fill: rgba(185, 89, 255, 0.6) !important;
 }
 
 /* Link icons */
@@ -884,18 +858,6 @@ html[data-theme-mode='dark'] .transfer-details-modal .opacity-40 {
 
 html[data-theme-mode='dark'] .transfer-details-modal a {
   color: var(--dark-text-primary) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-spinner {
-  color: var(--dark-text-primary) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-spinner circle {
-  stroke: rgba(185, 89, 255, 0.35) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-spinner path {
-  fill: rgb(var(--dark-accent-rgb)) !important;
 }
 
 /* Fix wallet icons being cropped to circles by widget's htw-rounded-full + htw-overflow-hidden */

@@ -13,8 +13,16 @@ test.describe('EVM approval flow', () => {
   test('low allowance forces approve() as the first captured tx', async ({ page }) => {
     const { txs } = await installEvmRpcMock(page, {
       chainUrlMap: [
-        { chainId: 8453, urlMatch: /base\.drpc|base\.org|base-mainnet|base\.publicnode|base\.llamarpc|basescan|base\.blockpi|base\.meowrpc/i },
-        { chainId: 1, urlMatch: /ethereum\.|eth\.drpc|eth-mainnet|llamarpc|cloudflare-eth|ankr.*eth|eth\.publicnode/i },
+        {
+          chainId: 8453,
+          urlMatch:
+            /base\.drpc|base\.org|base-mainnet|base\.publicnode|base\.llamarpc|basescan|base\.blockpi|base\.meowrpc/i,
+        },
+        {
+          chainId: 1,
+          urlMatch:
+            /ethereum\.|eth\.drpc|eth-mainnet|llamarpc|cloudflare-eth|ankr.*eth|eth\.publicnode/i,
+        },
       ],
       erc20: {
         [`1:${USDC_ETHEREUM}`]: {
@@ -49,13 +57,39 @@ test.describe('EVM approval flow', () => {
     await expect(page.locator('.transfer-review-panel').first()).toContainText(/Spender:/i);
     const sendButton = page.getByRole('button', { name: /^Send to/i });
     await sendButton.waitFor({ state: 'visible', timeout: 30_000 });
-    await sendButton.click({ timeout: 30_000 });
+    // Hold the fresh allowance check: preparation must render before RPCs finish,
+    // without persisting a draft or requesting any wallet transactions.
+    let releasePreflight = () => {};
+    const preflightGate = new Promise<void>((resolve) => {
+      releasePreflight = resolve;
+    });
+    await page.route('**/*', async (route) => {
+      if (
+        route.request().method() === 'POST' &&
+        route.request().postData()?.includes('0xdd62ed3e')
+      ) {
+        await preflightGate;
+      }
+      await route.fallback();
+    });
+    try {
+      await sendButton.click({ timeout: 30_000 });
+      await expect(page.getByTestId('transfer-headline')).toHaveText('Preparing transfer');
+      expect(txs).toHaveLength(0);
+      const history = await page.evaluate(
+        () => JSON.parse(localStorage.getItem('app-state') ?? '{}').state?.transactionHistory ?? [],
+      );
+      expect(history).toHaveLength(0);
+      await page.getByRole('button', { name: 'Close', exact: true }).click();
+    } finally {
+      releasePreflight();
+    }
 
     // First eth_sendTransaction must be the approval call. Route execution
     // should only dispatch after the approval receipt confirms.
-    await expect
-      .poll(() => txs.length, { timeout: 60_000, intervals: [500] })
-      .toBeGreaterThan(0);
+    await expect.poll(() => txs.length, { timeout: 60_000, intervals: [500] }).toBeGreaterThan(0);
+
+    await expect(page.getByTestId('transfer-details')).toBeHidden();
 
     const firstSelector = txs[0].data!.slice(0, 10).toLowerCase();
     expect(firstSelector).toBe(APPROVE_SELECTOR);

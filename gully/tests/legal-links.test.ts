@@ -14,7 +14,7 @@ const read = (p: string) => readFileSync(join(app, p), 'utf8');
 const SLOW = 120_000;
 const TERMS = 'https://gullychain.xyz/terms';
 const PRIVACY = 'https://gullychain.xyz/privacy';
-const newTab = (u: string) => new RegExp(`<a href="${u.replace(/[./]/g, '\$&')}" target="_blank" rel="noopener noreferrer">`);
+const newTab = (u: string) => new RegExp(`<a href="${u.replace(/[./]/g, '\\$&')}" target="_blank" rel="noopener noreferrer">`);
 
 describe('Gully Chain Terms and Privacy on the bridge', () => {
   it('/terms and /privacy (with or without a slash) redirect to gullychain.xyz; other paths do not', async () => {
@@ -59,7 +59,7 @@ describe('Gully Chain Terms and Privacy on the bridge', () => {
   it('no draft legal marker and no old docs.gullychain.xyz/privacy link in the app sources', () => {
     const files = ['index.html', 'picker/index.html', ...readdirSync(join(app, 'src'), { recursive: true }).map((f) => `src/${f}`)];
     for (const f of files.filter((f) => /\.(tsx?|html|css)$/.test(f))) {
-      const t = read(f.replace(/\/g, '/'));
+      const t = read(f.replace(/\\/g, '/'));
       expect(t, f).not.toMatch(/pending legal review|review by counsel/i);
       expect(t, f).not.toContain('docs.gullychain.xyz/privacy');
     }

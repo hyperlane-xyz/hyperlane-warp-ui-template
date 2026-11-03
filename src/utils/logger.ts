@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { captureException } from '@sentry/nextjs';
+
 import { config } from '../consts/config';
 
 export const logger = {

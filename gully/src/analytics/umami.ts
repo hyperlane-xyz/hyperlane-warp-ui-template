@@ -1,6 +1,6 @@
 /**
  * Gully Chain analytics: self-hosted Umami at analytics.gullychain.xyz (gully-ops gully/umami). The tag in index.html
- * is cookieless and honours Do Not Track, so there is no consent banner (docs.gullychain.xyz/privacy/).
+ * is cookieless and honours Do Not Track, so there is no consent banner (gullychain.xyz/privacy).
  * `track` is a no-op when the script is blocked or missing. Props are coarse labels only: never an address or email.
  */
 type Props = Record<string, string | number | boolean>;

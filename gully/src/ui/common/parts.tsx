@@ -369,19 +369,23 @@ export function ActionButton({ b }: { b: BridgeState }) {
           Connect wallet
         </Btn>
         {b.wallet.error && <p className="err">{b.wallet.error}</p>}
+        <ConsentLine />
       </>
     );
   const wrongChain = b.wallet.chainId !== CHAINS[b.from].id;
   return (
-    <Btn
-      icon={b.kind === 'fast' ? 'zap' : 'shield'}
-      className="btn-block"
-      disabled={!!b.blocker || b.busy}
-      busy={b.busy}
-      onClick={b.send}
-    >
-      {b.busy ? 'Confirm in your wallet' : b.blocker || `${wrongChain ? `Switch to ${CHAINS[b.from].short} and ` : ''}${b.kind === 'fast' ? 'Bridge fast' : b.direction === 'deposit' ? 'Deposit' : 'Start withdrawal'}`}
-    </Btn>
+    <>
+      <Btn
+        icon={b.kind === 'fast' ? 'zap' : 'shield'}
+        className="btn-block"
+        disabled={!!b.blocker || b.busy}
+        busy={b.busy}
+        onClick={b.send}
+      >
+        {b.busy ? 'Confirm in your wallet' : b.blocker || `${wrongChain ? `Switch to ${CHAINS[b.from].short} and ` : ''}${b.kind === 'fast' ? 'Bridge fast' : b.direction === 'deposit' ? 'Deposit' : 'Start withdrawal'}`}
+      </Btn>
+      <ConsentLine />
+    </>
   );
 }
 
@@ -536,6 +540,29 @@ export const FOOT_LINKS: { label: string; icon: IconName; href: string; newTab?:
   { label: 'X', icon: 'twitter', href: LINKS.x },
 ];
 
+/** Gully Chain's Terms and Privacy (gullychain.xyz), in every footer, the embed's minimal one too. Another origin: new tab. */
+export const LEGAL_LINKS: { label: string; icon: IconName; href: string }[] = [
+  { label: 'Terms', icon: 'book', href: LINKS.terms },
+  { label: 'Privacy', icon: 'shield', href: LINKS.privacy },
+];
+
+/** One line under the transfer button: bridging means agreeing to the Gully Chain Terms and Privacy Policy. */
+export function ConsentLine() {
+  return (
+    <p className="consent" data-testid="consent">
+      By bridging you agree to the Gully Chain{' '}
+      <Ext href={LINKS.terms} newTab>
+        Terms
+      </Ext>{' '}
+      and{' '}
+      <Ext href={LINKS.privacy} newTab>
+        Privacy Policy
+      </Ext>
+      .
+    </p>
+  );
+}
+
 export function Footer({ minimal }: { minimal?: boolean }) {
   return (
     <footer className="foot">
@@ -572,6 +599,14 @@ export function Footer({ minimal }: { minimal?: boolean }) {
             Fast lane secured by <Ext href={LINKS.hyperlane}>Hyperlane</Ext>. Canonical lane: the GullyChain Arbitrum Nitro
             rollup bridge. Testnet: no real value.
           </p>
+          <nav className="foot-legal" aria-label="Legal">
+            {LEGAL_LINKS.map((l) => (
+              <Ext key={l.href} href={l.href} newTab>
+                <Icon name={l.icon} size={16} />
+                {l.label}
+              </Ext>
+            ))}
+          </nav>
         </div>
       </div>
     </footer>

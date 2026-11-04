@@ -1,11 +1,14 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import type { RouteResponse } from '../api/types';
+import { useStore } from '../store';
 import { labelTransferMessages } from '../transfer/engine/messages';
 import type { LabeledMsgId } from '../transfer/engine/types';
 import { fetchMessages } from './graphqlClient';
+import { getMailboxDeliveryStatus, mailboxDeliveryQueryKey } from './mailboxDelivery';
 import { LiveConnection } from './messageStream';
 import { buildMessageByIdQuery, buildMessagesByOriginTxQuery } from './queries/build';
 import {
@@ -44,7 +47,13 @@ export function useMessageDeliveryStatus(
   lookup: MessageLookup | undefined,
   enabled: boolean,
   multiProvider: MultiProtocolProvider,
-  recheckDelivered = false,
+  {
+    destinationChain,
+    recheckDelivered = false,
+  }: {
+    destinationChain?: string;
+    recheckDelivered?: boolean;
+  } = {},
 ): MessageDeliveryResult {
   const connection = useMessageStream((state) => state.connection);
   const ready = multiProvider.getKnownChainNames().length > 0;
@@ -114,5 +123,41 @@ export function useMessageDeliveryStatus(
       },
     };
   }, [entries, byOriginTx, route, multiProvider]);
-  return { ...data, isLoading, error };
+  const chainAddresses = useStore((state) => state.chainAddresses);
+  const chain = data.message
+    ? (multiProvider.tryGetChainName(data.message.destinationDomain) ?? undefined)
+    : destinationChain;
+  const metadata = chain ? multiProvider.tryGetChainMetadata(chain) : undefined;
+  const msgId = lookup && 'msgId' in lookup ? lookup.msgId : getTransferDeliveryMsgId(data.msgIds);
+  const mailbox = chain ? chainAddresses[chain]?.mailbox : undefined;
+  const supportsMailbox =
+    metadata &&
+    [ProtocolType.Ethereum, ProtocolType.Tron, ProtocolType.Sealevel].includes(metadata.protocol);
+  const fallback = useQuery({
+    queryKey: [...mailboxDeliveryQueryKey(msgId), chain, mailbox, metadata?.rpcUrls],
+    queryFn: () => {
+      if (!msgId || !chain) throw new Error('Missing mailbox delivery target');
+      return getMailboxDeliveryStatus({
+        msgId,
+        destinationChain: chain,
+        chainAddresses,
+        multiProvider,
+      });
+    },
+    enabled: enabled && !!msgId && !!mailbox && !!supportsMailbox && !data.destinationTxHash,
+    staleTime: 5_000,
+    refetchInterval: (query) =>
+      !recheckDelivered &&
+      query.state.data?.isDelivered &&
+      (query.state.data.destinationTxHash || metadata?.protocol === ProtocolType.Sealevel)
+        ? false
+        : 5_000,
+  });
+  return {
+    ...data,
+    isDelivered: data.isDelivered || !!fallback.data?.isDelivered,
+    destinationTxHash: data.destinationTxHash ?? fallback.data?.destinationTxHash,
+    isLoading: isLoading || fallback.isLoading,
+    error: error ?? fallback.error,
+  };
 }

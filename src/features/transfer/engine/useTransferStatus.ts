@@ -91,7 +91,6 @@ export function useTransferStatus(
   );
   const updateStatus = useStore((s) => s.updateTransferTransactionStatus);
   const multiProvider = useMultiProvider();
-  const lastProcessedTxRef = useRef<string | null>(null);
   const retryTxHashRef = useRef<string | null>(null);
   const retryAttemptRef = useRef(0);
   const [retryTick, setRetryTick] = useState(0);
@@ -116,9 +115,12 @@ export function useTransferStatus(
       retryTxHashRef.current = destinationTxHash;
       retryAttemptRef.current = 0;
     }
-    if (status && FinalTransferStatuses.includes(status)) return undefined;
-    if (lastProcessedTxRef.current === destinationTxHash) return undefined;
-    lastProcessedTxRef.current = destinationTxHash;
+    // Read the latest status: an earlier effect may already have completed this
+    // transfer, including React's development effect replay.
+    const currentStatus =
+      useStore.getState().transactionHistory.find((item) => item.id === transactionId)?.data
+        .status ?? status;
+    if (currentStatus && FinalTransferStatuses.includes(currentStatus)) return undefined;
 
     const destinationSwapStep = route?.steps.find(
       (step): step is Extract<NonNullable<typeof route>['steps'][number], { type: 'swap' }> =>
@@ -147,7 +149,6 @@ export function useTransferStatus(
     }
 
     if (!provider) {
-      lastProcessedTxRef.current = null;
       scheduleRetry();
       return () => {
         cancelled = true;
@@ -180,7 +181,6 @@ export function useTransferStatus(
       })
       .catch(() => {
         if (cancelled) return;
-        lastProcessedTxRef.current = null;
         scheduleRetry();
       });
 

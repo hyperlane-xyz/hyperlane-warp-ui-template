@@ -1,11 +1,10 @@
 import { SpinnerIcon } from '@hyperlane-xyz/widgets';
-import { formatUnits } from 'viem';
 
 import { ChainLogo } from '../../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
 import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
+import { formatTokenAmount } from '../../../utils/amount';
 import type { QuoteStep } from '../../api/types';
-import { formatDisplayAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { ProgressState } from '../../messages/progress';
@@ -196,16 +195,7 @@ export function TransferRouteProgress(props: TransferRouteProgressProps) {
         const decimals =
           token?.decimals ??
           (index === 0 ? transfer.srcTokenMeta?.decimals : transfer.dstTokenMeta?.decimals);
-        const amount = !showAmounts
-          ? undefined
-          : decimals == null
-            ? `${rawAmount} (atomic)`
-            : formatDisplayAmount(BigInt(rawAmount), decimals);
-        const fullAmount = !showAmounts
-          ? undefined
-          : decimals == null
-            ? `${rawAmount} (atomic)`
-            : formatUnits(BigInt(rawAmount), decimals);
+        const amount = showAmounts ? formatTokenAmount(rawAmount, decimals) : undefined;
         const step = index > 0 ? steps[index - 1] : undefined;
         const label =
           !step || step.type === 'bridge'
@@ -241,7 +231,7 @@ export function TransferRouteProgress(props: TransferRouteProgressProps) {
                         <HoverTooltip
                           tooltip={
                             <span className="break-all font-secondary tabular-nums">
-                              {fullAmount} {symbol}
+                              {amount?.full} {symbol}
                             </span>
                           }
                         >
@@ -252,7 +242,7 @@ export function TransferRouteProgress(props: TransferRouteProgressProps) {
                             title=""
                             className={`block max-w-full cursor-help truncate font-secondary tabular-nums ${compact ? 'text-xxs' : 'text-sm'}`}
                           >
-                            {amount}
+                            {amount?.display}
                             {!compact && ` ${symbol}`}
                           </span>
                         </HoverTooltip>

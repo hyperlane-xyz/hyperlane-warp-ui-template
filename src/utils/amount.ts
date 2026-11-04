@@ -1,4 +1,5 @@
 import { fromWeiRounded } from '@hyperlane-xyz/utils';
+import { formatUnits } from 'viem';
 
 // Shared amount/USD formatters.
 // Feature-specific `getUsdValue` lives in each feature's balances/utils.ts
@@ -18,6 +19,17 @@ export function formatDisplayAmount(atomicAmount: bigint, decimals: number): str
   const decimalPlaces = integerPart === '0' && firstNonZeroIndex >= 4 ? firstNonZeroIndex + 4 : 4;
   const visibleFraction = fractionalPart.slice(0, decimalPlaces).replace(/0+$/, '');
   return visibleFraction ? `${integerPart}.${visibleFraction}` : integerPart;
+}
+
+/** Compact display and full-precision tooltip, including migrated decimal amounts. */
+export function formatTokenAmount(rawAmount: string, decimals: number | undefined) {
+  if (!/^\d+$/.test(rawAmount)) return { display: rawAmount, full: rawAmount };
+  if (decimals == null) {
+    const value = `${rawAmount} (atomic)`;
+    return { display: value, full: value };
+  }
+  const amount = BigInt(rawAmount);
+  return { display: formatDisplayAmount(amount, decimals), full: formatUnits(amount, decimals) };
 }
 
 export function formatUsd(value: number, approximate = false): string {

@@ -132,14 +132,17 @@ function MessageProgressRow({
   onDeliveryChange: (status: TransferDeliveryStatus) => void;
 }) {
   const multiProvider = useMultiProvider();
-  const indexed = useMessageDeliveryStatus({ msgId: message.msgId }, enabled, multiProvider, true);
+  const delivery = useMessageDeliveryStatus({ msgId: message.msgId }, enabled, multiProvider, {
+    destinationChain: multiProvider.tryGetChainName(transfer.dstChain) ?? undefined,
+    recheckDelivered: true,
+  });
   const origin =
-    multiProvider.tryGetChainName(indexed.message?.originDomain ?? transfer.srcChain) ?? undefined;
+    multiProvider.tryGetChainName(delivery.message?.originDomain ?? transfer.srcChain) ?? undefined;
   const destination =
-    multiProvider.tryGetChainName(indexed.message?.destinationDomain ?? transfer.dstChain) ??
+    multiProvider.tryGetChainName(delivery.message?.destinationDomain ?? transfer.dstChain) ??
     undefined;
-  const messageSender = indexed.message?.sender;
-  const messageRecipient = indexed.message?.recipient;
+  const messageSender = delivery.message?.sender;
+  const messageRecipient = delivery.message?.recipient;
   const { data: addressLinks } = useQuery({
     queryKey: ['messageAddressLinks', origin, destination, messageSender, messageRecipient],
     queryFn: () =>
@@ -147,24 +150,24 @@ function MessageProgressRow({
         origin ? multiProvider.tryGetExplorerAddressUrl(origin, messageSender) : null,
         destination ? multiProvider.tryGetExplorerAddressUrl(destination, messageRecipient) : null,
       ]),
-    enabled: enabled && !!indexed.message,
+    enabled: enabled && !!delivery.message,
     staleTime: 60_000,
   });
-  const originTx = indexed.message?.originTxHash ?? transfer.originTxHash;
-  const destinationTx = indexed.destinationTxHash;
+  const originTx = delivery.message?.originTxHash ?? transfer.originTxHash;
+  const destinationTx = delivery.destinationTxHash;
   const originConfirmation = useTransactionConfirmations(
     origin,
     originTx,
     enabled,
-    indexed.originBlockHeight,
+    delivery.originBlockHeight,
   );
   const destinationConfirmation = useTransactionConfirmations(
     destination,
     destinationTx,
     enabled,
-    indexed.destinationBlockHeight,
+    delivery.destinationBlockHeight,
   );
-  const delivered = indexed.isDelivered;
+  const delivered = delivery.isDelivered;
   const deliveryMissing =
     destinationConfirmation.data?.included === false ||
     destinationConfirmation.data?.state === ProgressState.Failed;
@@ -201,7 +204,7 @@ function MessageProgressRow({
       state:
         delivered && !deliveryMissing
           ? ProgressState.Confirmed
-          : indexed.error && !indexed.message
+          : delivery.error && !delivery.message
             ? ProgressState.Unavailable
             : ProgressState.Pending,
       active:
@@ -226,7 +229,7 @@ function MessageProgressRow({
           : 'Confirming destination'
         : originState === ProgressState.Failed
           ? 'Origin transaction failed'
-          : indexed.error && !indexed.message
+          : delivery.error && !delivery.message
             ? 'Status unavailable'
             : !originConfirmed && originState === ProgressState.Pending
               ? 'Confirming origin'
@@ -241,7 +244,7 @@ function MessageProgressRow({
           : status;
   const activity = deliveryMissing
     ? 'Rechecking the destination transaction'
-    : !delivered && indexed.error
+    : !delivered && delivery.error
       ? 'Delivery status is temporarily unavailable'
       : delivered && !deliveryMissing
         ? destinationTx
@@ -267,7 +270,7 @@ function MessageProgressRow({
     status,
     activity,
   ]);
-  const body = indexed.message?.body;
+  const body = delivery.message?.body;
   const token = decodeTransferBody({ label: message.label, body });
   const authorization = decodeAuthorizationBody(body);
   const fields = {

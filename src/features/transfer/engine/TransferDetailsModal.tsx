@@ -60,7 +60,9 @@ export function TransferDetailsModal() {
 
   const renderedId = lastIdRef.current;
   const liveRouteSteps = useStore((s) =>
-    renderedId ? s.transferRouteByTransactionId.get(renderedId)?.steps : undefined,
+    !preparingTransfer && renderedId
+      ? s.transferRouteByTransactionId.get(renderedId)?.steps
+      : undefined,
   );
   const item =
     renderedId != null ? transactionHistory.find((entry) => entry.id === renderedId) : undefined;

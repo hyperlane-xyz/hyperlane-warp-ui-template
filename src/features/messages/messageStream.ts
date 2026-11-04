@@ -110,6 +110,7 @@ export function connectMessageStream(
           case 'ready':
             retryDelay = 1_000;
             update({ connection: LiveConnection.Connected });
+            void client.resetQueries({ queryKey: ['mailboxDelivery'] });
             refresh();
             break;
           case 'block':
@@ -135,6 +136,7 @@ export function connectMessageStream(
             const domain = event.domain >>> 0;
             heads = { ...heads, [domain]: event.toHeight };
             update({ heads });
+            void client.resetQueries({ queryKey: ['mailboxDelivery'] });
             void client.cancelQueries({ queryKey: ['messageDelivery'] });
             client.setQueriesData<MessageStubEntry[]>({ queryKey: ['messageDelivery'] }, (rows) =>
               rows?.flatMap((row) => {

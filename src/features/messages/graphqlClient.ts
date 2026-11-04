@@ -18,7 +18,7 @@ export async function fetchMessages(
     if (result.errors?.length) throw new Error(result.errors[0].message);
     return messageSnapshotSchema.parse(result.data).message_view;
   } catch (error) {
-    if (!signal.aborted) logger.error('Failed to fetch message status', error);
+    if (!signal.aborted) logger.warn('Failed to fetch message status', error);
     throw error;
   }
 }

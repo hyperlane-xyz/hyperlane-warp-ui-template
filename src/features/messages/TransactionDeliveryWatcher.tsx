@@ -113,6 +113,7 @@ function DeliveryTargetWatcher({ target }: { target: DeliveryTarget }) {
         : undefined,
     true,
     multiProvider,
+    { destinationChain: target.destinationChain },
   );
   const bridgeDelivered =
     delivery.isDelivered || target.status === TransferStatus.ConfirmingDestination;

@@ -14,6 +14,7 @@ const E2E_WARP_ROUTER_BY_CHAIN_ID: Record<number, string> = {
 };
 
 interface InstallQuoteMockOptions {
+  expiresInSeconds?: number;
   approval?: 'erc20' | 'none';
   swapSide?: 'origin' | 'destination';
   sdkBridge?: boolean;
@@ -118,7 +119,7 @@ export async function installQuoteMock(
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        expiresAt: Math.floor(Date.now() / 1000) + 60,
+        expiresAt: Math.floor(Date.now() / 1000) + (opts.expiresInSeconds ?? 60),
         routes: [
           {
             steps: opts.sdkBridge

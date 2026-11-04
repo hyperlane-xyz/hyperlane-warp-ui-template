@@ -29,6 +29,9 @@ export const test = base.extend({
         body: JSON.stringify(response),
       });
     });
+    await page.routeWebSocket('**/messages?**', (socket) => {
+      socket.close();
+    });
     await use(page);
   },
 });

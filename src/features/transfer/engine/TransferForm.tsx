@@ -13,7 +13,7 @@ import {
   useAccounts,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
@@ -63,7 +63,7 @@ import {
   getApprovalPlanTransactionCount,
   getApprovalTransactionCount,
   isApprovalReadyForValidation,
-  readApprovalPlan,
+  approvalQueryOptions,
   useApprovalStatus,
 } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -90,8 +90,9 @@ import {
 import { useFormInitialValues } from './useFormInitialValues';
 import { useQuote } from './useQuote';
 import { useTransfer } from './useTransfer';
-import { validateTransferForm } from './validate';
+import { validateQuote, validateTransferForm } from './validate';
 
+const REVIEW_VALIDITY_MS = 10_000;
 const PRICE_IMPACT_DANGER_PCT = -3;
 const PRICE_IMPACT_WARN_PCT = -1;
 const PCT_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
@@ -119,6 +120,7 @@ function TransferFormContent() {
     useFormikContext<TransferFormValues>();
   const hasSelectedDestinationTokenRef = useRef(false);
   const multiProvider = useMultiProvider();
+  const queryClient = useQueryClient();
   const tokenMap = useTokenByKeyMap();
   const { data: chainsResp } = useChains();
   const { account: starknetAccount } = useStarknetAccount();
@@ -494,6 +496,12 @@ function TransferFormContent() {
     ],
   );
 
+  const reviewedForm = useRef<{
+    validate: typeof validateCurrentForm;
+    approvalCount: number;
+    checkedAt: number;
+  } | null>(null);
+
   const onContinue = useCallback(async () => {
     if (
       isAmountDebouncing ||
@@ -505,6 +513,7 @@ function TransferFormContent() {
       return;
     }
     const snapshot = values;
+    reviewedForm.current = null;
     setIsValidating(true);
     try {
       const result = await validateCurrentForm(approvalTransactionCount, sourceFeeQuery.data);
@@ -524,6 +533,11 @@ function TransferFormContent() {
         return;
       }
       if (!sender || !srcToken || !dstToken || !bestRoute || !effectiveRecipient) return;
+      reviewedForm.current = {
+        validate: validateCurrentForm,
+        approvalCount: approvalTransactionCount,
+        checkedAt: Date.now(),
+      };
       const canReview = await shouldReviewRecipient({
         multiProvider,
         dstChainName,
@@ -673,14 +687,13 @@ function TransferFormContent() {
     setSelectedTransactionId(null);
     setPreparingTransfer(item);
     try {
-      // Re-validate before broadcasting. Review mode pauses useQuote, so a
-      // user can sit on review past expiresAt with a stale quote — without
-      // this check we'd happily submit it. Same call as Continue plus the
-      // current quote.expiresAt so the staleness check fires.
+      // Reuse only a recent review of these exact inputs. Quote expiry is always checked.
       const snapshot = values;
       let executionApprovalPlan: ApprovalPlan | null;
       try {
-        executionApprovalPlan = await readApprovalPlan(approvalArgs, multiProvider);
+        executionApprovalPlan = approvalArgs.isNative
+          ? null
+          : await queryClient.fetchQuery(approvalQueryOptions(approvalArgs, multiProvider));
       } catch (err) {
         logger.warn('Unable to verify token approval before transfer', err as Error);
         const validationResult = {
@@ -706,9 +719,14 @@ function TransferFormContent() {
           getRouteTxs(bestRoute.raw).some(isApprovalRouteTx),
       };
       if (useStore.getState().preparingTransfer === item) setPreparingTransfer(executionItem);
-      const validationResult = await validateCurrentForm(
-        getApprovalPlanTransactionCount(executionApprovalPlan),
-      );
+      const approvalCount = getApprovalPlanTransactionCount(executionApprovalPlan);
+      const reviewed = reviewedForm.current;
+      const validationResult =
+        reviewed?.validate === validateCurrentForm &&
+        reviewed.approvalCount === approvalCount &&
+        Date.now() - reviewed.checkedAt < REVIEW_VALIDITY_MS
+          ? validateQuote({ bestRoute, quoteExpiresAt: quote?.expiresAt })
+          : await validateCurrentForm(approvalCount);
       // Same race as onContinue — if the form changed mid-validation,
       // discard the result. In practice the inputs are disabled in review
       // mode, but the wallet dropdown can still change the recipient.
@@ -792,6 +810,8 @@ function TransferFormContent() {
     effectiveRecipient,
     validateCurrentForm,
     approvalArgs,
+    queryClient,
+    quote?.expiresAt,
     approvalTransactionCount,
     multiProvider,
     approval,

@@ -10,14 +10,15 @@ const APPROVE_SELECTOR = '0x095ea7b3';
 
 test.describe('EVM approval flow', () => {
   test.setTimeout(180_000);
-  for (const { closeDuringPreparation, approvalRequired, sdkBridge } of [
+  for (const { closeDuringPreparation, approvalRequired, sdkBridge, expiredQuote = false } of [
     { closeDuringPreparation: true, approvalRequired: true, sdkBridge: false },
     { closeDuringPreparation: false, approvalRequired: true, sdkBridge: false },
     { closeDuringPreparation: false, approvalRequired: true, sdkBridge: true },
     { closeDuringPreparation: false, approvalRequired: false, sdkBridge: false },
     { closeDuringPreparation: false, approvalRequired: false, sdkBridge: true },
+    { closeDuringPreparation: false, approvalRequired: true, sdkBridge: false, expiredQuote: true },
   ]) {
-    test(`SDK bridge: ${sdkBridge}, approval required: ${approvalRequired}, close during preparation: ${closeDuringPreparation}`, async ({
+    test(`SDK bridge: ${sdkBridge}, approval required: ${approvalRequired}, close during preparation: ${closeDuringPreparation}, expired quote: ${expiredQuote}`, async ({
       page,
     }, testInfo) => {
       const { txs } = await installEvmRpcMock(page, {
@@ -51,6 +52,7 @@ test.describe('EVM approval flow', () => {
         },
       });
       await installQuoteMock(page, {
+        expiresInSeconds: expiredQuote ? 8 : 60,
         approval: approvalRequired ? 'erc20' : 'none',
         sdkBridge,
         swapSide: approvalRequired ? 'origin' : 'destination',
@@ -73,8 +75,23 @@ test.describe('EVM approval flow', () => {
       }
       const sendButton = page.getByRole('button', { name: /^Send to/i });
       await sendButton.waitFor({ state: 'visible', timeout: 30_000 });
-      // Hold the fresh allowance check: preparation must render before RPCs finish,
-      // without persisting a draft or requesting any wallet transactions.
+      if (expiredQuote) {
+        // Review stays within the 10-second cache window, but its quote has expired.
+        await page.clock.setFixedTime(new Date((await page.evaluate(() => Date.now())) + 9_000));
+        await sendButton.click();
+        await expect(page.getByTestId('transfer-submit')).toHaveText(
+          'Quote has expired — refresh to continue',
+        );
+        expect(txs).toHaveLength(0);
+        return;
+      }
+
+      // An older review must refresh; a fresh review must reach the wallet while reads are held.
+      if (closeDuringPreparation) {
+        await page.clock.setFixedTime(new Date((await page.evaluate(() => Date.now())) + 11_000));
+      }
+
+      // Hold allowance and route fee checks to distinguish cached review from revalidation.
       let releasePreflight = () => {};
       const preflightGate = new Promise<void>((resolve) => {
         releasePreflight = resolve;
@@ -100,7 +117,8 @@ test.describe('EVM approval flow', () => {
         }
         if (
           route.request().method() === 'POST' &&
-          route.request().postData()?.includes('0xdd62ed3e')
+          (body.includes('0xdd62ed3e') ||
+            (body.includes('eth_estimateGas') && body.includes('0x12345678')))
         ) {
           await preflightGate;
         }
@@ -110,9 +128,7 @@ test.describe('EVM approval flow', () => {
         await sendButton.click({ timeout: 30_000 });
         if (approvalRequired) {
           await expect(page.getByTestId('transfer-headline')).toHaveText(
-            sdkBridge
-              ? /Checking token permission|Approve in your wallet/
-              : 'Checking token permission',
+            closeDuringPreparation ? 'Checking token permission' : 'Approve in your wallet',
           );
           await expect(page.getByRole('list', { name: 'Before sending' })).toBeVisible();
           await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
@@ -121,7 +137,7 @@ test.describe('EVM approval flow', () => {
             () =>
               JSON.parse(localStorage.getItem('app-state') ?? '{}').state?.transactionHistory ?? [],
           );
-          if (!sdkBridge) expect(history).toHaveLength(0);
+          expect(history).toHaveLength(closeDuringPreparation ? 0 : 1);
           await expect(page.getByRole('region', { name: 'Transfer route' })).toHaveCount(0);
           if (closeDuringPreparation)
             await page.getByRole('button', { name: 'Close', exact: true }).click();

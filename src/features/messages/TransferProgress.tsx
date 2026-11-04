@@ -6,12 +6,14 @@ import { useEffect } from 'react';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { getHypExplorerLink } from '../../utils/links';
 import { useMultiProvider } from '../chains/hooks';
-import { useStore } from '../store';
 import type { LabeledMsgId, TransferHistoryItem } from '../transfer/engine/types';
-import { decodeAuthorizationBody, decodeTransferBody, ProgressState } from './progress';
-import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
+import {
+  decodeAuthorizationBody,
+  decodeTransferBody,
+  ProgressState,
+  type ConfirmationProgress,
+} from './progress';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
-import { useSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
 import { useTransactionConfirmations } from './useTransactionConfirmations';
 
 const MESSAGE_LABELS: Record<LabeledMsgId['label'], string> = {
@@ -40,6 +42,9 @@ export function TransferProgress({
 }) {
   return (
     <section aria-label="Transfer progress" className="mt-4 space-y-2">
+      {!transfer.msgIds?.length && (
+        <OriginTransactionProgress transfer={transfer} enabled={enabled} />
+      )}
       {transfer.msgIds?.map((message) => (
         <MessageProgressRow
           key={message.msgId}
@@ -50,6 +55,68 @@ export function TransferProgress({
         />
       ))}
     </section>
+  );
+}
+
+// Dispatch IDs are only available after origin inclusion/receipt decoding.
+function OriginTransactionProgress({
+  transfer,
+  enabled,
+}: {
+  transfer: TransferHistoryItem;
+  enabled: boolean;
+}) {
+  const multiProvider = useMultiProvider();
+  const origin = multiProvider.tryGetChainName(transfer.srcChain) ?? undefined;
+  const confirmation = useTransactionConfirmations(
+    origin,
+    transfer.originTxHash,
+    enabled,
+    transfer.originBlockNumber,
+  );
+  const count = confirmationCount(confirmation.data);
+  const status = confirmation.isError
+    ? 'Origin status unavailable'
+    : confirmation.data?.state === ProgressState.Confirmed
+      ? 'Origin confirmed · Finding dispatched messages'
+      : count
+        ? `Confirming origin · ${count}`
+        : (confirmation.data?.reason ?? 'Waiting for origin inclusion');
+  const url =
+    origin && transfer.originTxHash
+      ? multiProvider.tryGetExplorerTxUrl(origin, { hash: transfer.originTxHash })
+      : undefined;
+  return (
+    <article
+      aria-label="Origin transaction"
+      className="flex min-h-[56px] items-center gap-3 rounded-lg border border-gray-400/25 bg-surface px-3 py-2 text-xs"
+    >
+      <span
+        aria-hidden="true"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500/10 text-primary-700 dark:text-primary-200"
+      >
+        <SpinnerIcon
+          width={14}
+          height={14}
+          color="currentColor"
+          className="message-status-spinner"
+        />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium">Origin transaction</span>
+        <output className="block text-xxs tabular-nums text-foreground-muted">{status}</output>
+      </span>
+      {url && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View origin transaction"
+        >
+          <Image src={LinkIcon} alt="" width={14} height={14} />
+        </a>
+      )}
+    </article>
   );
 }
 
@@ -65,27 +132,12 @@ function MessageProgressRow({
   onDeliveryChange: (status: TransferDeliveryStatus) => void;
 }) {
   const multiProvider = useMultiProvider();
-  const chainAddresses = useStore((s) => s.chainAddresses);
-  const indexed = useMessageDeliveryStatus(message.msgId, enabled, multiProvider, true);
+  const indexed = useMessageDeliveryStatus({ msgId: message.msgId }, enabled, multiProvider, true);
   const origin =
     multiProvider.tryGetChainName(indexed.message?.originDomain ?? transfer.srcChain) ?? undefined;
   const destination =
     multiProvider.tryGetChainName(indexed.message?.destinationDomain ?? transfer.dstChain) ??
     undefined;
-  const evm = useEvmMailboxDeliveryStatus({
-    msgId: message.msgId,
-    destinationChain: destination,
-    chainAddresses,
-    multiProvider,
-    enabled: enabled && !indexed.destinationTxHash,
-  });
-  const solana = useSolanaMailboxDeliveryStatus({
-    msgId: message.msgId,
-    destinationChain: destination,
-    chainAddresses,
-    multiProvider,
-    enabled: enabled && !indexed.isDelivered && !evm.isDelivered,
-  });
   const messageSender = indexed.message?.sender;
   const messageRecipient = indexed.message?.recipient;
   const { data: addressLinks } = useQuery({
@@ -99,10 +151,20 @@ function MessageProgressRow({
     staleTime: 60_000,
   });
   const originTx = indexed.message?.originTxHash ?? transfer.originTxHash;
-  const destinationTx = indexed.destinationTxHash ?? evm.destinationTxHash;
-  const originConfirmation = useTransactionConfirmations(origin, originTx, enabled);
-  const destinationConfirmation = useTransactionConfirmations(destination, destinationTx, enabled);
-  const delivered = indexed.isDelivered || evm.isDelivered || solana.isDelivered;
+  const destinationTx = indexed.destinationTxHash;
+  const originConfirmation = useTransactionConfirmations(
+    origin,
+    originTx,
+    enabled,
+    indexed.originBlockHeight,
+  );
+  const destinationConfirmation = useTransactionConfirmations(
+    destination,
+    destinationTx,
+    enabled,
+    indexed.destinationBlockHeight,
+  );
+  const delivered = indexed.isDelivered;
   const deliveryMissing =
     destinationConfirmation.data?.included === false ||
     destinationConfirmation.data?.state === ProgressState.Failed;
@@ -123,14 +185,19 @@ function MessageProgressRow({
   const destinationState =
     destinationConfirmation.data?.state ??
     (destinationConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);
+  const originCount = confirmationCount(originConfirmation.data);
+  const destinationCount = confirmationCount(destinationConfirmation.data);
   const steps = [
     {
       label: 'Origin confirmed',
+      pendingLabel: 'Origin confirming',
+      count: originCount,
       state: originState,
       active: !originConfirmed && !delivered,
     },
     {
       label: 'Delivered',
+      pendingLabel: 'Delivering',
       state:
         delivered && !deliveryMissing
           ? ProgressState.Confirmed
@@ -143,6 +210,8 @@ function MessageProgressRow({
     },
     {
       label: 'Confirmed',
+      pendingLabel: 'Confirming',
+      count: delivered && !deliveryMissing ? destinationCount : undefined,
       state: delivered && !deliveryMissing ? destinationState : ProgressState.Pending,
       active: delivered && !deliveryMissing && !!destinationTx,
     },
@@ -162,6 +231,14 @@ function MessageProgressRow({
             : !originConfirmed && originState === ProgressState.Pending
               ? 'Confirming origin'
               : 'Awaiting delivery';
+  const subtitle =
+    status === 'Confirming origin' && originCount
+      ? `Confirming origin · ${originCount}`
+      : status === 'Awaiting delivery'
+        ? 'Awaiting relayer delivery'
+        : delivered && !deliveryMissing && !confirmed && destinationCount
+          ? `${status} · ${destinationCount}${fundsAvailable ? ' confirmations' : ''}`
+          : status;
   const activity = deliveryMissing
     ? 'Rechecking the destination transaction'
     : !delivered && indexed.error
@@ -257,8 +334,8 @@ function MessageProgressRow({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-medium">{MESSAGE_LABELS[message.label]}</span>
-            <output className="pointer-events-none block text-xxs text-foreground-muted">
-              {status}
+            <output className="pointer-events-none block text-xxs tabular-nums text-foreground-muted">
+              {subtitle}
             </output>
           </span>
           <span
@@ -271,8 +348,15 @@ function MessageProgressRow({
         </summary>
         <div className="border-t border-gray-400/25 px-3 pb-3 pt-3">
           <ol aria-label="Message milestones" className="grid grid-cols-3 gap-2">
-            {steps.map(({ label, state, active }) => (
-              <MessageMilestone key={label} label={label} state={state} active={active} />
+            {steps.map(({ label, pendingLabel, state, active, count }) => (
+              <MessageMilestone
+                key={label}
+                label={label}
+                pendingLabel={pendingLabel}
+                state={state}
+                active={active}
+                count={count}
+              />
             ))}
           </ol>
           <p className="mt-2 text-xxs text-foreground-muted">{activity}</p>
@@ -328,6 +412,11 @@ function MessageProgressRow({
   );
 }
 
+function confirmationCount(progress: ConfirmationProgress | undefined) {
+  if (progress?.confirmations == null || progress.required == null) return undefined;
+  return `${Math.min(progress.confirmations, progress.required)}/${progress.required}`;
+}
+
 function confirmationText({
   data,
   isError,
@@ -342,14 +431,19 @@ function confirmationText({
 
 function MessageMilestone({
   label,
+  pendingLabel,
   state,
   active,
+  count,
 }: {
   label: string;
+  pendingLabel: string;
   state: ProgressState;
   active: boolean;
+  count?: string;
 }) {
   const complete = state === ProgressState.Confirmed;
+  const displayLabel = complete ? label : pendingLabel;
   const unavailable = state === ProgressState.Unavailable;
   const failed = state === ProgressState.Failed;
   const current = state === ProgressState.Pending && active;
@@ -369,7 +463,7 @@ function MessageMilestone({
       : 'text-foreground-muted';
   return (
     <li
-      aria-label={`${label}: ${description}`}
+      aria-label={`${displayLabel}: ${description}`}
       aria-current={current ? 'step' : undefined}
       className={color}
     >
@@ -396,8 +490,9 @@ function MessageMilestone({
             '○'
           )}
         </span>
-        <span>{label}</span>
+        <span>{displayLabel}</span>
       </span>
+      {count && <span className="mt-1 block text-xxs tabular-nums">{count}</span>}
       {(unavailable || failed) && <span className="mt-1 block text-xxs">{description}</span>}
     </li>
   );

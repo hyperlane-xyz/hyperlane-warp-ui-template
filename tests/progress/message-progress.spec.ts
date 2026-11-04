@@ -1,3 +1,5 @@
+import type { WebSocketRoute } from '@playwright/test';
+
 import type { QuoteStep } from '../../src/features/api/types';
 import { test, expect } from '../fixtures';
 
@@ -65,14 +67,17 @@ function routeStepsFor(originSwap: boolean, destinationSwap: boolean): QuoteStep
   return steps;
 }
 
-for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
-  const directBridge = kind === 'bridge' || kind === 'origin';
+for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recovery', 'finalized']) {
+  const taggedFinality = kind === 'finalized';
+  const directBridge = kind === 'bridge' || kind === 'origin' || taggedFinality;
+  const recoverMessages = kind === 'recovery';
   const swapStages =
-    kind === 'bridge'
+    kind === 'bridge' || taggedFinality
       ? undefined
       : {
           origin: kind === 'origin' || kind === 'both',
-          destination: kind === 'destination' || kind === 'both' || kind === 'legacy',
+          destination:
+            kind === 'destination' || kind === 'both' || kind === 'legacy' || recoverMessages,
         };
   const routeSteps = routeStepsFor(!!swapStages?.origin, !!swapStages?.destination);
   test(`${kind}: tracks route stages, message delivery, and reloads`, async ({
@@ -83,7 +88,17 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
     let originConfirmed = directBridge;
     let destinationConfirmed = false;
     await page.addInitScript(
-      ({ ids, bodies, originTx, address, directBridge, routeSteps, legacyLabels }) => {
+      ({
+        ids,
+        bodies,
+        originTx,
+        address,
+        directBridge,
+        routeSteps,
+        legacyLabels,
+        recoverMessages,
+        taggedFinality,
+      }) => {
         const existing = localStorage.getItem('app-state');
         if (existing) {
           const persisted = JSON.parse(existing);
@@ -98,14 +113,19 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
           JSON.stringify({
             version: 6,
             state: {
-              chainMetadataOverrides: {},
+              chainMetadataOverrides: {
+                base: { blocks: { confirmations: 2, reorgPeriod: 15 } },
+                bsc: {
+                  blocks: { confirmations: 1, reorgPeriod: taggedFinality ? 'finalized' : 5 },
+                },
+              },
               selectedTransactionId: 'progress-fixture',
               transactionHistory: [
                 {
                   id: 'progress-fixture',
                   type: 'transfer',
                   data: {
-                    status: 'bridging',
+                    status: recoverMessages ? 'confirming-origin' : 'bridging',
                     routeSteps,
                     timestamp: Date.now() - 120_000,
                     srcChain: 8453,
@@ -126,12 +146,14 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
                           dstToken: address,
                           dstIsNative: true,
                         },
-                    msgIds: (directBridge ? ids.slice(0, 1) : ids).map((msgId, i) => ({
-                      msgId,
-                      label: directBridge
-                        ? 'warp'
-                        : [legacyLabels ? 'commit' : 'bridge', 'commit', 'reveal'][i],
-                    })),
+                    msgIds: (recoverMessages ? [] : directBridge ? ids.slice(0, 1) : ids).map(
+                      (msgId, i) => ({
+                        msgId,
+                        label: directBridge
+                          ? 'warp'
+                          : [legacyLabels ? 'commit' : 'bridge', 'commit', 'reveal'][i],
+                      }),
+                    ),
                   },
                 },
               ],
@@ -139,47 +161,99 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
           }),
         );
       },
-      { ids, bodies, originTx, address, directBridge, routeSteps, legacyLabels: kind === 'legacy' },
+      {
+        ids,
+        bodies,
+        originTx,
+        address,
+        directBridge,
+        routeSteps,
+        legacyLabels: kind === 'legacy',
+        recoverMessages,
+        taggedFinality,
+      },
     );
+    const entry = (index: number) => ({
+      id: index + 1,
+      msg_id: ids[index],
+      nonce: index,
+      sender: messageSenders[index],
+      recipient: messageRecipients[index],
+      message_body: bodies[index],
+      is_delivered: index < 2 && !reorg,
+      send_occurred_at: '2026-11-03T10:00:00',
+      delivery_occurred_at: index < 2 ? '2026-11-03T10:01:00' : null,
+      origin_chain_id: 8453,
+      origin_domain_id: 8453,
+      origin_tx_hash: originTx,
+      origin_tx_sender: address,
+      origin_tx_recipient: address,
+      destination_chain_id: 56,
+      destination_domain_id: 56,
+      destination_tx_hash:
+        index < 2 && !reorg
+          ? index === 1 || directBridge
+            ? pendingDestinationTx
+            : destinationTx
+          : null,
+      destination_tx_sender: address,
+      destination_tx_recipient: address,
+      origin_block_height: '100',
+      destination_block_height:
+        index < 2 && !reorg ? (index === 1 || directBridge ? '256' : '100') : null,
+    });
+    let liveSocket: WebSocketRoute | undefined;
+    let snapshotRequests = 0;
+    let originSnapshotRequests = 0;
+    let originIndexed = !recoverMessages;
+    let socketConnections = 0;
+    let liveAvailable = true;
+    let readyConnections = 0;
+    const sendHeads = () => {
+      for (const [domain, height] of [
+        [8453, originConfirmed ? 256 : 100],
+        [56, destinationConfirmed ? 261 : 256],
+      ]) {
+        liveSocket?.send(
+          JSON.stringify({
+            type: 'block',
+            domain,
+            height: String(height),
+            headHeight: String(height),
+            hash: `0x${'cc'.repeat(32)}`,
+          }),
+        );
+      }
+    };
+    await page.routeWebSocket('**/messages?**', (socket) => {
+      liveSocket = socket;
+      socketConnections++;
+      if (!liveAvailable) {
+        socket.close();
+        return;
+      }
+      readyConnections++;
+      socket.send(JSON.stringify({ type: 'ready', customDomains: [8453, 56] }));
+      sendHeads();
+    });
     await page.route('**/*graphql*', async (route) => {
+      snapshotRequests++;
       const request = route.request().postDataJSON();
+      expect(request.query).toContain('confirmations: 0');
       const id = String(request?.variables?.msgId ?? '').replace('\\x', '0x');
       const index = ids.indexOf(id);
+      const byOriginTx = !!request.variables?.originTxHash;
+      if (byOriginTx) originSnapshotRequests++;
       await route.fulfill({
         json: {
           data: {
-            message_view:
-              index < 0
+            message_view: byOriginTx
+              ? originIndexed
+                ? ids.map((_, i) => entry(i))
+                : []
+              : index < 0
                 ? []
-                : [
-                    {
-                      id: index + 1,
-                      msg_id: id,
-                      nonce: index,
-                      sender: messageSenders[index],
-                      recipient: messageRecipients[index],
-                      message_body: bodies[index],
-                      is_delivered: index < 2 && !reorg,
-                      send_occurred_at: '2026-11-03T10:00:00',
-                      delivery_occurred_at: index < 2 ? '2026-11-03T10:01:00' : null,
-                      origin_chain_id: 8453,
-                      origin_domain_id: 8453,
-                      origin_tx_hash: originTx,
-                      origin_tx_sender: address,
-                      origin_tx_recipient: address,
-                      destination_chain_id: 56,
-                      destination_domain_id: 56,
-                      destination_tx_hash:
-                        index < 2 && !reorg
-                          ? index === 1 || directBridge
-                            ? pendingDestinationTx
-                            : destinationTx
-                          : null,
-                      destination_tx_sender: address,
-                      destination_tx_recipient: address,
-                      origin_block_height: 100,
-                    },
-                  ],
+                : [entry(index)],
           },
         },
       });
@@ -195,6 +269,29 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
       if (!payload || !('method' in payload) || !String(payload.method).startsWith('eth_'))
         return route.fallback();
       expect(payload.method).not.toBe('eth_sendTransaction');
+      if (payload.method === 'eth_getBlockByNumber') {
+        expect(payload.params[0]).toBe('finalized');
+        await route.fulfill({
+          json: {
+            jsonrpc: '2.0',
+            id: payload.id,
+            result: {
+              number: destinationConfirmed ? '0x100' : '0xff',
+              hash: `0x${'cc'.repeat(32)}`,
+              parentHash: `0x${'cc'.repeat(32)}`,
+              timestamp: '0x65000000',
+              nonce: '0x0000000000000000',
+              difficulty: '0x0',
+              gasLimit: '0x100000',
+              gasUsed: '0x5208',
+              miner: address,
+              extraData: '0x',
+              transactions: [],
+            },
+          },
+        });
+        return;
+      }
       const receipt = {
         transactionHash: payload.params?.[0],
         blockHash: `0x${'cc'.repeat(32)}`,
@@ -215,7 +312,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
           ? receipt
           : payload.method === 'eth_blockNumber'
             ? destinationConfirmed
-              ? '0x101'
+              ? '0x105'
               : originConfirmed
                 ? '0x100'
                 : '0x65'
@@ -229,9 +326,26 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
       await route.fulfill({ json: { jsonrpc: '2.0', id: payload.id, result } });
     });
     await page.goto(process.env.PROGRESS_TEST_URL ?? 'http://localhost:3000');
+    if (recoverMessages) {
+      await expect.poll(() => originSnapshotRequests, { timeout: 60_000 }).toBeGreaterThan(0);
+      const pending = page.getByRole('article', { name: 'Origin transaction', exact: true });
+      await expect(pending).toBeVisible();
+      await expect(pending.getByRole('status')).toHaveText('Confirming origin · 1/15');
+      await expect(pending.getByRole('link', { name: 'View origin transaction' })).toHaveAttribute(
+        'href',
+        new RegExp(originTx),
+      );
+      originIndexed = true;
+      // One pushed message must recover the entire origin transaction, including reveal.
+      liveSocket?.send(JSON.stringify({ type: 'message_upsert', data: entry(0) }));
+    }
+
     const progress = page.getByRole('region', { name: 'Transfer progress' });
     await expect(progress).toBeVisible({ timeout: 60_000 });
     await expect(progress.locator('article')).toHaveCount(directBridge ? 1 : 3);
+    await expect(
+      page.getByRole('article', { name: 'Origin transaction', exact: true }),
+    ).toHaveCount(0);
     const stages = page.getByRole('region', { name: 'Transfer route' });
     await expect(stages.getByLabel('Amount to send', { exact: true })).toHaveText(
       swapStages ? '0.0005' : '0.0005 ETH',
@@ -312,7 +426,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
     const outcome = page.getByTestId('transfer-outcome');
     if (directBridge) {
       const bridge = progress.getByRole('article', { name: 'Bridge funds' });
-      await expect(bridge.getByRole('status')).toHaveText('Delivered');
+      await expect(bridge.getByRole('status')).toHaveText(
+        taggedFinality ? 'Delivered' : 'Delivered · 0/5 confirmations',
+      );
       await expect(outcome).toHaveText('Funds are available to use on Binance.');
       await expect(
         page.getByText('Transfer complete! Funds have arrived.', { exact: true }),
@@ -333,7 +449,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
       );
       await expect(dialog.getByText('Bridge Message ID', { exact: true })).toHaveCount(0);
       await bridge.locator('summary').click();
-      await expect(bridge).toContainText('0/1 blocks');
+      await expect(bridge).toContainText(
+        taggedFinality ? 'Waiting for finalized block' : '0/5 blocks',
+      );
       await expect(
         bridge.getByRole('link', { name: 'Sender (opens in new tab)', exact: true }),
       ).toHaveAttribute('title', messageSenders[0]);
@@ -350,7 +468,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
         bridge.getByRole('listitem', { name: 'Delivered: Complete', exact: true }),
       ).toBeVisible();
       await expect(
-        bridge.getByRole('listitem', { name: 'Confirmed: In progress', exact: true }),
+        bridge.getByRole('listitem', { name: 'Confirming: In progress', exact: true }),
       ).toBeVisible();
       await page.locator('.transfer-details-modal').evaluate((element) => element.scrollTo(0, 0));
       await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
@@ -384,10 +502,84 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
       await page.reload();
       await expect(outcome).toContainText('Funds are available to use');
       destinationConfirmed = true;
+      sendHeads();
       await expect(bridge.getByRole('status')).toHaveText('Confirmed', { timeout: 20_000 });
       await expect(outcome).toContainText('Funds are available to use');
+      const beforeIdle = snapshotRequests;
+      await page.waitForTimeout(11_000);
+      expect(snapshotRequests).toBe(beforeIdle);
+      const beforeReconnect = socketConnections;
+      liveSocket?.close();
+      await expect.poll(() => socketConnections).toBeGreaterThan(beforeReconnect);
+      await expect.poll(() => snapshotRequests).toBeGreaterThan(beforeIdle);
       reorg = true;
+      liveSocket?.send(
+        JSON.stringify({
+          type: 'rollback',
+          confirmations: 0,
+          domain: 56,
+          fromHeight: '257',
+          toHeight: '99',
+        }),
+      );
       await expect(outcome).toHaveCount(0, { timeout: 25_000 });
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              JSON.parse(localStorage.getItem('app-state') || '{}').state.transactionHistory[0].data
+                .destinationTxHash,
+          ),
+        )
+        .toBeUndefined();
+      if (kind === 'bridge') {
+        // A blocked WebSocket must still recover status through the GraphQL fallback.
+        liveAvailable = false;
+        liveSocket?.close();
+        const beforeFallback = snapshotRequests;
+        await expect
+          .poll(() => snapshotRequests, { timeout: 15_000 })
+          .toBeGreaterThan(beforeFallback);
+        const beforeReady = readyConnections;
+        liveAvailable = true;
+        await expect.poll(() => readyConnections, { timeout: 15_000 }).toBeGreaterThan(beforeReady);
+      }
+      // A new delivery transaction must replace the rolled-back hash, without a timer/refetch.
+      reorg = false;
+      destinationConfirmed = true;
+      sendHeads();
+      liveSocket?.send(
+        JSON.stringify({
+          type: 'message_upsert',
+          data: {
+            ...entry(0),
+            destination_tx_hash: destinationTx,
+            destination_block_height: '100',
+          },
+        }),
+      );
+      await expect(outcome).toContainText('Funds are available to use');
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              JSON.parse(localStorage.getItem('app-state') || '{}').state.transactionHistory[0].data
+                .destinationTxHash,
+          ),
+        )
+        .toBe(destinationTx);
+      reorg = true;
+      liveSocket?.send(
+        JSON.stringify({
+          type: 'rollback',
+          confirmations: 0,
+          domain: 56,
+          fromHeight: '257',
+          toHeight: '99',
+        }),
+      );
+      await expect(outcome).toHaveCount(0);
+
       for (const [status, message] of [
         ['failed', 'Transfer failed.'],
         ['failed-recovered', 'intermediate token was automatically returned'],
@@ -407,7 +599,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
     const reveal = progress.locator('article').filter({ hasText: 'Reveal authorization' });
     const bridge = progress.locator('article').filter({ hasText: 'Bridge funds' });
     const commit = progress.locator('article').filter({ hasText: 'Commit authorization' });
-    await expect(reveal.getByRole('status')).toHaveText('Confirming origin');
+    await expect(reveal.getByRole('status')).toHaveText('Confirming origin · 0/15');
     const spinner = reveal.locator('summary .message-status-spinner');
     await expect(spinner).toBeVisible();
     await expect(bridge.locator('summary .message-status-spinner')).toHaveCount(0);
@@ -421,29 +613,45 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
       '4px',
     );
     await expect(
-      reveal.getByRole('listitem', { name: 'Origin confirmed: In progress' }),
+      reveal.getByRole('listitem', { name: 'Origin confirming: In progress' }),
     ).toBeVisible();
-    await expect(reveal).toContainText('1/3 blocks');
+    await expect(reveal).toContainText('0/15 blocks');
+    liveSocket?.send(
+      JSON.stringify({
+        type: 'block',
+        domain: 8453,
+        height: '101',
+        headHeight: '101',
+        hash: `0x${'cc'.repeat(32)}`,
+      }),
+    );
+    await expect(reveal.getByRole('status')).toHaveText('Confirming origin · 1/15');
+    await expect(
+      reveal.getByRole('listitem', { name: 'Origin confirming: In progress' }),
+    ).toContainText('1/15');
     originConfirmed = true;
+    sendHeads();
     await expect(bridge.getByRole('status')).toHaveText('Confirmed');
-    await expect(commit.getByRole('status')).toHaveText('Confirming destination');
+    await expect(commit.getByRole('status')).toHaveText('Confirming destination · 0/5');
     await commit.locator('summary').click();
     await expect(
       commit.getByRole('listitem', { name: 'Delivered: Complete', exact: true }),
     ).toBeVisible();
     await expect(
-      commit.getByRole('listitem', { name: 'Confirmed: In progress', exact: true }),
+      commit.getByRole('listitem', { name: 'Confirming: In progress', exact: true }),
     ).toBeVisible();
-    await expect(commit).toContainText('0/1 blocks');
-    await expect(reveal.getByRole('status')).toHaveText('Awaiting delivery', { timeout: 20_000 });
+    await expect(commit).toContainText('0/5 blocks');
+    await expect(reveal.getByRole('status')).toHaveText('Awaiting relayer delivery', {
+      timeout: 20_000,
+    });
     await expect(
       reveal.getByRole('listitem', { name: 'Origin confirmed: Complete' }),
     ).toBeVisible();
     await expect(
-      reveal.getByRole('listitem', { name: 'Delivered: In progress', exact: true }),
+      reveal.getByRole('listitem', { name: 'Delivering: In progress', exact: true }),
     ).toBeVisible();
     await expect(
-      reveal.getByRole('listitem', { name: 'Confirmed: Waiting', exact: true }),
+      reveal.getByRole('listitem', { name: 'Confirming: Waiting', exact: true }),
     ).toBeVisible();
     await reveal.locator('summary').click();
     await commit.locator('summary').click();
@@ -512,10 +720,19 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy']) {
     await expect(stages.locator('.hyperswap-step')).toHaveCount(kind === 'both' ? 3 : 2);
     await expect(bridge.getByRole('status')).toHaveText('Confirmed');
     reorg = true;
+    liveSocket?.send(
+      JSON.stringify({
+        type: 'rollback',
+        confirmations: 0,
+        domain: 56,
+        fromHeight: '256',
+        toHeight: '99',
+      }),
+    );
     await expect(bridge.getByRole('status')).not.toHaveText('Confirmed', { timeout: 25_000 });
     await bridge.locator('summary').click();
     await expect(
-      bridge.getByRole('listitem', { name: 'Delivered: In progress', exact: true }),
+      bridge.getByRole('listitem', { name: 'Delivering: In progress', exact: true }),
     ).toBeVisible();
   });
 }

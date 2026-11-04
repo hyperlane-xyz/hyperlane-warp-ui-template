@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { TransferStatus, type TransferHistoryItem } from '../transfer/engine/types';
 import { prioritizeSelectedTarget, shouldUpdateFromOriginTx } from './TransactionDeliveryWatcher';
-import type { OriginTxMessagesResult } from './useOriginTxMessages';
+import type { MessageDeliveryResult } from './useMessageDeliveryStatus';
 
 const MSG_ID = `0x${'11'.repeat(32)}`;
 
@@ -74,7 +74,7 @@ describe('prioritizeSelectedTarget', () => {
   });
 });
 
-function originTxMessages(overrides: Partial<OriginTxMessagesResult> = {}): OriginTxMessagesResult {
+function originTxMessages(overrides: Partial<MessageDeliveryResult> = {}): MessageDeliveryResult {
   return {
     msgIds: [{ msgId: MSG_ID, label: 'bridge' }],
     isDelivered: false,

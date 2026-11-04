@@ -9,6 +9,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
@@ -56,6 +57,7 @@ interface ExecuteArgs {
 // transaction adapters.
 export function useTransfer() {
   const multiProvider = useMultiProvider();
+  const queryClient = useQueryClient();
   const transactionFns = useTransactionFns(multiProvider);
   const chainAddresses = useStore((s) => s.chainAddresses);
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
@@ -146,6 +148,7 @@ export function useTransfer() {
               logger.error('Approve tx reverted', new Error(`tx=${hash}`));
               throw new Error('Approve transaction reverted on chain');
             }
+            void queryClient.invalidateQueries({ queryKey: ['erc20-allowance', srcChainName] });
           };
           if (needsApprove && needsRevoke) await doApprove(0n);
           if (needsApprove) await doApprove(args.approvalAmount);
@@ -191,6 +194,7 @@ export function useTransfer() {
             if (isReverted(await sent.confirm())) {
               throw new Error('Approve transaction reverted on chain');
             }
+            void queryClient.invalidateQueries({ queryKey: ['erc20-allowance', srcChainName] });
             continue;
           }
           hash = sent.hash;
@@ -295,12 +299,16 @@ export function useTransfer() {
         setError(err as Error);
         throw err;
       } finally {
+        void queryClient.invalidateQueries({
+          queryKey: ['erc20-allowance', analyticsSrcChainName],
+        });
         setIsPending(false);
       }
     },
     [
       transactionFns,
       multiProvider,
+      queryClient,
       chainAddresses,
       updateTransferTransactionStatus,
       setTransferRoute,

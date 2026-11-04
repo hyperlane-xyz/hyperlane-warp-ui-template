@@ -146,6 +146,7 @@ function TransferDetailsModalInner({
   const bridgeDelivered = bridgeMsgId ? messageStatuses[bridgeMsgId]?.delivered : undefined;
 
   const showTimeline = !!originTxHash && !!pollingMsgId;
+  const awaitingMessages = !!originTxHash && srcChain !== dstChain && !pollingMsgId && !isFinal;
 
   const fundsAvailable = showTimeline
     ? !!deliveryStatus?.delivered && (deliveryStatus.fundsAvailable || isDelivered)
@@ -312,7 +313,7 @@ function TransferDetailsModalInner({
           <p className="mt-1 text-xs leading-relaxed text-foreground-muted">{description}</p>
         </div>
 
-        {showTimeline && (
+        {(showTimeline || awaitingMessages) && (
           <TransferProgress
             transfer={transfer}
             enabled={isOpen}

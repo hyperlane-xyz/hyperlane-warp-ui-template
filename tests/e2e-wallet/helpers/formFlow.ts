@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 // Extra patience for token-picker flows — under full-suite load (cosmos-kit
 // module init, multicall fallbacks, etc.) the default 5s locator timeouts
@@ -17,6 +17,41 @@ async function waitForTokenPickerClosed(page: Page) {
   ).toHaveCount(0, { timeout: MODAL_TIMEOUT });
 }
 
+async function selectTokenInVirtualList(modal: Locator, buttonName: RegExp) {
+  const button = modal.getByRole('button', { name: buttonName });
+  const scroller = modal.locator('.token-picker-scroll');
+
+  await expect
+    .poll(
+      async () => {
+        if (!(await modal.isVisible())) return true;
+
+        if ((await button.count()) > 0) {
+          try {
+            await button.first().dispatchEvent('click', undefined, { timeout: 500 });
+            return true;
+          } catch {
+            // Balance updates can reorder and unmount a row between lookup and click.
+            // A successful selection also unmounts the modal before dispatchEvent settles.
+            if (!(await modal.isVisible())) return true;
+          }
+        }
+
+        await scroller.evaluate((element) => {
+          const maxScrollTop = element.scrollHeight - element.clientHeight;
+          const nextScrollTop = Math.min(
+            maxScrollTop,
+            element.scrollTop + element.clientHeight * 0.8,
+          );
+          element.scrollTop = nextScrollTop > element.scrollTop ? nextScrollTop : 0;
+        });
+        return false;
+      },
+      { intervals: [50], timeout: MODAL_TIMEOUT },
+    )
+    .toBe(true);
+}
+
 // In dev builds (`pnpm dev`) Next.js renders a <nextjs-portal> web
 // component that intermittently shows up as the topmost element at
 // picker button click points. Playwright's pointer-based click hit-tests
@@ -33,10 +68,7 @@ export async function selectOriginToken(page: Page, buttonName: RegExp): Promise
   await page.getByTestId('token-select-origin').dispatchEvent('click');
   const modal = tokenPickerModal(page);
   await modal.waitFor({ state: 'visible', timeout: MODAL_TIMEOUT });
-  await modal
-    .getByRole('button', { name: buttonName })
-    .first()
-    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await selectTokenInVirtualList(modal, buttonName);
   await waitForTokenPickerClosed(page);
 }
 
@@ -52,10 +84,7 @@ export async function selectOriginTokenOnChain(
     .getByRole('button', { name: chainName })
     .first()
     .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
-  await modal
-    .getByRole('button', { name: buttonName })
-    .first()
-    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await selectTokenInVirtualList(modal, buttonName);
   await waitForTokenPickerClosed(page);
 }
 
@@ -71,10 +100,7 @@ export async function selectDestinationTokenOnChain(
     .getByRole('button', { name: chainName })
     .first()
     .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
-  await modal
-    .getByRole('button', { name: buttonName })
-    .first()
-    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await selectTokenInVirtualList(modal, buttonName);
   await waitForTokenPickerClosed(page);
 }
 
@@ -82,10 +108,7 @@ export async function selectDestinationToken(page: Page, buttonName: RegExp): Pr
   await page.getByTestId('token-select-destination').dispatchEvent('click');
   const modal = tokenPickerModal(page);
   await modal.waitFor({ state: 'visible', timeout: MODAL_TIMEOUT });
-  await modal
-    .getByRole('button', { name: buttonName })
-    .first()
-    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await selectTokenInVirtualList(modal, buttonName);
   await waitForTokenPickerClosed(page);
 }
 

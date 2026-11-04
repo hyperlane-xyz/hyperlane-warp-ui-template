@@ -231,6 +231,14 @@ table.sr { display: block; }
 .badge-link img { width: 190px; height: auto; }
 .credit { margin: 0; color: var(--gn-text-3); font-size: 12px; max-width: 60ch; }
 .credit a { color: var(--gn-text-3); text-decoration: underline; }
+/* Gully Chain Terms + Privacy (gullychain.xyz): footer row and the consent line under the transfer button */
+.foot-legal { display: flex; flex-wrap: wrap; gap: 0 18px; width: 100%; }
+.foot-legal a { color: var(--gn-text-3); font-size: 13px; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; gap: 6px; text-decoration: underline; text-underline-offset: 2px; }
+.foot-legal a svg { flex: none; color: var(--gn-text-3); }
+.foot-legal a:hover { color: var(--gn-text); }
+.consent { margin: 8px 0 0; color: var(--gn-text-3); font-size: 12px; line-height: 1.5; text-align: center; }
+.consent a { color: var(--gn-text-2); text-decoration: underline; text-underline-offset: 2px; }
+.consent a:hover { color: var(--gn-text); }
 
 .ref-pill { font-size: 12px; color: var(--gc-green); border: 1px solid color-mix(in srgb, var(--gn-green) 35%, transparent); border-radius: 999px; padding: 3px 10px; }
 
@@ -248,3 +256,5 @@ table.sr { display: block; }
 .testnet-tag { display: inline-flex; align-items: center; height: 16px; padding: 0 6px; margin-left: 6px; border-radius: 999px; border: 1px solid var(--gn-warn); color: var(--gn-warn); font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; vertical-align: middle; }
 .wallet-chain { display: inline-flex; align-items: center; gap: 4px; }
 .amount-on { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.legal-redirect { max-width: 34rem; margin: 0 auto; padding: 64px 16px; text-align: center; color: var(--gn-text-2); }
+.legal-redirect a { color: var(--gn-link, var(--gc-green)); display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }

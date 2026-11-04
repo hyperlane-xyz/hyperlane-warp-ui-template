@@ -94,4 +94,7 @@ export const LINKS = {
   discord: 'https://discord.com/invite/tY2ErsNNBp',
   x: 'https://x.com/Gully_Labs',
   hyperlane: 'https://hyperlane.xyz',
+  /** Gully Chain's one Terms of Service and Privacy Policy cover the bridge; /terms and /privacy here redirect there. */
+  terms: 'https://gullychain.xyz/terms',
+  privacy: 'https://gullychain.xyz/privacy',
 };

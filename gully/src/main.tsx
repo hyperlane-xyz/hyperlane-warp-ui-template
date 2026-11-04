@@ -6,6 +6,7 @@ import { AppB } from './ui/b/AppB';
 import { AppC } from './ui/c/AppC';
 import { Toaster } from './ui/common/toasts';
 import { readUrl } from './ui/useBridge';
+import { legalRedirect } from './config/legal';
 import { fetchMirrorRoutes, MIRRORS_URL } from './config/mirrors';
 import { setMirrorRoutes } from './config/routes';
 import './styles/night/tokens.css';
@@ -16,6 +17,10 @@ import './styles/c.css';
 import './styles/night.css';
 
 // Integrator seam: when @gullylabs/bridge-sdk ships, register it here with setBridgeClient() (src/bridge/bridgeClient.ts).
+
+// /terms and /privacy: Gully Chain's Terms and Privacy on gullychain.xyz (src/config/legal.ts). Caddy serves index.html
+// for every path, so the app sends these two paths there before the bridge renders.
+const legalTo = legalRedirect(location.pathname);
 
 const direction = (new URLSearchParams(location.search).get('design') || import.meta.env.VITE_DIRECTION || 'c').toLowerCase();
 const url = readUrl();
@@ -34,17 +39,29 @@ if (!indexable) {
   document.querySelector('meta[property="og:url"]')?.remove();
 }
 
-const render = () =>
+if (legalTo) {
+  document.querySelector('link[rel="canonical"]')?.setAttribute('href', legalTo);
+  location.replace(legalTo);
   createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      {direction === 'a' ? <AppA url={url} /> : direction === 'b' ? <AppB url={url} /> : <AppC url={url} />}
-      <Toaster />
-    </StrictMode>,
+    <main className="legal-redirect">
+      <p>
+        Opening <a href={legalTo}>{legalTo.replace('https://', '')}</a>
+      </p>
+    </main>,
   );
+} else {
+  const render = () =>
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        {direction === 'a' ? <AppA url={url} /> : direction === 'b' ? <AppB url={url} /> : <AppC url={url} />}
+        <Toaster />
+      </StrictMode>,
+    );
 
-// Gully Warp Mirrors: same-origin /mirrors.json (published every minute by the relayer sync on gully-l3) adds one Fast
-// route per active coin mirror before the first render, so a deep link ?token=&to= can preselect it. Missing file,
-// timeout or bad JSON = no mirror routes; the ETH routes and the default are unchanged either way.
-fetchMirrorRoutes(MIRRORS_URL, url.mirror ? 3000 : 1500)
-  .then(setMirrorRoutes)
-  .finally(render);
+  // Gully Warp Mirrors: same-origin /mirrors.json (published every minute by the relayer sync on gully-l3) adds one Fast
+  // route per active coin mirror before the first render, so a deep link ?token=&to= can preselect it. Missing file,
+  // timeout or bad JSON = no mirror routes; the ETH routes and the default are unchanged either way.
+  fetchMirrorRoutes(MIRRORS_URL, url.mirror ? 3000 : 1500)
+    .then(setMirrorRoutes)
+    .finally(render);
+}

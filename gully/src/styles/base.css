@@ -141,6 +141,11 @@ table.sr { display: block; }
 .mirror-note { align-items: center; flex-wrap: wrap; }
 .mirror-note .gc-core-mark { display: inline-flex; align-items: center; line-height: 0; margin-left: auto; }
 .mirror-note .gc-core-mark img { width: 146px; height: 24px; vertical-align: middle; }
+/* Gully Warp Mirrors: asset picker + the mirror label (owner wording) */
+.asset-pick { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; font-size: 13px; color: var(--gn-text-2); }
+.asset-pick select { flex: 1; min-height: 40px; padding: 6px 10px; border-radius: 12px; background: var(--gn-surface-2); color: var(--gn-text); border: 1px solid var(--gn-line-strong); font: inherit; font-weight: 700; }
+.mirror-note b { color: var(--gn-text); }
+.mirror-note a { color: var(--gn-link); font-weight: 700; }
 .quote-loading { min-height: 76px; }
 .shimmer { display: block; height: 14px; border-radius: 8px; background: linear-gradient(90deg, var(--gn-surface-2) 0%, var(--gn-surface-3) 50%, var(--gn-surface-2) 100%); background-size: 200% 100%; animation: shim 1.2s linear infinite; }
 .shimmer + .shimmer { width: 60%; }

@@ -7,7 +7,7 @@ import type { ActivityItem } from '../../bridge/types';
 import { Icon } from '../common/icons';
 import { Money, UsdLine, UsdNote } from '../common/money';
 import { asEth, ethN } from '../../bridge/usd';
-import { ActionButton, ActivityList, AmountField, ChainMark, Footer, LegacyNotice, MirrorNotice, MyTransfers, QuoteDetails, Stepper } from '../common/parts';
+import { ActionButton, ActivityList, AmountField, AssetPicker, ChainMark, Footer, LegacyNotice, MirrorNotice, MyTransfers, QuoteDetails, Stepper, WarpMirrorNotice } from '../common/parts';
 import { Header, AddUsdcRow } from '../common/shell';
 import { useActivity, useBridge, useHeads, type BridgeState, type UrlOptions } from '../useBridge';
 
@@ -171,6 +171,7 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
         <h1 className="h-card">{title}</h1>
         <LaneToggle b={b} />
       </div>
+      <AssetPicker b={b} />
       <div className="swap-box">
         <div className="swap-chain">
           <ChainMark chain={b.from} size={22} />
@@ -193,11 +194,12 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
             {b.quote?.receiveSymbol || 'ETH'}
           </span>
         </div>
-        <UsdLine v={b.quote && b.amount ? b.quote.receive : null} className="usd-recv" />
+        <UsdLine v={b.quote && b.amount && !b.mirror ? b.quote.receive : null} className="usd-recv" />
         <small className="muted">
           {b.quote ? `Arrives ${duration(b.quote.etaSeconds)}${b.kind === 'canonical' && b.direction === 'withdraw' ? ', then claim' : ''}` : 'Getting a quote…'}
         </small>
       </div>
+      <WarpMirrorNotice b={b} />
       <LegacyNotice b={b} />
       <MirrorNotice b={b} />
       <QuoteDetails b={b} />

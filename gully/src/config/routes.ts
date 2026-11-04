@@ -2,6 +2,7 @@ import type { Address } from 'viem';
 
 import data from './routes.json';
 import type { ChainKey } from './chains';
+import type { MirrorMeta } from './mirrors';
 
 export interface WarpToken {
   address: Address;
@@ -24,8 +25,14 @@ export interface FastRoute {
    * native asset. These routes carry the "Powered by Gully Core" badge (brand kit v4). Written by scripts/sync-routes.mjs.
    */
   mirror?: boolean;
+  /**
+   * a Gully Warp Mirror route (a Gully Core coin locked on Gully Chain and its opt-in copy on another chain), loaded at
+   * startup from /mirrors.json (mirrors.ts). Separate from `mirror` above, which marks the static synthetic ETH routes.
+   */
+  warp?: MirrorMeta;
 }
 
+/** the static ETH routes (routes.json); stats and the activity feed read only these */
 export const FAST_ROUTES = data.routes as FastRoute[];
 /** True for mirror routes: the GullyChain token is minted on Gully Chain (not native). */
 export const isMirrorRoute = (r: Pick<FastRoute, 'mirror'> | null | undefined): boolean => r?.mirror === true;
@@ -35,6 +42,12 @@ export const DEFAULT_FAST_ROUTE_ID = data.defaultRouteId;
 /** retired routes whose GullyChain token can still be redeemed (synthetic or collateral tokens a wallet can hold) */
 export const LEGACY_ROUTES = FAST_ROUTES.filter((r) => r.legacy && r.tokens.gullychaintestnet.tokenType !== 'native');
 
+/** Gully Warp Mirror routes, filled once at startup (main.tsx -> setMirrorRoutes); empty when /mirrors.json is absent. */
+export const MIRROR_ROUTES: FastRoute[] = [];
+export function setMirrorRoutes(routes: FastRoute[]) {
+  MIRROR_ROUTES.splice(0, MIRROR_ROUTES.length, ...routes.filter((r) => r.warp));
+}
+
 /** A route for a transfer: deposits always use the default route; legacy routes are only valid to withdraw (redeem). */
 export function routeFor(direction: 'deposit' | 'withdraw', id?: string): FastRoute {
   const r = fastRoute(id);
@@ -42,5 +55,9 @@ export function routeFor(direction: 'deposit' | 'withdraw', id?: string): FastRo
 }
 
 export function fastRoute(id?: string): FastRoute {
-  return FAST_ROUTES.find((r) => r.id === id) || FAST_ROUTES.find((r) => r.id === DEFAULT_FAST_ROUTE_ID)!;
+  return (
+    FAST_ROUTES.find((r) => r.id === id) ||
+    MIRROR_ROUTES.find((r) => r.id === id) ||
+    FAST_ROUTES.find((r) => r.id === DEFAULT_FAST_ROUTE_ID)!
+  );
 }

@@ -4,6 +4,7 @@ import testnetData from './routes.json';
 import mainnetJson from './mainnet.json';
 import type { ChainKey } from './chains';
 import { IS_TESTNET, MAINNET, ZERO_ADDRESS, fastReady } from './network';
+import type { MirrorMeta } from './mirrors';
 
 export interface WarpToken {
   address: Address;
@@ -28,6 +29,11 @@ export interface FastRoute {
   mirror?: boolean;
   /** false on mainnet until the route's routers are configured (mainnet.json / VITE_MAINNET_*); unset = ready */
   ready?: boolean;
+  /**
+   * a Gully Warp Mirror route (a Gully Core coin locked on Gully Chain and its opt-in copy on another chain), loaded at
+   * startup from /mirrors.json (mirrors.ts). Separate from `mirror` above, which marks the static synthetic ETH routes.
+   */
+  warp?: MirrorMeta;
 }
 
 /**
@@ -56,7 +62,7 @@ const data = IS_TESTNET ? (testnetData as { defaultRouteId: string; routes: Fast
 export const ROUTE_TABLE = data.routes;
 /** A route the bridge may use: every testnet route; on mainnet only once its contracts are configured. */
 export const routeReady = (r: Pick<FastRoute, 'ready'>): boolean => r.ready !== false;
-/** Usable routes only: stats, activity and the Fast lane read these. Empty on mainnet until launch day. */
+/** Usable routes only: the static ETH routes for stats, activity and the Fast lane. Empty on mainnet until launch day. */
 export const FAST_ROUTES = ROUTE_TABLE.filter(routeReady);
 /** True for mirror routes: the GullyChain token is minted on Gully Chain (not native). */
 export const isMirrorRoute = (r: Pick<FastRoute, 'mirror'> | null | undefined): boolean => r?.mirror === true;
@@ -66,6 +72,12 @@ export const DEFAULT_FAST_ROUTE_ID = data.defaultRouteId;
 /** retired routes whose GullyChain token can still be redeemed (synthetic or collateral tokens a wallet can hold) */
 export const LEGACY_ROUTES = FAST_ROUTES.filter((r) => r.legacy && r.tokens.gullychaintestnet.tokenType !== 'native');
 
+/** Gully Warp Mirror routes, filled once at startup (main.tsx -> setMirrorRoutes); empty when /mirrors.json is absent. */
+export const MIRROR_ROUTES: FastRoute[] = [];
+export function setMirrorRoutes(routes: FastRoute[]) {
+  MIRROR_ROUTES.splice(0, MIRROR_ROUTES.length, ...routes.filter((r) => r.warp));
+}
+
 /** A route for a transfer: deposits always use the default route; legacy routes are only valid to withdraw (redeem). */
 export function routeFor(direction: 'deposit' | 'withdraw', id?: string): FastRoute {
   const r = fastRoute(id);
@@ -73,5 +85,9 @@ export function routeFor(direction: 'deposit' | 'withdraw', id?: string): FastRo
 }
 
 export function fastRoute(id?: string): FastRoute {
-  return ROUTE_TABLE.find((r) => r.id === id) || ROUTE_TABLE.find((r) => r.id === DEFAULT_FAST_ROUTE_ID)!;
+  return (
+    ROUTE_TABLE.find((r) => r.id === id) ||
+    MIRROR_ROUTES.find((r) => r.id === id) ||
+    ROUTE_TABLE.find((r) => r.id === DEFAULT_FAST_ROUTE_ID)!
+  );
 }

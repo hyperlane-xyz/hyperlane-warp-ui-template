@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { formatEther, isAddress, type Address } from 'viem';
 
 import { CHAINS, CHILD, PARENT, type ChainKey } from '../config/chains';
-import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
+import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, MIRROR_ROUTES, routeFor } from '../config/routes';
+import { parseMirrorLink, pickMirrorRoute, type MirrorLink } from '../config/mirrors';
 import { getBridgeClient, onBridgeClientChange, type Balances } from '../bridge/bridgeClient';
 import { pub } from '../bridge/clients';
 import { track } from '../analytics/umami';
@@ -40,6 +41,8 @@ export interface UrlOptions {
   route?: RouteKind;
   amount?: string;
   preview: boolean;
+  /** Gully Warp Mirror deep link `?token=<originToken>&to=<domain>` (kre8.fun Drop page "Bridge" button) */
+  mirror?: MirrorLink;
 }
 
 export function readUrl(): UrlOptions {
@@ -68,6 +71,7 @@ export function readUrl(): UrlOptions {
     route: r === 'fast' || r === 'canonical' ? r : undefined,
     amount: q.get('amount') || undefined,
     preview: q.has('preview'),
+    mirror: parseMirrorLink(q.toString()),
   };
 }
 
@@ -150,10 +154,18 @@ export function useBridge(url: UrlOptions) {
   const wallet = useWallet();
   const [, force] = useState(0);
   useEffect(() => onBridgeClientChange(() => force((n) => n + 1)), []);
-  const [direction, setDirection] = useState<Direction>(url.direction || 'deposit');
+  // a mirror deep link preselects its route; direction Gully Chain -> destination until we see the wallet holds the
+  // mirror, then "Bridge back" (destination -> Gully Chain) unless the link or the user chose a direction
+  const linked = pickMirrorRoute(MIRROR_ROUTES, url.mirror);
+  const [direction, setDirectionRaw] = useState<Direction>(url.direction || (linked ? 'withdraw' : 'deposit'));
+  const directionChosen = useRef(!!url.direction);
+  const setDirection = (d: Direction | ((p: Direction) => Direction)) => {
+    directionChosen.current = true;
+    setDirectionRaw(d);
+  };
   const [amountText, setAmountText] = useState(url.amount || '');
   const [manualKind, setManualKind] = useState<RouteKind | undefined>(url.route);
-  const [fastRouteId, setFastRouteId] = useState(DEFAULT_FAST_ROUTE_ID);
+  const [fastRouteId, setFastRouteId] = useState(linked?.id || DEFAULT_FAST_ROUTE_ID);
   const [balances, setBalances] = useState<Balances>({});
   const [quotes, setQuotes] = useState<Partial<Record<RouteKind, Quote>>>({});
   const [quoteError, setQuoteError] = useState<string>();
@@ -168,6 +180,7 @@ export function useBridge(url: UrlOptions) {
   const route = routeFor(direction, fastRouteId);
   const routeId = route.id;
   const { from, to } = ends(direction);
+  const mirror = route.warp;
 
   // balances
   useEffect(() => {
@@ -188,6 +201,15 @@ export function useBridge(url: UrlOptions) {
       clearInterval(id);
     };
   }, [wallet.address, routeId]);
+
+  // mirror holders default to "Bridge back" (once per route, only while nobody picked a direction)
+  const autoBack = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!mirror || directionChosen.current || autoBack.current === route.id) return;
+    if (balances.mirrorToken === undefined) return;
+    autoBack.current = route.id;
+    if (balances.mirrorToken > 0n) setDirectionRaw('deposit');
+  }, [mirror, route.id, balances.mirrorToken]);
 
   // retired-route tokens the wallet still holds: the UI offers to redeem them for ETH on Arbitrum Sepolia
   const legacyHoldings = LEGACY_ROUTES.map((r) => ({
@@ -213,7 +235,8 @@ export function useBridge(url: UrlOptions) {
       }),
     [direction, amount, quotes.fast?.available, wallet.address, balances.fastToken, balances.childEth],
   );
-  const kind: RouteKind = manualKind || pick.kind;
+  // a mirror only moves over its warp route: the canonical rollup bridge carries ETH only
+  const kind: RouteKind = mirror ? 'fast' : manualKind || pick.kind;
 
   // quotes for both lanes, debounced
   useEffect(() => {
@@ -285,7 +308,13 @@ export function useBridge(url: UrlOptions) {
   }, []);
 
   const balanceFrom: bigint | undefined =
-    direction === 'deposit' ? balances.parentEth : kind === 'fast' ? balances.fastToken : balances.childEth;
+    direction === 'deposit'
+      ? mirror
+        ? balances.mirrorToken
+        : balances.parentEth
+      : kind === 'fast'
+        ? balances.fastToken
+        : balances.childEth;
 
   let blocker: string | undefined;
   if (!amount || amount <= 0n) blocker = 'Enter an amount';
@@ -354,12 +383,13 @@ export function useBridge(url: UrlOptions) {
     direction,
     setDirection: (d: Direction) => {
       setDirection(d);
-      if (d === 'deposit') setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+      if (d === 'deposit' && !mirror) setFastRouteId(DEFAULT_FAST_ROUTE_ID);
       setSteps({});
     },
     flip: () => {
       setDirection((d) => (d === 'deposit' ? 'withdraw' : 'deposit'));
-      setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+      // a mirror route works both ways; only the retired ETH routes fall back to the default on a flip
+      if (!mirror) setFastRouteId(DEFAULT_FAST_ROUTE_ID);
       setSteps({});
     },
     from,
@@ -373,6 +403,21 @@ export function useBridge(url: UrlOptions) {
     setKind: (k: RouteKind | undefined) => setManualKind(k),
     route,
     routes: FAST_ROUTES,
+    /** the selected Gully Warp Mirror (coin + destination), undefined on the ETH routes */
+    mirror,
+    mirrorRoutes: MIRROR_ROUTES,
+    /** pick a mirror route (or the default ETH route with undefined) */
+    selectMirror: (id?: string) => {
+      setFastRouteId(id || DEFAULT_FAST_ROUTE_ID);
+      setManualKind(undefined);
+      if (id) {
+        // start GullyChain -> destination; the holder check above flips to "Bridge back" if the wallet holds the mirror
+        setDirectionRaw('withdraw');
+        directionChosen.current = false;
+        autoBack.current = undefined;
+      }
+      setSteps({});
+    },
     fastRouteId: routeId,
     setFastRouteId,
     legacyHoldings,

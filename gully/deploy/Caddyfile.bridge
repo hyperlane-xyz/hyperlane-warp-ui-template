@@ -2,6 +2,8 @@
 # Replaces the bridge block in gully-ops l3/edge/Caddyfile.l3.tpl. Static files from
 # gully-labs/hyperlane-warp-ui-template, folder gully/ (node scripts/build-staging.mjs), copied to
 # /srv/status/sites/testnet-bridge.gullychain.xyz on gully-l3 (the status Caddy sees it as /srv/sites/...).
+# The live block is gully-ops l3/edge/Caddyfile.l3.tpl; since 2026-10-30 it also serves /mirrors.json and /mirrors/*
+# (Gully Warp Mirrors, src/config/mirrors.ts) from /srv/sites/warp-mirrors, outside this site folder.
 ${L3_BRIDGE_HOST}, ${L3_BRIDGE_HOST}:2053, bridge.gullychain.xyz, bridge.gullychain.xyz:2053 {
 	tls /certs/origin.pem /certs/origin.key
 	encode zstd gzip

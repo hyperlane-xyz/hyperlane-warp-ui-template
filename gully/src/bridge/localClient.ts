@@ -34,6 +34,7 @@ import {
   sentTransferEvent,
   warpRouterAbi,
 } from './abis';
+import { checkRecipient } from '../config/mirrors';
 import { pub } from './clients';
 import type { ActivityItem, Quote, QuoteRequest, StepDef, StepUpdate, TransferRecord } from './types';
 import { ensureChain, walletClient } from './wallet';
@@ -178,10 +179,24 @@ async function laneQuote(req: QuoteRequest): Promise<Quote> {
         reason = `Fast lane liquidity on ${CHAINS[to].short} is ${Number(liq) / 1e18} ${dest.symbol}`;
       }
     }
-    if (dest.tokenType === 'synthetic')
-      notes.push(`You receive ${dest.symbol} (${dest.name}), redeemable 1:1 for ETH through the Fast lane.`);
-    if (t.tokenType === 'synthetic')
-      notes.push(`${t.symbol} is burned on ${CHAINS[from].short}; ETH is released on ${CHAINS[to].short}.`);
+    if (r.warp) {
+      // Gully Warp Mirror: the coin is locked in its GullyCollateral on Gully Chain, the mirror is minted / burned 1:1
+      notes.push(r.warp.label);
+      notes.push(
+        dest.tokenType === 'synthetic'
+          ? `You receive ${dest.symbol} on ${CHAINS[to].short}, the official mirror of ${t.symbol}. Bridge back 1:1 any time to trade on Gully Core.`
+          : `${t.symbol} is burned on ${CHAINS[from].short}; ${dest.symbol} is released 1:1 on ${CHAINS[to].short}.`,
+      );
+      if (r.warp.syncing) {
+        available = false;
+        reason = 'The relayer is syncing this mirror route; try again in a minute';
+      }
+    } else {
+      if (dest.tokenType === 'synthetic')
+        notes.push(`You receive ${dest.symbol} (${dest.name}), redeemable 1:1 for ETH through the Fast lane.`);
+      if (t.tokenType === 'synthetic')
+        notes.push(`${t.symbol} is burned on ${CHAINS[from].short}; ETH is released on ${CHAINS[to].short}.`);
+    }
     return {
       req,
       from,
@@ -304,7 +319,7 @@ async function execute(q: Quote, onStep: (u: StepUpdate) => void): Promise<Trans
   await ensureChain(q.from);
   const wc = walletClient(q.from);
   const sender = wc.account!.address;
-  const recipient = req.recipient || sender;
+  const recipient = checkRecipient(req.recipient || sender);
   const client = pub(q.from);
   let hash: Hash;
   if (req.kind === 'fast') {
@@ -521,6 +536,8 @@ async function withdrawalsOf(address: Address): Promise<TransferRecord[]> {
 export interface Balances {
   parentEth?: bigint;
   childEth?: bigint;
+  /** Gully Warp Mirror routes: the wallet's mirror balance on the destination chain (what "Bridge back" sends) */
+  mirrorToken?: bigint;
   /** what the Fast route sends from GullyChain: native ETH (the default route) or the route's token (gETH / hypETH) */
   fastToken?: bigint;
   /** balances of retired routes' GullyChain tokens (gETH, hypETH) by route id, so the UI can offer a redeem */
@@ -538,12 +555,19 @@ const tokenBalance = (g: { tokenType: string; address: Address; collateralAddres
     .catch(() => undefined);
 
 async function balances(address: Address, routeId?: string): Promise<Balances> {
-  const g = fastRoute(routeId).tokens[CHILD];
-  const [parentEth, childEth, token, legacyList] = await Promise.all([
+  const route = fastRoute(routeId);
+  const g = route.tokens[CHILD];
+  const m = route.warp;
+  const [parentEth, childEth, token, legacyList, mirrorToken] = await Promise.all([
     pub(PARENT).getBalance({ address }).catch(() => undefined),
     pub(CHILD).getBalance({ address }).catch(() => undefined),
     g.tokenType === 'native' ? Promise.resolve(undefined) : tokenBalance(g, address),
     Promise.all(LEGACY_ROUTES.map((r) => tokenBalance(r.tokens[CHILD], address))),
+    m
+      ? pub(m.chain)
+          .readContract({ address: m.mirror, abi: erc20Abi, functionName: 'balanceOf', args: [address] })
+          .catch(() => undefined)
+      : Promise.resolve(undefined),
   ]);
   const legacy: Record<string, bigint> = {};
   LEGACY_ROUTES.forEach((r, i) => {
@@ -551,7 +575,7 @@ async function balances(address: Address, routeId?: string): Promise<Balances> {
   });
   // a native GullyChain router sends the wallet's own gas ETH
   const fastToken = g.tokenType === 'native' ? childEth : token;
-  return { parentEth, childEth, fastToken, legacy };
+  return { parentEth, childEth, fastToken, legacy, mirrorToken };
 }
 
 const blockTimes = new Map<string, number>();

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { formatEther, isAddress, type Address } from 'viem';
 
-import { CHILD, PARENT, type ChainKey } from '../config/chains';
+import { CHAINS, CHILD, PARENT, type ChainKey } from '../config/chains';
 import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, MIRROR_ROUTES, routeFor } from '../config/routes';
 import { parseMirrorLink, pickMirrorRoute, type MirrorLink } from '../config/mirrors';
 import { getBridgeClient, onBridgeClientChange, type Balances } from '../bridge/bridgeClient';
@@ -278,7 +278,7 @@ export function useBridge(url: UrlOptions) {
           const n = await getBridgeClient().track(t);
           if (n.status !== t.status) {
             setTransfers((all) => all.map((x) => (x.id === n.id ? n : x)));
-            if (n.status === 'delivered') toast({ kind: 'success', title: 'Delivered', body: `${n.receiveSymbol} arrived on ${n.to === CHILD ? 'GullyChain' : 'Arbitrum Sepolia'}` });
+            if (n.status === 'delivered') toast({ kind: 'success', title: 'Delivered', body: `${n.receiveSymbol} arrived on ${n.to === CHILD ? CHAINS[CHILD].short : CHAINS[PARENT].name}` });
             if (n.status === 'claimable') toast({ kind: 'info', title: 'Ready to claim', body: 'Your withdrawal passed the challenge period' });
           }
         } catch {
@@ -364,7 +364,7 @@ export function useBridge(url: UrlOptions) {
       try {
         const n = await getBridgeClient().claim(rec, onStep);
         setTransfers((all) => all.map((x) => (x.id === n.id ? n : x)));
-        toast({ kind: 'success', title: 'Claimed', body: 'ETH released on Arbitrum Sepolia' });
+        toast({ kind: 'success', title: 'Claimed', body: `ETH released on ${CHAINS[PARENT].name}` });
       } catch (e) {
         toast({ kind: 'error', title: 'Claim failed', body: ((e as Error).message || '').slice(0, 140) });
       } finally {

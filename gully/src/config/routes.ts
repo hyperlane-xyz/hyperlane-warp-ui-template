@@ -1,7 +1,9 @@
 import type { Address } from 'viem';
 
-import data from './routes.json';
+import testnetData from './routes.json';
+import mainnetJson from './mainnet.json';
 import type { ChainKey } from './chains';
+import { IS_TESTNET, MAINNET, ZERO_ADDRESS, fastReady } from './network';
 import type { MirrorMeta } from './mirrors';
 
 export interface WarpToken {
@@ -25,6 +27,8 @@ export interface FastRoute {
    * native asset. These routes carry the "Powered by Gully Core" badge (brand kit v4). Written by scripts/sync-routes.mjs.
    */
   mirror?: boolean;
+  /** false on mainnet until the route's routers are configured (mainnet.json / VITE_MAINNET_*); unset = ready */
+  ready?: boolean;
   /**
    * a Gully Warp Mirror route (a Gully Core coin locked on Gully Chain and its opt-in copy on another chain), loaded at
    * startup from /mirrors.json (mirrors.ts). Separate from `mirror` above, which marks the static synthetic ETH routes.
@@ -32,8 +36,34 @@ export interface FastRoute {
   warp?: MirrorMeta;
 }
 
-/** the static ETH routes (routes.json); stats and the activity feed read only these */
-export const FAST_ROUTES = data.routes as FastRoute[];
+/**
+ * Mainnet routes from mainnet.json: router addresses come from VITE_MAINNET_FAST_*_ROUTER or the json (null until the
+ * warp route is deployed). Until then the route is listed (so the card renders) but not ready, so it is never offered.
+ */
+function mainnetRoutes(): { defaultRouteId: string; routes: FastRoute[] } {
+  const ready = fastReady(MAINNET);
+  return {
+    defaultRouteId: mainnetJson.defaultRouteId,
+    routes: mainnetJson.routes.map((r) => ({
+      id: r.id,
+      symbol: r.symbol,
+      ready: r.id === mainnetJson.defaultRouteId && ready,
+      tokens: {
+        arbitrumsepolia: { ...r.tokens.arbitrumsepolia, address: (r.id === mainnetJson.defaultRouteId && MAINNET.fastParentRouter) || ZERO_ADDRESS },
+        gullychaintestnet: { ...r.tokens.gullychaintestnet, address: (r.id === mainnetJson.defaultRouteId && MAINNET.fastChildRouter) || ZERO_ADDRESS },
+      },
+    })) as FastRoute[],
+  };
+}
+
+const data = IS_TESTNET ? (testnetData as { defaultRouteId: string; routes: FastRoute[] }) : mainnetRoutes();
+
+/** Every route of this network, ready or not (the card always has a route to render). */
+export const ROUTE_TABLE = data.routes;
+/** A route the bridge may use: every testnet route; on mainnet only once its contracts are configured. */
+export const routeReady = (r: Pick<FastRoute, 'ready'>): boolean => r.ready !== false;
+/** Usable routes only: the static ETH routes for stats, activity and the Fast lane. Empty on mainnet until launch day. */
+export const FAST_ROUTES = ROUTE_TABLE.filter(routeReady);
 /** True for mirror routes: the GullyChain token is minted on Gully Chain (not native). */
 export const isMirrorRoute = (r: Pick<FastRoute, 'mirror'> | null | undefined): boolean => r?.mirror === true;
 /** The badge's link target (brand kit v4 badges/README.md): opens in a new tab like every external link. */
@@ -56,8 +86,8 @@ export function routeFor(direction: 'deposit' | 'withdraw', id?: string): FastRo
 
 export function fastRoute(id?: string): FastRoute {
   return (
-    FAST_ROUTES.find((r) => r.id === id) ||
+    ROUTE_TABLE.find((r) => r.id === id) ||
     MIRROR_ROUTES.find((r) => r.id === id) ||
-    FAST_ROUTES.find((r) => r.id === DEFAULT_FAST_ROUTE_ID)!
+    ROUTE_TABLE.find((r) => r.id === DEFAULT_FAST_ROUTE_ID)!
   );
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
-import { CHAINS, LINKS, txUrl, type ChainKey } from '../../config/chains';
+import { CHAINS, IS_TESTNET, LINKS, PARENT, txUrl, type ChainKey } from '../../config/chains';
+import { CAPS } from '../../config/network';
+import { capLines } from '../../bridge/caps';
 import { GULLY_CORE_URL } from '../../config/routes';
 import { ago, duration, fmtAmount, short } from '../../bridge/format';
 import type { ActivityItem, StepDef, TransferRecord } from '../../bridge/types';
@@ -82,12 +84,12 @@ export function ChainMark({ chain, size = 28, alt = '', badge = false }: { chain
         {l.text}
       </span>
     );
-  return <img className="chain-mark" src={badge ? l.badged : l.mark} width={size} height={size} alt={alt} title={alt || undefined} onError={() => setBroken(true)} />;
+  return <img className="chain-mark" src={badge && IS_TESTNET ? l.badged : l.mark} width={size} height={size} alt={alt} title={alt || undefined} onError={() => setBroken(true)} />;
 }
 
-/** Small "Testnet" badge written after a testnet chain's name. */
+/** Small "Testnet" badge written after a testnet chain's name (nothing on the mainnet build). */
 export function TestnetTag() {
-  return <span className="testnet-tag">Testnet</span>;
+  return IS_TESTNET ? <span className="testnet-tag">Testnet</span> : null;
 }
 
 export function Sparkline({ values, w = 96, h = 28, label }: { values: number[]; w?: number; h?: number; label: string }) {
@@ -449,7 +451,24 @@ export function ActionButton({ b }: { b: BridgeState }) {
         {b.busy ? 'Confirm in your wallet' : b.blocker || `${wrongChain ? `Switch to ${CHAINS[b.from].short} and ` : ''}${b.kind === 'fast' ? 'Bridge fast' : b.direction === 'deposit' ? 'Deposit' : 'Start withdrawal'}`}
       </Btn>
       <ConsentLine />
+      <CapsNote />
     </>
+  );
+}
+
+/** Phase 1 limits under the button (mainnet build only; the testnet bridge has none, so nothing renders). */
+export function CapsNote() {
+  const lines = capLines(CAPS);
+  if (!lines.length) return null;
+  return (
+    <div className="caps-note" role="note" aria-label="Phase 1 limits" data-testid="caps-note">
+      <b>Phase 1 limits</b>
+      <ul>
+        {lines.map((l) => (
+          <li key={l}>{l}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -540,7 +559,7 @@ export function MyTransfers({ b }: { b: BridgeState }) {
             <Stepper defs={stepDefsOf(t)} state={recordSteps(t)} compact />
             {t.status === 'claimable' && (
               <Btn icon="key" onClick={() => b.claim(t)} busy={b.busy} disabled={b.busy} className="btn-sm">
-                Claim on Arbitrum Sepolia
+                Claim on {CHAINS[PARENT].name}
               </Btn>
             )}
           </li>
@@ -590,7 +609,7 @@ function stepDefsOf(t: TransferRecord): StepDef[] {
 }
 
 /** Footer links: every one carries a Lucide icon next to its label (owner rule 2026-10-30, icons on the whole stack). */
-export const FOOT_LINKS: { label: string; icon: IconName; href: string; newTab?: boolean }[] = [
+export const FOOT_LINKS_ALL: { label: string; icon: IconName; href: string | null; newTab?: boolean }[] = [
   { label: 'GullyChain', icon: 'house', href: LINKS.chain },
   { label: 'Explorer', icon: 'search', href: LINKS.explorer },
   { label: 'Faucet', icon: 'droplet', href: LINKS.faucet },
@@ -603,6 +622,8 @@ export const FOOT_LINKS: { label: string; icon: IconName; href: string; newTab?:
   { label: 'Discord', icon: 'message', href: LINKS.discord },
   { label: 'X', icon: 'twitter', href: LINKS.x },
 ];
+/** The faucet is testnet only, so the mainnet build drops it (LINKS.faucet is null there). */
+export const FOOT_LINKS = FOOT_LINKS_ALL.filter((l): l is { label: string; icon: IconName; href: string; newTab?: boolean } => !!l.href);
 
 /** Gully Chain's Terms and Privacy (gullychain.xyz), in every footer, the embed's minimal one too. Another origin: new tab. */
 export const LEGAL_LINKS: { label: string; icon: IconName; href: string }[] = [
@@ -661,7 +682,7 @@ export function Footer({ minimal }: { minimal?: boolean }) {
           </Ext>
           <p className="credit">
             Fast lane secured by <Ext href={LINKS.hyperlane}>Hyperlane</Ext>. Canonical lane: the GullyChain Arbitrum Nitro
-            rollup bridge. Testnet: no real value.
+            rollup bridge.{IS_TESTNET ? ' Testnet: no real value.' : ''}
           </p>
           <nav className="foot-legal" aria-label="Legal">
             {LEGAL_LINKS.map((l) => (

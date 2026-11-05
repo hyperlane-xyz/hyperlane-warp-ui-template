@@ -8,6 +8,7 @@ import { Icon } from './icons';
 import { Sparkline } from './parts';
 import { Money, UsdNote } from './money';
 import { asEth, ethN, fmtUsd, toUsd, useEthUsd } from '../../bridge/usd';
+import { CHAINS } from '../../config/chains';
 
 export function useStats(intervalMs = 30000) {
   const [stats, setStats] = useState<BridgeStats>();
@@ -139,14 +140,14 @@ export function Analytics() {
           <ChartCard title="Fast lane liquidity" sub="native ETH each router can pay out">
             <dl className="kv">
               <div><dt>GullyChain router (pays deposits)</dt><dd><Money v={liq.supply} inline /></dd></div>
-              <div><dt>Arbitrum Sepolia router (pays withdrawals)</dt><dd><Money v={liq.locked} inline /></dd></div>
+              <div><dt>{CHAINS.arbitrumsepolia.name} router (pays withdrawals)</dt><dd><Money v={liq.locked} inline /></dd></div>
             </dl>
-            <Legend items={[{ label: 'Arbitrum Sepolia router', color: SERIES.canonical }, { label: 'GullyChain router (dashed)', color: SERIES.fast }]} />
+            <Legend items={[{ label: `${CHAINS.arbitrumsepolia.name} router`, color: SERIES.canonical }, { label: 'GullyChain router (dashed)', color: SERIES.fast }]} />
             <BackingLines series={liq.series} symbol="ETH liquidity" />
           </ChartCard>
         )}
         {(b || !liq) && (
-        <ChartCard title={`${b?.symbol || 'gETH'} backing${b?.legacy ? ' (retired route)' : ''}`} sub="ETH locked on Arbitrum Sepolia vs supply on GullyChain">
+        <ChartCard title={`${b?.symbol || 'gETH'} backing${b?.legacy ? ' (retired route)' : ''}`} sub={`ETH locked on ${CHAINS.arbitrumsepolia.name} vs supply on ${CHAINS.gullychaintestnet.short}`}>
           {b ? (
             <>
               <BackingGauge supply={Number(b.supply) / 1e18} locked={Number(b.locked) / 1e18} symbol={b.symbol} />

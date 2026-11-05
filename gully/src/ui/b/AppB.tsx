@@ -133,7 +133,7 @@ export function RouteVisual({ b, items, heads }: { b: BridgeState; items?: Activ
       </svg>
       <div className="rv-node rv-node-l">
         <ChainMark chain="arbitrumsepolia" size={64} />
-        <b>Arbitrum Sepolia</b>
+        <b>{CHAINS.arbitrumsepolia.name}</b>
         <small className="mono">#{heads.arbitrumsepolia.block?.toString() ?? '…'}</small>
       </div>
       <div className="rv-node rv-node-r">

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // Gully Chain sync (2026-10-30): the bridge's "Connect a wallet" is the shared gc-connect dialog (Gully Wallet first,
 // WalletConnect, EIP-6963 wallets, then install links), a byte copy of gully-ops sites/_shared/gc-connect; the switcher
-// is gc-switcher 1.8.2. The kit v3 guard fails on v3 colours, fonts, art files, typed wordmarks and kre8.fun chrome links.
+// is gc-switcher 1.8.3. The kit v3 guard fails on v3 colours, fonts, art files, typed wordmarks and kre8.fun chrome links.
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';

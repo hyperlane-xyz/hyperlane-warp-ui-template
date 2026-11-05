@@ -625,12 +625,6 @@ export const FOOT_LINKS_ALL: { label: string; icon: IconName; href: string | nul
 /** The faucet is testnet only, so the mainnet build drops it (LINKS.faucet is null there). */
 export const FOOT_LINKS = FOOT_LINKS_ALL.filter((l): l is { label: string; icon: IconName; href: string; newTab?: boolean } => !!l.href);
 
-/** The bridge's own legal pages, in every footer (also the embed's minimal one). Same tab: they are this site. */
-export const LEGAL_LINKS: { label: string; icon: IconName; href: string }[] = [
-  { label: 'Terms', icon: 'book', href: LINKS.terms },
-  { label: 'Privacy', icon: 'shield', href: LINKS.privacy },
-];
-
 /** Gully Chain's Terms and Privacy (gullychain.xyz), in every footer, the embed's minimal one too. Another origin: new tab. */
 export const LEGAL_LINKS: { label: string; icon: IconName; href: string }[] = [
   { label: 'Terms', icon: 'book', href: LINKS.terms },

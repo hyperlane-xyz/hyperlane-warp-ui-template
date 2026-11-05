@@ -96,3 +96,8 @@ html[data-hfit~="menu"] .nav.nav-open { display: flex; }
 .add-usdc-b { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--gc-line-2); background: none; color: var(--gn-text); font: 700 13px var(--gn-font); cursor: pointer; }
 .add-usdc-b:hover { border-color: var(--gn-link); }
 .add-usdc-c { border: 0; background: none; color: var(--gn-text-3); font: 500 12px var(--gn-font); cursor: pointer; text-decoration: underline; min-height: 32px; }
+
+/* 44 px tap targets (owner 2026-11-05): header brand and Connect, footer brand and links */
+.brand, .foot-brand { min-width: 44px; min-height: 44px; }
+.top-act .btn-sm, .top-act .wallet-pill { min-height: 44px; }
+.credit a, .foot-legal a, .foot-links a { display: inline-flex; align-items: center; min-height: 44px; }

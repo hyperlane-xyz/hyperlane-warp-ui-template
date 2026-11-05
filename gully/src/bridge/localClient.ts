@@ -314,8 +314,12 @@ function messageIdFromReceipt(r: TransactionReceipt, chain: ChainKey): Hash | un
   return undefined;
 }
 
-async function execute(q: Quote, onStep: (u: StepUpdate) => void): Promise<TransferRecord> {
-  const req = q.req;
+async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<TransferRecord> {
+  const req = given.req;
+  // the quote on screen can be stale (the amount just changed, the router just filled up): the caps and the destination
+  // router are read again right before the wallet opens, for this exact amount. Unreadable = nothing is sent.
+  const q = await quote(req);
+  if (!q.available) throw new Error(q.reason || 'Route unavailable');
   await ensureChain(q.from);
   const wc = walletClient(q.from);
   const sender = wc.account!.address;

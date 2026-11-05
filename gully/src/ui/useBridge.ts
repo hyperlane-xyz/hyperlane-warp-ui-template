@@ -1,4 +1,5 @@
 // All bridge state for both design directions. The shells (A, B) only render it.
+import { sendBlocker } from '../bridge/blocker';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { formatEther, isAddress, type Address } from 'viem';
 
@@ -316,20 +317,14 @@ export function useBridge(url: UrlOptions) {
         ? balances.fastToken
         : balances.childEth;
 
-  let blocker: string | undefined;
-  if (!amount || amount <= 0n) blocker = 'Enter an amount';
-  else if (!quote) blocker = quoting ? 'Getting a quote' : 'No quote';
-  else if (wallet.address && balanceFrom !== undefined && amount > balanceFrom) blocker = `Insufficient ${quote.sendSymbol} balance`;
-  else if (!quote.available) blocker = quote.reason || 'Route unavailable';
-  else if (
-    wallet.address &&
-    balanceFrom !== undefined &&
-    quote.value > 0n &&
-    (direction === 'deposit' || (kind === 'fast' && route.tokens[CHILD].tokenType === 'native')) &&
-    balanceFrom < quote.value
-  )
-    blocker = 'Insufficient balance';
-  else if (wallet.address && balanceFrom !== undefined && amount > balanceFrom) blocker = 'Insufficient balance';
+  const blocker = sendBlocker({
+    amount,
+    quote,
+    quoting,
+    wallet: wallet.address,
+    balanceFrom,
+    paysValueFromBalance: direction === 'deposit' || (kind === 'fast' && route.tokens[CHILD].tokenType === 'native'),
+  });
 
   const send = useCallback(async () => {
     if (!quote || !amount) return;

@@ -101,3 +101,5 @@ html[data-hfit~="menu"] .nav.nav-open { display: flex; }
 .brand, .foot-brand { min-width: 44px; min-height: 44px; }
 .top-act .btn-sm, .top-act .wallet-pill { min-height: 44px; }
 .credit a, .foot-legal a, .foot-links a { display: inline-flex; align-items: center; min-height: 44px; }
+.foot-links a { min-width: 44px; justify-content: center; }
+.top-act a, .top-act button, .top-act .btn { min-height: 44px; }

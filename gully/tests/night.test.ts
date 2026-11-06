@@ -104,7 +104,7 @@ describe('brand kit files on the black pages', () => {
 describe('navigation reach (gc-switcher 1.8.3 + footer)', () => {
   it('ships gc-switcher 1.8.3 (Gully Chain products only, no kre8.fun; kit v4 icon; Ecosystem entry) in the dark header', () => {
     const js = readFileSync(join(app, 'src/gc-switcher/gc-switcher.js'), 'utf8');
-    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.8\.2'/);
+    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.8\.3'/);
     expect(js.slice(js.indexOf('var PRODUCTS = ['), js.indexOf('];', js.indexOf('var PRODUCTS = [')))).not.toMatch(/kre8\.fun/);
     expect(js).toMatch(/id: 'ecosystem'[^}]*https:\/\/gullychain\.xyz\/ecosystem\//);
     expect(js).toMatch(/showPopover\(\)/);

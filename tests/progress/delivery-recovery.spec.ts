@@ -68,6 +68,10 @@ async function setup(
     { messageId, originHash, oldHash, recipient, bridgeToken, outputToken, swap },
   );
   await page.routeWebSocket('**/messages?**', (connection) => {
+    if (new URL(connection.url()).searchParams.get('diagnostics') === 'true') {
+      connection.send(JSON.stringify({ type: 'diagnostics_unavailable' }));
+      return;
+    }
     socket = connection;
     connection.send(JSON.stringify({ type: 'ready' }));
     for (const domain of [8453, 56])
@@ -196,7 +200,7 @@ for (const scenario of ['empty', 'offline'] as const) {
     await expect(page.getByLabel('Amount to send', { exact: true })).toHaveText('1.5 ETH');
     expect(state.mailboxReads()).toBeGreaterThan(0);
     const bridge = page.getByRole('article', { name: 'Bridge funds' });
-    await bridge.locator('summary').click();
+    await bridge.getByText('Transaction details', { exact: true }).click();
     await expect(
       bridge.getByRole('link', { name: 'Destination transaction (opens in new tab)' }),
     ).toHaveAttribute('title', oldHash);

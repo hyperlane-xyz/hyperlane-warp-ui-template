@@ -66,22 +66,22 @@ export function TransactionDeliveryWatcher() {
     );
   }, [multiProvider, selectedTransactionId, transferRouteByTransactionId, transactionHistory]);
 
-  const watchedChains: Array<string | number> = targets.flatMap((target) => [
-    target.originDomainId,
-    target.destinationChain,
-  ]);
-  const selected = transactionHistory.find((item) => item.id === selectedTransactionId);
-  if (
-    selected?.type === TransactionHistoryItemType.Transfer &&
-    (selected.data.originTxHash || selected.data.msgIds?.length)
-  ) {
-    watchedChains.push(selected.data.srcChain, selected.data.dstChain);
-  }
+  // Watch every message in each active swap, including bridge, commit, and reveal.
+  const watchedTransfers = transactionHistory.flatMap((item) =>
+    item.type === TransactionHistoryItemType.Transfer &&
+    (item.id === selectedTransactionId || targets.some((target) => target.id === item.id)) &&
+    (item.data.originTxHash || item.data.msgIds?.length)
+      ? [item.data]
+      : [],
+  );
   useWatchMessages(
-    watchedChains.flatMap((chain) => {
-      const domain = multiProvider.tryGetDomainId(chain);
-      return domain == null ? [] : [domain];
-    }),
+    watchedTransfers.flatMap(({ srcChain, dstChain }) =>
+      [srcChain, dstChain].flatMap((chain) => {
+        const domain = multiProvider.tryGetDomainId(chain);
+        return domain == null ? [] : [domain];
+      }),
+    ),
+    watchedTransfers.flatMap((transfer) => transfer.msgIds?.map(({ msgId }) => msgId) ?? []),
   );
 
   return (

@@ -22,25 +22,20 @@ export const useMessageStream = create<MessageStreamState>(() => ({
   heads: {},
 }));
 
-export function useWatchMessages(domains: number[]) {
+export function useWatchMessages(domains: number[], messageIds: string[]) {
   const client = useQueryClient();
   useEffect(() => subscribeToMessageUpdates(client), [client]);
 
-  const domainKey = [...new Set(domains.map((domain) => domain >>> 0))]
-    .sort((a, b) => a - b)
-    .join(',');
+  const url = domains.length
+    ? messageStreamUrl(config.explorerApiUrl, config.explorerWsUrl, domains, messageIds)
+    : undefined;
   useEffect(() => {
-    if (!domainKey) {
+    if (!url) {
       useMessageStream.setState({ connection: LiveConnection.Connecting, heads: {} });
       return;
     }
-    const url = messageStreamUrl(
-      config.explorerApiUrl,
-      config.explorerWsUrl,
-      domainKey.split(',').map(Number),
-    );
     return connectMessageStream(url, client, useMessageStream.setState);
-  }, [client, domainKey]);
+  }, [client, url]);
 }
 
 /** Reconcile both streamed updates and reconnect snapshots with persisted outcomes. */

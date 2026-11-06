@@ -65,11 +65,36 @@ describe('live message status', () => {
   });
   it('derives the subscription URL and respects an override', () => {
     expect(messageStreamUrl('https://example.com/graphql', undefined, [56, 8453])).toBe(
-      'wss://example.com/messages?confirmations=0&domains=56%2C8453&blocks=true',
+      'wss://example.com/messages?confirmations=0&domains=56%2C8453&blocks=true&messageIds=',
     );
     expect(
       messageStreamUrl('http://localhost/graphql', 'ws://localhost:8080/messages', [1]),
     ).toContain('ws://localhost:8080/messages?');
+  });
+  it('scopes messages to normalized IDs and uses an empty filter while discovering', () => {
+    const first = 'AB'.repeat(32);
+    const second = '12'.repeat(32);
+    const url = new URL(
+      messageStreamUrl(
+        'https://example.com/graphql',
+        undefined,
+        [1],
+        [`0x${first}`, `\\x${first.toLowerCase()}`, `0x${second}`],
+      ),
+    );
+    expect(url.searchParams.get('messageIds')).toBe(`${second},${first.toLowerCase()}`);
+    expect(
+      new URL(messageStreamUrl('https://example.com/graphql', undefined, [1])).searchParams.get(
+        'messageIds',
+      ),
+    ).toBe('');
+  });
+  it('keeps subscription URLs stable when tracked domains or messages reorder', () => {
+    const a = `0x${'11'.repeat(32)}`;
+    const b = `0x${'22'.repeat(32)}`;
+    expect(
+      messageStreamUrl('https://example.com/graphql', undefined, [8453, 56, 56], [b, a, a]),
+    ).toBe(messageStreamUrl('https://example.com/graphql', undefined, [56, 8453], [a, b]));
   });
   it('applies push updates without polling and ignores unrelated messages', async () => {
     const fetch = vi.fn(async () => [{ ...row, is_delivered: false }]);

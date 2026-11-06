@@ -148,6 +148,7 @@ function TransferDetailsModalInner({
   const bridgeDelivered = bridgeMsgId ? messageStatuses[bridgeMsgId]?.delivered : undefined;
 
   const showTimeline = !!originTxHash && !!pollingMsgId;
+  const singleMessageTimeline = showTimeline && msgIds?.length === 1;
   const awaitingMessages = !!originTxHash && srcChain !== dstChain && !pollingMsgId && !isFinal;
 
   const fundsAvailable = showTimeline
@@ -301,7 +302,11 @@ function TransferDetailsModalInner({
           />
         )}
         <div
-          className="mt-3 min-h-[76px] border-t border-gray-400/25 pt-4"
+          className={
+            singleMessageTimeline
+              ? 'mt-3 border-t border-gray-400/25 pt-3'
+              : 'mt-3 min-h-[76px] border-t border-gray-400/25 pt-4'
+          }
           aria-live="polite"
           aria-atomic="true"
         >
@@ -312,7 +317,9 @@ function TransferDetailsModalInner({
           >
             {headline}
           </DialogTitle>
-          <p className="mt-1 text-xs leading-relaxed text-foreground-muted">{description}</p>
+          {!singleMessageTimeline && (
+            <p className="mt-1 text-xs leading-relaxed text-foreground-muted">{description}</p>
+          )}
         </div>
 
         {(showTimeline || awaitingMessages) && (
@@ -351,31 +358,42 @@ function TransferDetailsModalInner({
             ))}
           </div>
         )}
-        <div className="mt-4 min-h-[52px]">
-          {outcome && (
-            <div
+        {(!singleMessageTimeline || (outcome && !outcomeIsSuccess)) && (
+          <div className="mt-4 min-h-[52px]">
+            {outcome && (
+              <div
+                data-testid="transfer-outcome"
+                role={outcomeIsSuccess ? 'status' : 'alert'}
+                className={`rounded-lg border p-3 text-xs leading-relaxed ${
+                  outcomeIsSuccess
+                    ? 'border-green-50/30 bg-green-50/10 text-green-600 dark:text-green-50'
+                    : isFailedRecovered
+                      ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
+                      : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
+                }`}
+              >
+                {outcome}
+              </div>
+            )}
+          </div>
+        )}
+        <div className="mt-3 flex min-h-[52px] items-center justify-between gap-4 border-t border-gray-400/25 pt-3">
+          {singleMessageTimeline && outcomeIsSuccess ? (
+            <output
               data-testid="transfer-outcome"
-              role={outcomeIsSuccess ? 'status' : 'alert'}
-              className={`rounded-lg border p-3 text-xs leading-relaxed ${
-                outcomeIsSuccess
-                  ? 'border-green-50/30 bg-green-50/10 text-green-600 dark:text-green-50'
-                  : isFailedRecovered
-                    ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
-                    : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
-              }`}
+              className="text-xxs text-green-600 dark:text-green-50"
             >
               {outcome}
-            </div>
+            </output>
+          ) : (
+            <span className="text-xxs text-foreground-muted">
+              {originTxHash && !isFinal && !fundsAvailable
+                ? 'You can close this. Your transfer will continue.'
+                : needsWallet
+                  ? 'Your wallet needs your confirmation.'
+                  : ''}
+            </span>
           )}
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-4 border-t border-gray-400/25 pt-3">
-          <span className="text-xxs text-foreground-muted">
-            {originTxHash && !isFinal && !fundsAvailable
-              ? 'You can close this. Your transfer will continue.'
-              : needsWallet
-                ? 'Your wallet needs your confirmation.'
-                : ''}
-          </span>
           <button
             type="button"
             onClick={close}

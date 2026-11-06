@@ -76,10 +76,11 @@ export function useMessageDeliveryStatus(
     enabled: enabled && ready && !!request,
     staleTime: 30_000,
     refetchInterval: (query) =>
-      (connection === LiveConnection.Disconnected || query.state.status === 'error') &&
-      (recheckDelivered ||
-        !query.state.data?.length ||
-        query.state.data.some((row) => !row.is_delivered || !row.destination_tx_hash))
+      // Discover indexed messages before their IDs can enter the targeted stream.
+      !query.state.data?.length ||
+      ((connection === LiveConnection.Disconnected || query.state.status === 'error') &&
+        (recheckDelivered ||
+          query.state.data.some((row) => !row.is_delivered || !row.destination_tx_hash)))
         ? 10_000
         : false,
   });

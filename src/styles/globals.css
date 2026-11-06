@@ -754,12 +754,219 @@ html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
   }
 }
 
+/* Relay animation follows reported state; it never advances a fabricated percentage. */
+.relay-panel {
+  --ism-success: #236a45;
+}
+html[data-theme-mode='dark'] .relay-panel {
+  --ism-success: #00c467;
+}
+.relay-card {
+  border: 1px solid color-mix(in srgb, var(--color-primary-500, #9a0dff) 20%, transparent);
+  border-radius: 12px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-primary-500, #9a0dff) 5%, transparent),
+    transparent 65%
+  );
+}
+.relay-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+}
+.relay-panel[data-active='true'] .relay-live-dot {
+  color: var(--color-primary-500, #9a0dff);
+  animation: relay-breathe 2s ease-in-out infinite;
+}
+.relay-stages li {
+  color: var(--color-foreground-muted, #737380);
+}
+.relay-stage-track {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  height: 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  transition: background-color 400ms ease;
+}
+.relay-stages [data-reached='true'] .relay-stage-track,
+.relay-stages [data-current='true'] .relay-stage-track {
+  background: var(--color-primary-500, #9a0dff);
+}
+.relay-stages [data-current='true'] .relay-stage-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #ffffffaa, transparent);
+  animation: relay-flow 1.8s ease-in-out infinite;
+}
+.relay-status-text {
+  display: inline-block;
+  animation: ism-reveal 250ms ease-out;
+}
+.ism-branch {
+  min-width: 0;
+  animation: ism-reveal 300ms ease-out;
+}
+/* Keep unselected details readable; only mute the collapsed row. */
+.ism-branch[data-selected='false'] > .ism-node > summary {
+  opacity: 0.7;
+}
+.ism-node > summary {
+  border: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+  background: color-mix(in srgb, var(--color-surface, #fff) 90%, transparent);
+  transition:
+    border-color 450ms ease,
+    background-color 450ms ease;
+}
+.ism-node:is([data-state='verified'], [data-state='threshold_met'], [data-state='ready'])
+  > summary {
+  border-color: #3c835e60;
+  background: #3c835e0b;
+}
+.ism-node[data-state='failed'] > summary {
+  border-color: #e2a22c80;
+}
+.ism-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  color: var(--color-foreground-muted, #737380);
+}
+.ism-node:is([data-state='unknown'], [data-state='unused']) > summary .ism-state-icon {
+  border-radius: 3px;
+  border-style: dashed;
+}
+.ism-node:is([data-state='verified'], [data-state='threshold_met'], [data-state='ready'])
+  > summary
+  .ism-state-icon {
+  color: var(--ism-success);
+  animation: ism-verified 400ms ease-out;
+}
+.ism-node[data-state='failed'] > summary .ism-state-icon {
+  color: #b88321;
+}
+.ism-node[data-working='true'] > summary .ism-state-icon {
+  color: var(--color-primary-500, #9a0dff);
+  animation: relay-breathe 2s ease-in-out infinite;
+}
+.ism-node:is([data-state='verified'], [data-state='threshold_met'], [data-state='ready'])
+  > summary
+  .ism-status-label {
+  color: var(--ism-success);
+}
+.ism-chevron {
+  transition: transform 180ms ease;
+}
+.message-disclosure[open] > summary .message-disclosure-chevron,
+.ism-node[open] > summary .ism-chevron,
+.ism-disclosure[open] > summary .ism-chevron {
+  transform: rotate(90deg);
+}
+.ism-children {
+  margin: 0 0 0 7px;
+  padding-left: 9px;
+  border-left: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+.ism-children > .ism-branch {
+  position: relative;
+  margin-top: 3px;
+}
+.ism-children > .ism-branch::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 15px;
+  width: 9px;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  transition: border-color 450ms ease;
+}
+.ism-children
+  > .ism-branch:is(
+    [data-state='verified'],
+    [data-state='threshold_met'],
+    [data-state='ready']
+  )::before {
+  border-color: var(--ism-success);
+}
+.ism-children > .ism-branch[data-working='true']::before {
+  border-color: var(--color-primary-500, #9a0dff);
+  animation: relay-breathe 2s ease-in-out infinite;
+}
+.ism-quorum-track {
+  height: 3px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #88888820;
+}
+.ism-quorum-track > span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary-500, #9a0dff);
+  transition: width 450ms ease;
+}
+@keyframes relay-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes relay-flow {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes ism-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ism-verified {
+  0% {
+    transform: scale(0.8);
+  }
+  55% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relay-panel *,
+  .relay-panel *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 /* Anchor the receipt so expanding messages never recenters the dialog. */
 .transfer-details-modal {
   align-self: flex-start;
   transition-property: opacity, transform, translate, scale;
   margin-top: clamp(0rem, 8vh, 5rem);
   max-height: calc(100dvh - clamp(0rem, 8vh, 5rem) - 2rem);
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 @media (prefers-reduced-motion: reduce) {

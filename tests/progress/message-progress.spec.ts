@@ -203,6 +203,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         index < 2 && !reorg ? (index === 1 || directBridge ? '256' : '100') : null,
     });
     let liveSocket: WebSocketRoute | undefined;
+    let diagnosticsSocket: WebSocketRoute | undefined;
     let snapshotRequests = 0;
     let originSnapshotRequests = 0;
     let originIndexed = !recoverMessages;
@@ -226,6 +227,11 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       }
     };
     await page.routeWebSocket('**/messages?**', (socket) => {
+      if (new URL(socket.url()).searchParams.get('diagnostics') === 'true') {
+        diagnosticsSocket = socket;
+        socket.send(JSON.stringify({ type: 'diagnostics_unavailable' }));
+        return;
+      }
       liveSocket = socket;
       socketConnections++;
       if (!liveAvailable) {
@@ -448,7 +454,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         0,
       );
       await expect(dialog.getByText('Bridge Message ID', { exact: true })).toHaveCount(0);
-      await bridge.locator('summary').click();
+      await bridge.getByText('Transaction details', { exact: true }).click();
       await expect(bridge).toContainText(
         taggedFinality ? 'Waiting for finalized block' : '0/5 blocks',
       );
@@ -464,12 +470,14 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       await expect(
         bridge.getByRole('link', { name: 'Destination transaction (opens in new tab)' }),
       ).toHaveAttribute('title', pendingDestinationTx);
+      await expect(bridge.getByRole('list', { name: 'Message lifecycle stages' })).toHaveCount(1);
+      await expect(bridge.getByRole('list', { name: 'Message milestones' })).toHaveCount(0);
       await expect(
-        bridge.getByRole('listitem', { name: 'Delivered: Complete', exact: true }),
-      ).toBeVisible();
+        bridge.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
+      ).toHaveAttribute('data-reached', 'true');
       await expect(
-        bridge.getByRole('listitem', { name: 'Confirming: In progress', exact: true }),
-      ).toBeVisible();
+        bridge.locator('.relay-stages li').filter({ hasText: /^Confirm$/ }),
+      ).toHaveAttribute('aria-current', 'step');
       await page.locator('.transfer-details-modal').evaluate((element) => element.scrollTo(0, 0));
       await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
       await page.setViewportSize({ width: 390, height: 844 });
@@ -600,21 +608,24 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     const bridge = progress.locator('article').filter({ hasText: 'Bridge funds' });
     const commit = progress.locator('article').filter({ hasText: 'Commit authorization' });
     await expect(reveal.getByRole('status')).toHaveText('Confirming origin · 0/15');
-    const spinner = reveal.locator('summary .message-status-spinner');
+    const spinner = reveal.locator(
+      ':scope > .message-disclosure > summary .message-status-spinner',
+    );
     await expect(spinner).toBeVisible();
-    await expect(bridge.locator('summary .message-status-spinner')).toHaveCount(0);
+    await expect(
+      bridge.locator(':scope > .message-disclosure > summary .message-status-spinner'),
+    ).toHaveCount(0);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await expect(spinner).toHaveCSS('animation-name', 'none');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect(spinner).not.toHaveCSS('animation-name', 'none');
-    await reveal.locator('summary').click();
+    await reveal.locator(':scope > .message-disclosure > summary').click();
     await expect(reveal.getByRole('listitem').first().locator(':scope > span').first()).toHaveCSS(
       'height',
-      '4px',
+      '3px',
     );
-    await expect(
-      reveal.getByRole('listitem', { name: 'Origin confirming: In progress' }),
-    ).toBeVisible();
+    await expect(reveal.getByRole('list', { name: 'Message lifecycle stages' })).toBeVisible();
+    await reveal.getByText('Transaction details', { exact: true }).click();
     await expect(reveal).toContainText('0/15 blocks');
     liveSocket?.send(
       JSON.stringify({
@@ -626,35 +637,31 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       }),
     );
     await expect(reveal.getByRole('status')).toHaveText('Confirming origin · 1/15');
-    await expect(
-      reveal.getByRole('listitem', { name: 'Origin confirming: In progress' }),
-    ).toContainText('1/15');
+    await expect(reveal).toContainText('1/15 blocks');
     originConfirmed = true;
     sendHeads();
     await expect(bridge.getByRole('status')).toHaveText('Confirmed');
     await expect(commit.getByRole('status')).toHaveText('Confirming destination · 0/5');
-    await commit.locator('summary').click();
+    await commit.locator(':scope > .message-disclosure > summary').click();
     await expect(
-      commit.getByRole('listitem', { name: 'Delivered: Complete', exact: true }),
-    ).toBeVisible();
+      commit.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
+    ).toHaveAttribute('data-reached', 'true');
     await expect(
-      commit.getByRole('listitem', { name: 'Confirming: In progress', exact: true }),
-    ).toBeVisible();
+      commit.locator('.relay-stages li').filter({ hasText: /^Confirm$/ }),
+    ).toHaveAttribute('aria-current', 'step');
+    await commit.getByText('Transaction details', { exact: true }).click();
     await expect(commit).toContainText('0/5 blocks');
     await expect(reveal.getByRole('status')).toHaveText('Awaiting relayer delivery', {
       timeout: 20_000,
     });
     await expect(
-      reveal.getByRole('listitem', { name: 'Origin confirmed: Complete' }),
-    ).toBeVisible();
+      reveal.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
+    ).toHaveAttribute('data-reached', 'false');
     await expect(
-      reveal.getByRole('listitem', { name: 'Delivering: In progress', exact: true }),
-    ).toBeVisible();
-    await expect(
-      reveal.getByRole('listitem', { name: 'Confirming: Waiting', exact: true }),
-    ).toBeVisible();
-    await reveal.locator('summary').click();
-    await commit.locator('summary').click();
+      reveal.locator('.relay-stages li').filter({ hasText: /^Confirm$/ }),
+    ).toHaveAttribute('data-reached', 'false');
+    await reveal.locator(':scope > .message-disclosure > summary').click();
+    await commit.locator(':scope > .message-disclosure > summary').click();
     await expect(page.getByTestId('transfer-headline')).toHaveText('Waiting for message delivery');
     await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
     for (const row of await progress.locator('article').all()) {
@@ -692,7 +699,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     }
     await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
     const panelTop = (await page.getByTestId('transfer-details').boundingBox())?.y;
-    await reveal.locator('summary').click();
+    await reveal.locator(':scope > .message-disclosure > summary').click();
     expect((await page.getByTestId('transfer-details').boundingBox())?.y).toBe(panelTop);
     await expect(
       reveal.getByRole('link', { name: 'Sender (opens in new tab)', exact: true }),
@@ -730,9 +737,64 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       }),
     );
     await expect(bridge.getByRole('status')).not.toHaveText('Confirmed', { timeout: 25_000 });
-    await bridge.locator('summary').click();
+    await bridge.locator(':scope > .message-disclosure > summary').click();
     await expect(
-      bridge.getByRole('listitem', { name: 'Delivering: In progress', exact: true }),
-    ).toBeVisible();
+      bridge.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
+    ).toHaveAttribute('data-reached', 'false');
+
+    // All three message IDs share one diagnostics subscription and keep separate trees.
+    expect(
+      diagnosticsSocket && new URL(diagnosticsSocket.url()).searchParams.get('messageIds'),
+    ).toBe(ids.map((id) => id.slice(2)).join(','));
+    const types = ['Null', 'CcipRead', 'MessageIdMultisig'];
+    const labels = ['Null', 'CCIP Read', 'Message ID Multisig'];
+    for (const [index, row] of [bridge, commit, reveal].entries()) {
+      diagnosticsSocket?.send(
+        JSON.stringify({
+          type: 'diagnostics',
+          data: {
+            version: 1,
+            message_id: ids[index],
+            partial: false,
+            activities: [
+              {
+                id: '1',
+                relayer: address,
+                version: 1,
+                observed_at: '2026-11-06 15:00:00',
+                activity: {
+                  type: 'snapshot',
+                  state: {
+                    phase: 'ready_to_submit',
+                    tree_root: 'root',
+                    modules: [
+                      {
+                        node_id: 'root',
+                        ism: address,
+                        module_type: types[index],
+                        discovered: true,
+                        children: [],
+                        verification: 'succeeded',
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        }),
+      );
+      if ((await row.locator(':scope > .message-disclosure').getAttribute('open')) === null)
+        await row.locator(':scope > .message-disclosure > summary').click();
+    }
+    for (const [index, row] of [bridge, commit, reveal].entries()) {
+      await expect(row.getByRole('list', { name: 'ISM verification tree' })).toBeVisible();
+      await expect(row.locator('.ism-node > summary')).toContainText(labels[index]);
+      await expect(row.getByRole('list', { name: 'Message milestones' })).toHaveCount(0);
+    }
+    await page.screenshot({
+      path: testInfo.outputPath('three-message-proofs.png'),
+      fullPage: true,
+    });
   });
 }

@@ -22,12 +22,25 @@ const eventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('rollback'), domain: z.number().int(), toHeight: blockHeightSchema }),
 ]);
 
-export function messageStreamUrl(apiUrl: string, override: string | undefined, domains: number[]) {
+export function messageStreamUrl(
+  apiUrl: string,
+  override: string | undefined,
+  domains: number[],
+  messageIds: string[] = [],
+) {
   const url = new URL(override || '/messages', apiUrl);
   url.protocol = url.protocol === 'https:' || url.protocol === 'wss:' ? 'wss:' : 'ws:';
   url.searchParams.set('confirmations', '0');
-  url.searchParams.set('domains', domains.join(','));
+  url.searchParams.set(
+    'domains',
+    [...new Set(domains.map((domain) => domain >>> 0))].sort((a, b) => a - b).join(','),
+  );
   url.searchParams.set('blocks', 'true');
+  // Explicitly empty while discovering IDs: receive heads, never the global feed.
+  url.searchParams.set(
+    'messageIds',
+    [...new Set(messageIds.map(normalizeMessageId))].sort().join(','),
+  );
   return url.toString();
 }
 export function normalizeMessageId(value: string) {

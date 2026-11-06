@@ -1,12 +1,15 @@
 import { CopyButton, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { getHypExplorerLink } from '../../utils/links';
 import { useMultiProvider } from '../chains/hooks';
 import type { LabeledMsgId, TransferHistoryItem } from '../transfer/engine/types';
+import { DiagnosticConnection, relayLabel } from './diagnostics';
+import { MessageRelayProgress } from './MessageRelayProgress';
+import { normalizeMessageId } from './messageStream';
 import {
   decodeAuthorizationBody,
   decodeTransferBody,
@@ -14,6 +17,11 @@ import {
   type ConfirmationProgress,
 } from './progress';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
+import {
+  useMessageDiagnostics,
+  connectingDiagnostics,
+  type DiagnosticsState,
+} from './useMessageDiagnostics';
 import { useTransactionConfirmations } from './useTransactionConfirmations';
 
 const MESSAGE_LABELS: Record<LabeledMsgId['label'], string> = {
@@ -40,6 +48,10 @@ export function TransferProgress({
   enabled: boolean;
   onDeliveryChange: (status: TransferDeliveryStatus) => void;
 }) {
+  const diagnostics = useMessageDiagnostics(
+    transfer.msgIds?.map((message) => message.msgId) ?? [],
+    enabled,
+  );
   return (
     <section aria-label="Transfer progress" className="mt-4 space-y-2">
       {!transfer.msgIds?.length && (
@@ -49,6 +61,7 @@ export function TransferProgress({
         <MessageProgressRow
           key={message.msgId}
           message={message}
+          diagnostics={diagnostics[normalizeMessageId(message.msgId)] ?? connectingDiagnostics}
           transfer={transfer}
           enabled={enabled}
           onDeliveryChange={onDeliveryChange}
@@ -122,16 +135,29 @@ function OriginTransactionProgress({
 
 function MessageProgressRow({
   message,
+  diagnostics,
   transfer,
   enabled,
   onDeliveryChange,
 }: {
   message: LabeledMsgId;
+  diagnostics: DiagnosticsState;
   transfer: TransferHistoryItem;
   enabled: boolean;
   onDeliveryChange: (status: TransferDeliveryStatus) => void;
 }) {
   const multiProvider = useMultiProvider();
+  const [expanded, setExpanded] = useState(transfer.msgIds?.length === 1);
+  const [selectedRelayer, setSelectedRelayer] = useState('');
+  const [metadataExpanded, setMetadataExpanded] = useState(false);
+  const relayers = diagnostics.data?.relayers;
+  const relay = selectedRelayer
+    ? relayers?.find((item) => item.relayer === selectedRelayer)
+    : relayers?.[0];
+  useEffect(() => {
+    // Keep the first observed reporter, even as new anchors/reporters arrive.
+    if (!selectedRelayer && relay) setSelectedRelayer(relay.relayer);
+  }, [selectedRelayer, relay]);
   const delivery = useMessageDeliveryStatus({ msgId: message.msgId }, enabled, multiProvider, {
     destinationChain: multiProvider.tryGetChainName(transfer.dstChain) ?? undefined,
     recheckDelivered: true,
@@ -150,7 +176,7 @@ function MessageProgressRow({
         origin ? multiProvider.tryGetExplorerAddressUrl(origin, messageSender) : null,
         destination ? multiProvider.tryGetExplorerAddressUrl(destination, messageRecipient) : null,
       ]),
-    enabled: enabled && !!delivery.message,
+    enabled: enabled && metadataExpanded && !!delivery.message,
     staleTime: 60_000,
   });
   const originTx = delivery.message?.originTxHash ?? transfer.originTxHash;
@@ -159,7 +185,7 @@ function MessageProgressRow({
     origin,
     originTx,
     enabled,
-    delivery.originBlockHeight,
+    delivery.originBlockHeight ?? transfer.originBlockNumber,
   );
   const destinationConfirmation = useTransactionConfirmations(
     destination,
@@ -190,35 +216,6 @@ function MessageProgressRow({
     (destinationConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);
   const originCount = confirmationCount(originConfirmation.data);
   const destinationCount = confirmationCount(destinationConfirmation.data);
-  const steps = [
-    {
-      label: 'Origin confirmed',
-      pendingLabel: 'Origin confirming',
-      count: originCount,
-      state: originState,
-      active: !originConfirmed && !delivered,
-    },
-    {
-      label: 'Delivered',
-      pendingLabel: 'Delivering',
-      state:
-        delivered && !deliveryMissing
-          ? ProgressState.Confirmed
-          : delivery.error && !delivery.message
-            ? ProgressState.Unavailable
-            : ProgressState.Pending,
-      active:
-        (!delivered || deliveryMissing) &&
-        (originConfirmed || originState === ProgressState.Unavailable),
-    },
-    {
-      label: 'Confirmed',
-      pendingLabel: 'Confirming',
-      count: delivered && !deliveryMissing ? destinationCount : undefined,
-      state: delivered && !deliveryMissing ? destinationState : ProgressState.Pending,
-      active: delivered && !deliveryMissing && !!destinationTx,
-    },
-  ];
   const status = deliveryMissing
     ? 'Rechecking delivery'
     : confirmed
@@ -238,7 +235,9 @@ function MessageProgressRow({
     status === 'Confirming origin' && originCount
       ? `Confirming origin · ${originCount}`
       : status === 'Awaiting delivery'
-        ? 'Awaiting relayer delivery'
+        ? relay && diagnostics.connection === DiagnosticConnection.Live
+          ? relayLabel(relay.state)
+          : 'Awaiting relayer delivery'
         : delivered && !deliveryMissing && !confirmed && destinationCount
           ? `${status} · ${destinationCount}${fundsAvailable ? ' confirmations' : ''}`
           : status;
@@ -309,12 +308,58 @@ function MessageProgressRow({
           : undefined,
     },
   };
+  const metadata = (
+    <dl className="mt-2 space-y-2">
+      {Object.entries(fields).map(([label, value]) =>
+        value == null ? null : (
+          <div key={label} className="flex justify-between gap-3">
+            <dt className="shrink-0 text-foreground-muted">{label}</dt>
+            <dd className="min-w-0 break-all text-right">{value}</dd>
+          </div>
+        ),
+      )}
+      {Object.entries(links).map(([label, { hash, url }]) =>
+        !hash ? null : (
+          <div key={label} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <dt className="text-foreground-muted">{label}</dt>
+            <dd className="flex min-w-0 items-center gap-2">
+              {url ? (
+                <a
+                  className="inline-flex items-center gap-1 underline"
+                  href={url}
+                  title={hash}
+                  aria-label={`${label} (opens in new tab)`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {hash.slice(0, 8)}…{hash.slice(-6)}
+                  <Image src={LinkIcon} width={12} height={12} alt="" />
+                </a>
+              ) : (
+                <span title={hash}>
+                  {hash.slice(0, 8)}…{hash.slice(-6)}
+                </span>
+              )}
+              <CopyButton copyValue={hash} width={12} height={12} />
+            </dd>
+          </div>
+        ),
+      )}
+      {body && (
+        <div>
+          <dt className="text-foreground-muted">Message body</dt>
+          <dd className="font-mono mt-1 max-h-24 overflow-auto break-all text-xxs">{body}</dd>
+        </div>
+      )}
+    </dl>
+  );
   return (
-    <article
-      aria-label={MESSAGE_LABELS[message.label]}
-      className="rounded-lg border border-gray-400/25 bg-surface text-xs"
-    >
-      <details className="group">
+    <article aria-label={MESSAGE_LABELS[message.label]} className="relay-card text-xs">
+      <details
+        className="message-disclosure"
+        open={expanded}
+        onToggle={(event) => setExpanded(event.currentTarget.open)}
+      >
         <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 [&::-webkit-details-marker]:hidden">
           <span
             aria-hidden="true"
@@ -337,78 +382,47 @@ function MessageProgressRow({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-medium">{MESSAGE_LABELS[message.label]}</span>
-            <output className="pointer-events-none block text-xxs tabular-nums text-foreground-muted">
-              {subtitle}
-            </output>
+            {!expanded && (
+              <output className="pointer-events-none block text-xxs tabular-nums text-foreground-muted">
+                {subtitle}
+              </output>
+            )}
           </span>
           <span
             aria-hidden="true"
-            className="text-lg text-foreground-muted transition-transform group-open:rotate-90 motion-reduce:transition-none"
+            className="message-disclosure-chevron text-lg text-foreground-muted transition-transform motion-reduce:transition-none"
           >
             ›
           </span>
           <span className="sr-only">Message details</span>
         </summary>
-        <div className="border-t border-gray-400/25 px-3 pb-3 pt-3">
-          <ol aria-label="Message milestones" className="grid grid-cols-3 gap-2">
-            {steps.map(({ label, pendingLabel, state, active, count }) => (
-              <MessageMilestone
-                key={label}
-                label={label}
-                pendingLabel={pendingLabel}
-                state={state}
-                active={active}
-                count={count}
-              />
-            ))}
-          </ol>
-          <p className="mt-2 text-xxs text-foreground-muted">{activity}</p>
-          <dl className="mt-3 space-y-2 border-t border-gray-400/25 pt-3">
-            {Object.entries(fields).map(([label, value]) =>
-              value == null ? null : (
-                <div key={label} className="flex justify-between gap-3">
-                  <dt className="shrink-0 text-foreground-muted">{label}</dt>
-                  <dd className="min-w-0 break-all text-right">{value}</dd>
-                </div>
-              ),
-            )}
-            {Object.entries(links).map(([label, { hash, url }]) =>
-              !hash ? null : (
-                <div
-                  key={label}
-                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
-                >
-                  <dt className="text-foreground-muted">{label}</dt>
-                  <dd className="flex min-w-0 items-center gap-2">
-                    {url ? (
-                      <a
-                        className="inline-flex items-center gap-1 underline"
-                        href={url}
-                        title={hash}
-                        aria-label={`${label} (opens in new tab)`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {hash.slice(0, 8)}…{hash.slice(-6)}
-                        <Image src={LinkIcon} width={12} height={12} alt="" />
-                      </a>
-                    ) : (
-                      <span title={hash}>
-                        {hash.slice(0, 8)}…{hash.slice(-6)}
-                      </span>
-                    )}
-                    <CopyButton copyValue={hash} width={12} height={12} />
-                  </dd>
-                </div>
-              ),
-            )}
-            {body && (
-              <div>
-                <dt className="text-foreground-muted">Message body</dt>
-                <dd className="font-mono mt-1 max-h-24 overflow-auto break-all text-xxs">{body}</dd>
-              </div>
-            )}
-          </dl>
+        <div className="px-3 pb-3">
+          <MessageRelayProgress
+            diagnostics={diagnostics}
+            destination={destination}
+            observation={relay}
+            delivered={delivered && !deliveryMissing}
+            confirmed={confirmed}
+            confirming={
+              delivered &&
+              !deliveryMissing &&
+              !!destinationTx &&
+              destinationState === ProgressState.Pending
+            }
+            status={subtitle}
+            selectedRelayer={selectedRelayer || relay?.relayer || ''}
+            onSelectRelayer={setSelectedRelayer}
+          />
+          <details
+            open={metadataExpanded}
+            onToggle={(event) => setMetadataExpanded(event.currentTarget.open)}
+            className="mt-3 border-t border-gray-400/25 pt-3"
+          >
+            <summary className="cursor-pointer text-xxs text-foreground-muted">
+              Transaction details
+            </summary>
+            {metadata}
+          </details>
         </div>
       </details>
     </article>
@@ -430,73 +444,4 @@ function confirmationText({
       ? `Confirmed (${data.required}/${data.required})`
       : `${data.confirmations}/${data.required} blocks`;
   return data.reason ?? 'Waiting';
-}
-
-function MessageMilestone({
-  label,
-  pendingLabel,
-  state,
-  active,
-  count,
-}: {
-  label: string;
-  pendingLabel: string;
-  state: ProgressState;
-  active: boolean;
-  count?: string;
-}) {
-  const complete = state === ProgressState.Confirmed;
-  const displayLabel = complete ? label : pendingLabel;
-  const unavailable = state === ProgressState.Unavailable;
-  const failed = state === ProgressState.Failed;
-  const current = state === ProgressState.Pending && active;
-  const description = complete
-    ? 'Complete'
-    : unavailable
-      ? 'Unavailable'
-      : failed
-        ? 'Failed'
-        : current
-          ? 'In progress'
-          : 'Waiting';
-  const color = complete
-    ? 'text-primary-700 dark:text-primary-200'
-    : current
-      ? 'text-foreground-primary'
-      : 'text-foreground-muted';
-  return (
-    <li
-      aria-label={`${displayLabel}: ${description}`}
-      aria-current={current ? 'step' : undefined}
-      className={color}
-    >
-      <span
-        aria-hidden="true"
-        className={`mb-1 block h-1 rounded-full ${complete ? 'bg-primary-500' : current ? 'bg-primary-300' : 'bg-gray-400/25'}`}
-      />
-      <span className="flex items-start gap-1 text-xxs leading-tight">
-        <span aria-hidden="true">
-          {current ? (
-            <SpinnerIcon
-              width={10}
-              height={10}
-              color="currentColor"
-              className="message-status-spinner mt-0.5"
-            />
-          ) : complete ? (
-            '✓'
-          ) : unavailable ? (
-            '?'
-          ) : failed ? (
-            '!'
-          ) : (
-            '○'
-          )}
-        </span>
-        <span>{displayLabel}</span>
-      </span>
-      {count && <span className="mt-1 block text-xxs tabular-nums">{count}</span>}
-      {(unavailable || failed) && <span className="mt-1 block text-xxs">{description}</span>}
-    </li>
-  );
 }

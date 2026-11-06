@@ -67,7 +67,7 @@ export function readUrl(): UrlOptions {
   const r = q.get('route');
   return {
     ref: ref as Address | undefined,
-    embed: q.has('embed') || location.pathname.endsWith('/embed') || location.pathname.endsWith('/embed/'),
+    embed: q.has('embed') || (typeof location !== 'undefined' && location.pathname.endsWith('/embed')) || (typeof location !== 'undefined' && location.pathname.endsWith('/embed/'),
     direction: d === 'withdraw' || d === 'deposit' ? d : undefined,
     route: r === 'fast' || r === 'canonical' ? r : undefined,
     amount: q.get('amount') || undefined,

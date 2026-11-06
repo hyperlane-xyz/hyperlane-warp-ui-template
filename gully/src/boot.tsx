@@ -67,7 +67,10 @@ if (legalTo) {
     .finally(render);
 }
 
-// Repeat visits paint from cache (load/build-sw.mjs). Registered after load so it never competes with first paint.
+// Repeat visits paint from cache (load/build-sw.mjs). Registered after load so it never competes with first paint. This
+// chunk is a dynamic import, which the load event does not wait for: it may already have fired.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  addEventListener('load', () => void navigator.serviceWorker.register('sw.js').catch(() => undefined));
+  const register = () => void navigator.serviceWorker.register('sw.js').catch(() => undefined);
+  if (document.readyState === 'complete') register();
+  else addEventListener('load', register);
 }

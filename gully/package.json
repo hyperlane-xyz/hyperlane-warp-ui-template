@@ -13,7 +13,7 @@
     "build": "tsc --noEmit && vite build",
     "build:all": "node scripts/build-all.mjs",
     "serve": "node scripts/serve.mjs",
-    "test": "vitest --run && node --test load/load.test.mjs",
+    "test": "vitest --run --exclude load/** && node --test load/load.test.mjs",
     "e2e": "node tests/e2e.mjs"
   },
   "dependencies": {

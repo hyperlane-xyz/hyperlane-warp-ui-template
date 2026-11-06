@@ -19,6 +19,9 @@ describe('first paint', () => {
     expect(text('index.html')).toContain("d.classList.add('gb-spa')");
     expect(text('src/styles/base.css')).toContain('.gb-spa #root > *');
   });
+  it('the service worker registers even when the load event fired before this chunk arrived', () => {
+    expect(text('src/boot.tsx')).toContain("document.readyState === 'complete'");
+  });
   it('the service worker never touches RPC, quotes or the mirror list', () => {
     expect(text('scripts/build-staging.mjs')).toContain("'/rpc,/rpc-arb,/mirrors.json,/api,/stats,/price'");
   });

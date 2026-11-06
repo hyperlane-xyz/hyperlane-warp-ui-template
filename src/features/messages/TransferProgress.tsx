@@ -193,20 +193,17 @@ function MessageProgressRow({
     enabled,
     delivery.destinationBlockHeight,
   );
-  const delivered = delivery.isDelivered;
   const deliveryMissing =
     destinationConfirmation.data?.included === false ||
     destinationConfirmation.data?.state === ProgressState.Failed;
+  const delivered = delivery.isDelivered && !deliveryMissing;
   const isDirectBridge =
     transfer.msgIds?.length === 1 &&
     (message.label === 'bridge' || message.label === 'warp') &&
     !transfer.destinationOutcome &&
     !transfer.solanaDestSwapPda;
-  const fundsAvailable = isDirectBridge && delivered && !deliveryMissing;
-  const confirmed =
-    delivered &&
-    !deliveryMissing &&
-    destinationConfirmation.data?.state === ProgressState.Confirmed;
+  const fundsAvailable = isDirectBridge && delivered;
+  const confirmed = delivered && destinationConfirmation.data?.state === ProgressState.Confirmed;
   const originState =
     originConfirmation.data?.state ??
     (originConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);
@@ -238,14 +235,14 @@ function MessageProgressRow({
         ? relay && diagnostics.connection === DiagnosticConnection.Live
           ? relayLabel(relay.state)
           : 'Awaiting relayer delivery'
-        : delivered && !deliveryMissing && !confirmed && destinationCount
+        : delivered && !confirmed && destinationCount
           ? `${status} · ${destinationCount}${fundsAvailable ? ' confirmations' : ''}`
           : status;
   const activity = deliveryMissing
     ? 'Rechecking the destination transaction'
     : !delivered && delivery.error
       ? 'Delivery status is temporarily unavailable'
-      : delivered && !deliveryMissing
+      : delivered
         ? destinationTx
           ? confirmationText(destinationConfirmation)
           : 'Waiting for destination transaction details'
@@ -255,26 +252,18 @@ function MessageProgressRow({
   useEffect(() => {
     onDeliveryChange({
       messageId: message.msgId,
-      delivered: delivered && !deliveryMissing,
+      delivered,
       fundsAvailable,
       status,
       activity,
     });
-  }, [
-    onDeliveryChange,
-    message.msgId,
-    delivered,
-    deliveryMissing,
-    fundsAvailable,
-    status,
-    activity,
-  ]);
+  }, [onDeliveryChange, message.msgId, delivered, fundsAvailable, status, activity]);
   const body = delivery.message?.body;
   const token = decodeTransferBody({ label: message.label, body });
   const authorization = decodeAuthorizationBody(body);
   const fields = {
     'Origin confirmations': confirmationText(originConfirmation),
-    ...(delivered
+    ...(delivery.isDelivered
       ? {
           'Destination confirmations': destinationTx
             ? confirmationText(destinationConfirmation)
@@ -363,9 +352,9 @@ function MessageProgressRow({
         <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 [&::-webkit-details-marker]:hidden">
           <span
             aria-hidden="true"
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${delivered && !deliveryMissing ? 'bg-green-50/10 text-green-600 dark:text-green-50' : 'bg-primary-500/10 text-primary-700 dark:text-primary-200'}`}
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${delivered ? 'bg-green-50/10 text-green-600 dark:text-green-50' : 'bg-primary-500/10 text-primary-700 dark:text-primary-200'}`}
           >
-            {delivered && !deliveryMissing ? (
+            {delivered ? (
               '✓'
             ) : originState === ProgressState.Failed ? (
               '!'
@@ -401,14 +390,9 @@ function MessageProgressRow({
             diagnostics={diagnostics}
             destination={destination}
             observation={relay}
-            delivered={delivered && !deliveryMissing}
+            delivered={delivered}
             confirmed={confirmed}
-            confirming={
-              delivered &&
-              !deliveryMissing &&
-              !!destinationTx &&
-              destinationState === ProgressState.Pending
-            }
+            confirming={delivered && !!destinationTx && destinationState === ProgressState.Pending}
             status={subtitle}
             selectedRelayer={selectedRelayer || relay?.relayer || ''}
             onSelectRelayer={setSelectedRelayer}

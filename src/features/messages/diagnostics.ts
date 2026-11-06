@@ -142,16 +142,27 @@ export enum IsmState {
   Unused = 'unused',
   Ready = 'ready',
   Failed = 'failed',
+  Waiting = 'waiting',
   Pending = 'pending',
   Unknown = 'unknown',
 }
-export function ismState(node: IsmNode, selected?: boolean): IsmState {
+export function ismState(node: IsmNode, selected?: boolean, preparing = false): IsmState {
   // An unsuccessful alternative does not block the selected verification path.
   if (selected === false) return IsmState.Unused;
   if (node.verification === 'succeeded') return IsmState.Verified;
-  if (node.verification === 'failed') return IsmState.Failed;
-  if (node.metadata_error || Object.values(node.checks ?? {}).includes('failed'))
-    return IsmState.Failed;
+  // An undecided alternative's error is still visible in its details, but does not
+  // make the preparing path look failed before another branch can satisfy it.
+  const failure = preparing && selected === undefined ? IsmState.Waiting : IsmState.Failed;
+  if (node.verification === 'failed') return failure;
+  if (Object.values(node.checks ?? {}).includes('failed') || node.offchain_read?.state === 'failed')
+    return failure;
+  // The relayer also puts unmet prerequisites in metadata_error, before verification.
+  const waitingForMetadata =
+    node.metadata_error === 'Awaiting validator signatures' ||
+    node.metadata_error === 'Could not fetch metadata' ||
+    /^Aggregation threshold not met \(\d+\)$/.test(node.metadata_error ?? '');
+  if (node.metadata_error && !waitingForMetadata) return failure;
+  if (waitingForMetadata || node.metadata_status === 'blocked') return IsmState.Waiting;
   if (
     node.module_type === 'Aggregation' &&
     node.threshold != null &&

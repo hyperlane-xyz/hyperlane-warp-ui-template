@@ -174,24 +174,13 @@ export function shouldUpdateFromOriginTx(
 ) {
   if (!transfer) return true;
 
-  const nextOriginTxTimestamp = originTxMessages.originTimestamp
-    ? Math.floor(originTxMessages.originTimestamp / 1000)
-    : undefined;
-
   return (
     transfer.status !== nextStatus ||
-    shouldBackfillMsgIds(transfer.msgIds, originTxMessages.msgIds) ||
+    (!!originTxMessages.msgIds?.length && !transfer.msgIds?.length) ||
     (transfer.originBlockNumber == null && originTxMessages.originBlockHeight != null) ||
-    (transfer.originTxTimestamp == null && nextOriginTxTimestamp != null) ||
+    (transfer.originTxTimestamp == null && !!originTxMessages.originTimestamp) ||
     (transfer.destinationTxHash == null && originTxMessages.destinationTxHash != null)
   );
-}
-
-function shouldBackfillMsgIds(
-  current: Array<{ msgId: string; label: string }> | undefined,
-  recovered: Array<{ msgId: string; label: string }> | undefined,
-) {
-  return !!recovered?.length && (!current || current.length === 0);
 }
 
 export function prioritizeSelectedTarget<T extends { id: string }>(

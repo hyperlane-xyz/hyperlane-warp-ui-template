@@ -80,7 +80,6 @@ function originTxMessages(overrides: Partial<MessageDeliveryResult> = {}): Messa
     isDelivered: false,
     originTimestamp: 1_718_000_000_000,
     originBlockHeight: 123,
-    isLoading: false,
     ...overrides,
   };
 }

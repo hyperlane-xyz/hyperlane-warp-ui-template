@@ -1,6 +1,7 @@
-import type { WebSocketRoute } from '@playwright/test';
+import type { Locator, WebSocketRoute } from '@playwright/test';
 
 import type { QuoteStep } from '../../src/features/api/types';
+import type { RelayState } from '../../src/features/messages/diagnostics';
 import { test, expect } from '../fixtures';
 
 const ids = ['11', '22', '33'].map((byte) => `0x${byte.repeat(32)}`);
@@ -65,6 +66,29 @@ function routeStepsFor(originSwap: boolean, destinationSwap: boolean): QuoteStep
       poolCount: 1,
     });
   return steps;
+}
+
+async function expectCompactRoute(stages: Locator) {
+  expect(await stages.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  const layout = await stages.evaluate((element) => {
+    const region = element.getBoundingClientRect();
+    return Array.from(element.querySelectorAll('.hyperswap-leg')).map((leg) => {
+      const rect = leg.getBoundingClientRect();
+      return {
+        top: Math.round(rect.top),
+        inside: rect.left >= region.left - 1 && rect.right <= region.right + 1,
+      };
+    });
+  });
+  expect(layout.every((leg) => leg.inside)).toBe(true);
+  expect(new Set(layout.map((leg) => leg.top)).size).toBe(1);
+  expect(
+    new Set(
+      await stages
+        .locator('.hyperswap-step')
+        .evaluateAll((steps) => steps.map((step) => step.getBoundingClientRect().width)),
+    ).size,
+  ).toBe(1);
 }
 
 for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recovery', 'finalized']) {
@@ -482,30 +506,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
       await page.setViewportSize({ width: 390, height: 844 });
       expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-      if (swapStages) {
-        expect(await stages.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
-          true,
-        );
-        const layout = await stages.evaluate((element) => {
-          const region = element.getBoundingClientRect();
-          return Array.from(element.querySelectorAll('.hyperswap-leg')).map((leg) => {
-            const rect = leg.getBoundingClientRect();
-            return {
-              top: Math.round(rect.top),
-              inside: rect.left >= region.left - 1 && rect.right <= region.right + 1,
-            };
-          });
-        });
-        expect(layout.every((leg) => leg.inside)).toBe(true);
-        expect(new Set(layout.map((leg) => leg.top)).size).toBe(1);
-        expect(
-          new Set(
-            await stages
-              .locator('.hyperswap-step')
-              .evaluateAll((steps) => steps.map((step) => step.getBoundingClientRect().width)),
-          ).size,
-        ).toBe(1);
-      }
+      if (swapStages) await expectCompactRoute(stages);
       await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
       await page.reload();
       await expect(outcome).toContainText('Funds are available to use');
@@ -516,10 +517,25 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       const beforeIdle = snapshotRequests;
       await page.waitForTimeout(11_000);
       expect(snapshotRequests).toBe(beforeIdle);
+      // Record transient regressions too: the final assertion alone misses flicker.
+      await bridge.getByRole('status').evaluate((element) => {
+        const history = [element.textContent];
+        element.setAttribute('data-status-history', JSON.stringify(history));
+        const observer = new MutationObserver(() => {
+          history.push(element.textContent);
+          element.setAttribute('data-status-history', JSON.stringify(history));
+        });
+        observer.observe(element, { childList: true, characterData: true, subtree: true });
+      });
       const beforeReconnect = socketConnections;
       liveSocket?.close();
       await expect.poll(() => socketConnections).toBeGreaterThan(beforeReconnect);
       await expect.poll(() => snapshotRequests).toBeGreaterThan(beforeIdle);
+      await expect(bridge.getByRole('status')).toHaveText('Confirmed');
+      const confirmationHistory = JSON.parse(
+        (await bridge.getByRole('status').getAttribute('data-status-history'))!,
+      );
+      expect(new Set(confirmationHistory)).toEqual(new Set(['Confirmed']));
       reorg = true;
       liveSocket?.send(
         JSON.stringify({
@@ -673,30 +689,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(progress).toBeVisible();
     expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-    if (swapStages) {
-      expect(await stages.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
-        true,
-      );
-      const layout = await stages.evaluate((element) => {
-        const region = element.getBoundingClientRect();
-        return Array.from(element.querySelectorAll('.hyperswap-leg')).map((leg) => {
-          const rect = leg.getBoundingClientRect();
-          return {
-            top: Math.round(rect.top),
-            inside: rect.left >= region.left - 1 && rect.right <= region.right + 1,
-          };
-        });
-      });
-      expect(layout.every((leg) => leg.inside)).toBe(true);
-      expect(new Set(layout.map((leg) => leg.top)).size).toBe(1);
-      expect(
-        new Set(
-          await stages
-            .locator('.hyperswap-step')
-            .evaluateAll((steps) => steps.map((step) => step.getBoundingClientRect().width)),
-        ).size,
-      ).toBe(1);
-    }
+    if (swapStages) await expectCompactRoute(stages);
     await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
     const panelTop = (await page.getByTestId('transfer-details').boundingBox())?.y;
     await reveal.locator(':scope > .message-disclosure > summary').click();
@@ -749,47 +742,105 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     const types = ['Null', 'CcipRead', 'MessageIdMultisig'];
     const labels = ['Null', 'CCIP Read', 'Message ID Multisig'];
     for (const [index, row] of [bridge, commit, reveal].entries()) {
-      diagnosticsSocket?.send(
-        JSON.stringify({
-          type: 'diagnostics',
-          data: {
-            version: 1,
-            message_id: ids[index],
-            partial: false,
-            activities: [
-              {
-                id: '1',
-                relayer: address,
-                version: 1,
-                observed_at: '2026-11-06 15:00:00',
-                activity: {
-                  type: 'snapshot',
-                  state: {
-                    phase: 'ready_to_submit',
-                    tree_root: 'root',
-                    modules: [
-                      {
-                        node_id: 'root',
-                        ism: address,
-                        module_type: types[index],
-                        discovered: true,
-                        children: [],
-                        verification: 'succeeded',
-                      },
-                    ],
+      const sendProof = (
+        verification: string | null,
+        metadata_error: string | null,
+        relayState?: RelayState,
+      ) =>
+        diagnosticsSocket?.send(
+          JSON.stringify({
+            type: 'diagnostics',
+            data: {
+              version: 1,
+              message_id: ids[index],
+              partial: false,
+              activities: [
+                {
+                  id: '1',
+                  relayer: address,
+                  version: 1,
+                  observed_at: '2026-11-06 15:00:00',
+                  activity: {
+                    type: 'snapshot',
+                    state: relayState ?? {
+                      phase: metadata_error ? 'awaiting_signatures' : 'ready_to_submit',
+                      tree_root: 'root',
+                      modules: [
+                        {
+                          node_id: 'root',
+                          ism: address,
+                          module_type: types[index],
+                          discovered: true,
+                          children: [],
+                          metadata_status: metadata_error ? 'blocked' : 'ready',
+                          metadata_error,
+                          verification,
+                        },
+                      ],
+                    },
                   },
                 },
-              },
-            ],
-          },
-        }),
-      );
+              ],
+            },
+          }),
+        );
       if ((await row.locator(':scope > .message-disclosure').getAttribute('open')) === null)
         await row.locator(':scope > .message-disclosure > summary').click();
+      if (kind === 'both' && index === 2) {
+        sendProof(null, 'Awaiting validator signatures');
+        await expect(row.locator('.ism-node')).toHaveAttribute('data-state', 'waiting');
+        await expect(row.locator('.ism-status-label')).toHaveText('Waiting');
+        sendProof('failed', null);
+        await expect(row.locator('.ism-status-label')).toHaveText('Attempt failed');
+        const candidate: RelayState = {
+          phase: 'preparing',
+          tree_root: 'root',
+          modules: [
+            {
+              node_id: 'root',
+              ism: address,
+              module_type: 'Aggregation',
+              threshold: 1,
+              children: [
+                { node_id: 'routing', ism: address },
+                { node_id: 'other', ism: address },
+              ],
+            },
+            {
+              node_id: 'routing',
+              ism: address,
+              module_type: 'Routing',
+              children: [{ node_id: 'leaf', ism: address }],
+              selected_children: ['leaf'],
+              metadata_error: 'Metadata build failed',
+            },
+            { node_id: 'leaf', ism: address, children: [], verification: 'failed' },
+            { node_id: 'other', ism: address, children: [], verification: 'succeeded' },
+          ],
+        };
+        const routing = row.locator('.ism-node > summary').filter({ hasText: 'Routing' });
+        sendProof(null, null, candidate);
+        await expect(routing.locator('.ism-status-label')).toHaveText('Waiting');
+        await expect(row.locator('.ism-node[data-state="waiting"]')).toHaveCount(2);
+        sendProof(null, null, { ...candidate, phase: 'retrying' });
+        await expect(row.locator('.ism-node[data-state="failed"]')).toHaveCount(2);
+        sendProof(null, null, {
+          ...candidate,
+          phase: 'ready_to_submit',
+          modules: [
+            { ...candidate.modules[0], selected_children: ['other'], verified: 1 },
+            ...candidate.modules.slice(1),
+          ],
+        });
+        await expect(routing.locator('.ism-status-label')).toHaveText('Unused');
+        await expect(row.locator('.ism-node[data-state="unused"]')).toHaveCount(2);
+      }
+      sendProof('succeeded', null);
     }
     for (const [index, row] of [bridge, commit, reveal].entries()) {
       await expect(row.getByRole('list', { name: 'ISM verification tree' })).toBeVisible();
       await expect(row.locator('.ism-node > summary')).toContainText(labels[index]);
+      await expect(row.locator('.ism-status-label')).toHaveText('Passed');
       await expect(row.getByRole('list', { name: 'Message milestones' })).toHaveCount(0);
     }
     await page.screenshot({

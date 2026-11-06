@@ -30,7 +30,6 @@ export interface MessageDeliveryResult {
   originBlockHeight?: number;
   destinationBlockHeight?: number;
   msgIds?: LabeledMsgId[];
-  isLoading: boolean;
   error?: Error | null;
   message?: {
     originDomain: number;
@@ -66,11 +65,7 @@ export function useMessageDeliveryStatus(
           lookup.originDomainId,
           multiProvider.tryGetChainMetadata(lookup.originDomainId),
         ));
-  const {
-    data: entries,
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: entries, error } = useQuery({
     queryKey: ['messageDelivery', request?.variables],
     queryFn: ({ signal }) => (request ? fetchMessages(request, signal) : []),
     enabled: enabled && ready && !!request,
@@ -158,7 +153,6 @@ export function useMessageDeliveryStatus(
     ...data,
     isDelivered: data.isDelivered || !!fallback.data?.isDelivered,
     destinationTxHash: data.destinationTxHash ?? fallback.data?.destinationTxHash,
-    isLoading: isLoading || fallback.isLoading,
     error: error ?? fallback.error,
   };
 }

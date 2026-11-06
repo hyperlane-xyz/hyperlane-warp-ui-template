@@ -191,3 +191,37 @@ it('keeps unused alternatives neutral even if their earlier attempt failed', () 
   expect(ismState({ ...node, discovered: false }, false)).toBe(IsmState.Unused);
   expect(ismState({ ...node, verification: 'failed' }, true)).toBe(IsmState.Failed);
 });
+
+it('keeps unmet proof prerequisites neutral, then updates when proof is ready', () => {
+  expect(ismState(node)).toBe(IsmState.Pending);
+  for (const metadata_error of [
+    'Awaiting validator signatures',
+    'Could not fetch metadata',
+    'Aggregation threshold not met (2)',
+    null,
+  ]) {
+    const waiting = { ...node, metadata_status: 'blocked', metadata_error };
+    expect(ismState(waiting)).toBe(IsmState.Waiting);
+    expect(ismState({ ...waiting, verification: 'failed' })).toBe(IsmState.Failed);
+    expect(ismState({ ...waiting, checks: { merkle_leaf: 'failed' } })).toBe(IsmState.Failed);
+    expect(ismState({ ...waiting, metadata_status: 'ready', metadata_error: null })).toBe(
+      IsmState.Ready,
+    );
+  }
+});
+
+it('still reports explicit build, offchain read, and verification failures on a first attempt', () => {
+  for (const metadata_error of ['Metadata build failed', 'Validator reported a reorg']) {
+    expect(ismState({ ...node, metadata_status: 'blocked', metadata_error })).toBe(IsmState.Failed);
+  }
+  expect(ismState({ ...node, offchain_read: { state: 'failed' } })).toBe(IsmState.Failed);
+  expect(ismState({ ...node, checks: { merkle_leaf: 'unavailable' } })).toBe(IsmState.Pending);
+});
+
+it('keeps undecided alternative failures neutral only while preparing the path', () => {
+  const failed = { ...node, metadata_error: 'Metadata build failed' };
+  expect(ismState(failed, undefined, true)).toBe(IsmState.Waiting);
+  expect(ismState(failed, false, true)).toBe(IsmState.Unused);
+  expect(ismState(failed, true, true)).toBe(IsmState.Failed);
+  expect(ismState(failed, undefined, false)).toBe(IsmState.Failed);
+});

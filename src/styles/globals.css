@@ -748,11 +748,6 @@ html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
   color: inherit !important;
   animation-duration: 1.2s;
 }
-@media (prefers-reduced-motion: reduce) {
-  .message-status-spinner {
-    animation: none !important;
-  }
-}
 
 /* Relay animation follows reported state; it never advances a fabricated percentage. */
 .relay-panel {
@@ -823,8 +818,7 @@ html[data-theme-mode='dark'] .relay-panel {
     border-color 450ms ease,
     background-color 450ms ease;
 }
-.ism-node:is([data-state='verified'], [data-state='threshold_met'], [data-state='ready'])
-  > summary {
+.ism-node[data-complete='true'] > summary {
   border-color: #3c835e60;
   background: #3c835e0b;
 }
@@ -845,9 +839,7 @@ html[data-theme-mode='dark'] .relay-panel {
   border-radius: 3px;
   border-style: dashed;
 }
-.ism-node:is([data-state='verified'], [data-state='threshold_met'], [data-state='ready'])
-  > summary
-  .ism-state-icon {
+.ism-node[data-complete='true'] > summary .ism-state-icon {
   color: var(--ism-success);
   animation: ism-verified 400ms ease-out;
 }
@@ -858,9 +850,7 @@ html[data-theme-mode='dark'] .relay-panel {
   color: var(--color-primary-500, #9a0dff);
   animation: relay-breathe 2s ease-in-out infinite;
 }
-.ism-node:is([data-state='verified'], [data-state='threshold_met'], [data-state='ready'])
-  > summary
-  .ism-status-label {
+.ism-node[data-complete='true'] > summary .ism-status-label {
   color: var(--ism-success);
 }
 .ism-chevron {
@@ -889,12 +879,7 @@ html[data-theme-mode='dark'] .relay-panel {
   border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   transition: border-color 450ms ease;
 }
-.ism-children
-  > .ism-branch:is(
-    [data-state='verified'],
-    [data-state='threshold_met'],
-    [data-state='ready']
-  )::before {
+.ism-children > .ism-branch[data-complete='true']::before {
   border-color: var(--ism-success);
 }
 .ism-children > .ism-branch[data-working='true']::before {
@@ -951,13 +936,6 @@ html[data-theme-mode='dark'] .relay-panel {
     transform: scale(1);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .relay-panel *,
-  .relay-panel *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
 
 /* Anchor the receipt so expanding messages never recenters the dialog. */
 .transfer-details-modal {
@@ -970,6 +948,13 @@ html[data-theme-mode='dark'] .relay-panel {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .message-status-spinner,
+  .relay-panel *,
+  .relay-panel *::before,
+  .relay-panel *::after {
+    animation: none !important;
+    transition: none !important;
+  }
   .transfer-details-modal {
     transition: none;
   }

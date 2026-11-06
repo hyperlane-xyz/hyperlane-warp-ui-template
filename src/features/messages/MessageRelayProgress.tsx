@@ -199,6 +199,12 @@ export function MessageRelayProgress({
               destination={destination}
               modules={modules}
               active={active}
+              selected={true}
+              preparing={
+                !!state &&
+                !state.failure &&
+                ['preparing', 'awaiting_signatures'].includes(state.phase)
+              }
               ancestors={[]}
             />
           </ul>
@@ -230,6 +236,7 @@ function IsmBranch({
   modules,
   selected,
   active,
+  preparing,
   ancestors,
 }: {
   node: IsmNode;
@@ -237,12 +244,13 @@ function IsmBranch({
   modules: Map<string, IsmNode>;
   selected?: boolean;
   active: boolean;
+  preparing: boolean;
   ancestors: string[];
 }) {
   const [expanded, setExpanded] = useState(false);
   if (ancestors.includes(node.node_id))
     return <li className="text-xxs text-foreground-muted">Invalid circular module reference</li>;
-  const status = ismState(node, selected);
+  const status = ismState(node, selected, preparing);
   const working = active && selected !== false && status === IsmState.Pending;
   const moduleLabel = node.module_type
     ? humanize(node.module_type).replace('Message Id', 'Message ID').replace('Ccip', 'CCIP')
@@ -264,15 +272,22 @@ function IsmBranch({
     [IsmState.Ready]: 'Proof ready',
     [IsmState.Unused]: 'Unused',
     [IsmState.Failed]: 'Attempt failed',
+    [IsmState.Waiting]: 'Waiting',
     [IsmState.Pending]: working ? 'Checking' : 'Waiting',
     [IsmState.Unknown]: 'Not explored',
   }[status];
   const complete = [IsmState.Verified, IsmState.ThresholdMet, IsmState.Ready].includes(status);
   return (
-    <li className="ism-branch" data-selected={selected} data-state={status} data-working={working}>
+    <li
+      className="ism-branch"
+      data-selected={selected}
+      data-complete={complete}
+      data-working={working}
+    >
       <details
         className="ism-node"
         data-state={status}
+        data-complete={complete}
         data-working={working}
         onToggle={(event) => setExpanded(event.currentTarget.open)}
       >
@@ -375,11 +390,13 @@ function IsmBranch({
               destination={destination}
               ancestors={[...ancestors, node.node_id]}
               active={active}
+              preparing={preparing}
               selected={
-                selected === false
+                selected === false || node.selected_children?.includes(child.node_id) === false
                   ? false
-                  : node.selected_children
-                    ? node.selected_children.includes(child.node_id)
+                  : node.selected_children ||
+                      (aggregation && node.threshold === node.children.length)
+                    ? selected
                     : undefined
               }
             />

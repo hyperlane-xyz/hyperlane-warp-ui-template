@@ -1,5 +1,6 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 
 import { useMultiProvider } from '../chains/hooks';
 import { LiveConnection } from './messageStream';
@@ -20,16 +21,31 @@ export function useTransactionConfirmations(
     metadata ? state.heads[metadata.domainId ?? Number(metadata.chainId)] : undefined,
   );
   const connected = useMessageStream((state) => state.connection === LiveConnection.Connected);
-  const liveProgress =
-    connected &&
-    protocol === ProtocolType.Ethereum &&
-    typeof required === 'number' &&
-    blockHeight != null &&
-    head != null
-      ? confirmationProgress(blockHeight, head, required)
-      : undefined;
+  const client = useQueryClient();
+  const queryKey = useMemo(
+    () => ['transactionConfirmations', chain, txHash, required, metadata?.rpcUrls],
+    [chain, txHash, required, metadata?.rpcUrls],
+  );
+  const liveProgress = useMemo(
+    () =>
+      connected &&
+      protocol === ProtocolType.Ethereum &&
+      typeof required === 'number' &&
+      blockHeight != null &&
+      head != null
+        ? confirmationProgress(blockHeight, head, required)
+        : undefined,
+    [connected, protocol, required, blockHeight, head],
+  );
+  useEffect(() => {
+    if (!enabled || !chain || !txHash || !liveProgress) return;
+    // Reconnects must retain live progress instead of revealing an older RPC result.
+    // Cancel in-flight RPC reads so they cannot overwrite the newer observation.
+    void client.cancelQueries({ queryKey, exact: true });
+    client.setQueryData(queryKey, liveProgress);
+  }, [client, queryKey, enabled, chain, txHash, liveProgress]);
   const query = useQuery({
-    queryKey: ['transactionConfirmations', chain, txHash, required, metadata?.rpcUrls],
+    queryKey,
     enabled: enabled && !!chain && !!txHash && !liveProgress,
     queryFn: async (): Promise<ConfirmationProgress> => {
       if (!chain || !txHash) throw new Error('Missing transaction');

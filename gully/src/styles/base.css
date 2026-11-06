@@ -228,7 +228,7 @@ table.sr { display: block; }
 .foot-links a { color: var(--gn-text-3); min-height: 44px; min-width: 40px; justify-content: center; display: inline-flex; align-items: center; }
 .foot-links a:hover { color: var(--gn-text); }
 .foot-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
-.badge-link img { width: 190px; height: auto; }
+.badge-link img { width: 140px; height: auto; }
 .credit { margin: 0; color: var(--gn-text-3); font-size: 12px; max-width: 60ch; }
 .credit a { color: var(--gn-text-3); text-decoration: underline; }
 /* Gully Chain Terms + Privacy (gullychain.xyz): footer row and the consent line under the transfer button */

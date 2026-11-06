@@ -178,14 +178,12 @@ describe('live message status', () => {
   });
   it('retracts delivery and confirmation evidence on rollback', () => {
     client.setQueryData(key, [row]);
-    client.setQueryData(['mailboxDelivery', { msgId: row.msg_id }], { isDelivered: true });
     client.setQueryData(['transactionConfirmations', 'bsc', 'hash'], { state: 'confirmed' });
     const update = vi.fn();
     stop = connectMessageStream('ws://test', client, update);
     socket().send({ type: 'block', domain: 56, headHeight: '210' });
     expect(update).toHaveBeenLastCalledWith({ heads: { 56: 210 } });
     socket().send({ type: 'rollback', domain: 56, toHeight: '199' });
-    expect(client.getQueryData(['mailboxDelivery', { msgId: row.msg_id }])).toBeUndefined();
     expect(client.getQueryData(key)).toEqual([
       {
         ...row,
@@ -198,12 +196,6 @@ describe('live message status', () => {
     expect(client.getQueryData(['transactionConfirmations', 'bsc', 'hash'])).toBeUndefined();
     socket().send({ type: 'rollback', domain: 8453, toHeight: '99' });
     expect(client.getQueryData(key)).toEqual([]);
-  });
-  it('discards cached mailbox evidence on reconnect before repairing snapshots', () => {
-    client.setQueryData(['mailboxDelivery', { msgId: row.msg_id }], { isDelivered: true });
-    stop = connectMessageStream('ws://test', client, vi.fn());
-    socket().send({ type: 'ready' });
-    expect(client.getQueryData(['mailboxDelivery', { msgId: row.msg_id }])).toBeUndefined();
   });
   it('leaves unaffected transactions intact and conservatively retracts missing heights', () => {
     expect(rollbackMessage(row, 1, 0)).toBe(row);

@@ -13,9 +13,12 @@ import { normalizeMessageId } from './messageStream';
 import {
   decodeAuthorizationBody,
   decodeTransferBody,
+  estimateDeliverySeconds,
+  formatEstimatedTime,
   ProgressState,
   type ConfirmationProgress,
 } from './progress';
+import { hexToProtocolAddress } from './queries/encoding';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
 import {
   useMessageDiagnostics,
@@ -23,20 +26,22 @@ import {
   type DiagnosticsState,
 } from './useMessageDiagnostics';
 import { useTransactionConfirmations } from './useTransactionConfirmations';
+import { getTransferOverviewMsgId } from './utils';
 
 const MESSAGE_LABELS: Record<LabeledMsgId['label'], string> = {
   warp: 'Bridge funds',
   bridge: 'Bridge funds',
   commit: 'Commit authorization',
-  reveal: 'Reveal authorization',
+  reveal: 'Destination delivery',
 };
 
 export interface TransferDeliveryStatus {
   messageId: string;
   delivered: boolean;
   fundsAvailable: boolean;
-  status: string;
-  activity: string;
+  destinationTxHash?: string;
+  destinationChain?: string;
+  explorerUrl?: string | null;
 }
 
 export function TransferProgress({
@@ -52,21 +57,35 @@ export function TransferProgress({
     transfer.msgIds?.map((message) => message.msgId) ?? [],
     enabled,
   );
+  const messages = transfer.msgIds ?? [];
+  const primaryId = getTransferOverviewMsgId(transfer);
+  const primary = messages.find(({ msgId }) => msgId === primaryId);
+  const otherMessages = messages.filter(({ msgId }) => msgId !== primary?.msgId);
+  const renderMessage = (message: LabeledMsgId) => (
+    <MessageProgressRow
+      key={message.msgId}
+      message={message}
+      primary={message.msgId === primary?.msgId}
+      diagnostics={diagnostics[normalizeMessageId(message.msgId)] ?? connectingDiagnostics}
+      transfer={transfer}
+      enabled={enabled}
+      onDeliveryChange={onDeliveryChange}
+    />
+  );
   return (
     <section aria-label="Transfer progress" className="mt-4 space-y-2">
       {!transfer.msgIds?.length && (
         <OriginTransactionProgress transfer={transfer} enabled={enabled} />
       )}
-      {transfer.msgIds?.map((message) => (
-        <MessageProgressRow
-          key={message.msgId}
-          message={message}
-          diagnostics={diagnostics[normalizeMessageId(message.msgId)] ?? connectingDiagnostics}
-          transfer={transfer}
-          enabled={enabled}
-          onDeliveryChange={onDeliveryChange}
-        />
-      ))}
+      {primary && renderMessage(primary)}
+      {otherMessages.length > 0 && (
+        <details className="pt-2">
+          <summary className="cursor-pointer text-xxs text-foreground-muted">
+            Other transfer messages ({otherMessages.length})
+          </summary>
+          <div className="mt-2 space-y-2">{otherMessages.map(renderMessage)}</div>
+        </details>
+      )}
     </section>
   );
 }
@@ -118,6 +137,11 @@ function OriginTransactionProgress({
       <span className="min-w-0 flex-1">
         <span className="block font-medium">Origin transaction</span>
         <output className="block text-xxs tabular-nums text-foreground-muted">{status}</output>
+        {confirmation.estimatedSeconds != null && (
+          <span className="block text-xxs text-foreground-muted">
+            {formatEstimatedTime(confirmation.estimatedSeconds)} remaining
+          </span>
+        )}
       </span>
       {url && (
         <a
@@ -135,21 +159,23 @@ function OriginTransactionProgress({
 
 function MessageProgressRow({
   message,
+  primary,
   diagnostics,
   transfer,
   enabled,
   onDeliveryChange,
 }: {
   message: LabeledMsgId;
+  primary: boolean;
   diagnostics: DiagnosticsState;
   transfer: TransferHistoryItem;
   enabled: boolean;
   onDeliveryChange: (status: TransferDeliveryStatus) => void;
 }) {
   const multiProvider = useMultiProvider();
-  const [expanded, setExpanded] = useState(transfer.msgIds?.length === 1);
+  const [expanded, setExpanded] = useState(primary);
   const [selectedRelayer, setSelectedRelayer] = useState('');
-  const [metadataExpanded, setMetadataExpanded] = useState(false);
+  const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const relayers = diagnostics.data?.relayers;
   const relay = selectedRelayer
     ? relayers?.find((item) => item.relayer === selectedRelayer)
@@ -158,10 +184,7 @@ function MessageProgressRow({
     // Keep the first observed reporter, even as new anchors/reporters arrive.
     if (!selectedRelayer && relay) setSelectedRelayer(relay.relayer);
   }, [selectedRelayer, relay]);
-  const delivery = useMessageDeliveryStatus({ msgId: message.msgId }, enabled, multiProvider, {
-    destinationChain: multiProvider.tryGetChainName(transfer.dstChain) ?? undefined,
-    recheckDelivered: true,
-  });
+  const delivery = useMessageDeliveryStatus({ msgId: message.msgId }, enabled, multiProvider);
   const origin =
     multiProvider.tryGetChainName(delivery.message?.originDomain ?? transfer.srcChain) ?? undefined;
   const destination =
@@ -169,15 +192,37 @@ function MessageProgressRow({
     undefined;
   const messageSender = delivery.message?.sender;
   const messageRecipient = delivery.message?.recipient;
-  const { data: addressLinks } = useQuery({
-    queryKey: ['messageAddressLinks', origin, destination, messageSender, messageRecipient],
-    queryFn: () =>
-      Promise.all([
+  const body = delivery.message?.body;
+  const token = decodeTransferBody({ label: message.label, body });
+  const destinationMetadata = destination
+    ? multiProvider.tryGetChainMetadata(destination)
+    : undefined;
+  const { data: addressLinks, isError: addressLinksError } = useQuery({
+    queryKey: [
+      'messageAddressLinks',
+      origin,
+      destination,
+      messageSender,
+      messageRecipient,
+      token?.recipient,
+      destinationMetadata,
+    ],
+    queryFn: async () => {
+      const tokenRecipient = token
+        ? hexToProtocolAddress(token.recipient, destinationMetadata)
+        : undefined;
+      const [senderUrl, recipientUrl, tokenRecipientUrl] = await Promise.all([
         origin ? multiProvider.tryGetExplorerAddressUrl(origin, messageSender) : null,
         destination ? multiProvider.tryGetExplorerAddressUrl(destination, messageRecipient) : null,
-      ]),
-    enabled: enabled && metadataExpanded && !!delivery.message,
+        destination && destinationMetadata && tokenRecipient && !/^0x0+$/.test(tokenRecipient)
+          ? multiProvider.tryGetExplorerAddressUrl(destination, tokenRecipient)
+          : null,
+      ]);
+      return { senderUrl, recipientUrl, tokenRecipient, tokenRecipientUrl };
+    },
+    enabled: enabled && advancedExpanded && !!delivery.message,
     staleTime: 60_000,
+    retry: false,
   });
   const originTx = delivery.message?.originTxHash ?? transfer.originTxHash;
   const destinationTx = delivery.destinationTxHash;
@@ -228,38 +273,61 @@ function MessageProgressRow({
             : !originConfirmed && originState === ProgressState.Pending
               ? 'Confirming origin'
               : 'Awaiting delivery';
-  const subtitle =
-    status === 'Confirming origin' && originCount
-      ? `Confirming origin · ${originCount}`
+  const phaseLabel =
+    relay && diagnostics.connection === DiagnosticConnection.Live && status === 'Awaiting delivery'
+      ? relayLabel(relay.state)
       : status === 'Awaiting delivery'
-        ? relay && diagnostics.connection === DiagnosticConnection.Live
-          ? relayLabel(relay.state)
+        ? diagnostics.connection === DiagnosticConnection.Live
+          ? 'Waiting for relayer to pick up the message'
           : 'Awaiting relayer delivery'
-        : delivered && !confirmed && destinationCount
-          ? `${status} · ${destinationCount}${fundsAvailable ? ' confirmations' : ''}`
-          : status;
-  const activity = deliveryMissing
-    ? 'Rechecking the destination transaction'
-    : !delivered && delivery.error
-      ? 'Delivery status is temporarily unavailable'
+        : status;
+  const confirmation = delivered ? destinationConfirmation : originConfirmation;
+  const confirmationCountText = delivered ? destinationCount : originCount;
+  const confirmationSummary =
+    !deliveryMissing && confirmation.data?.state === ProgressState.Pending
+      ? `${delivered ? 'Destination' : 'Origin'} confirmations${confirmationCountText ? ` · ${confirmationCountText}` : ''}${confirmation.estimatedSeconds != null ? ` · ${formatEstimatedTime(confirmation.estimatedSeconds)} remaining` : ''}`
+      : undefined;
+  const subtitle =
+    !expanded && confirmationCountText && confirmation.data?.state === ProgressState.Pending
+      ? `${phaseLabel} · ${confirmationCountText}`
+      : phaseLabel;
+  const lifecycle = {
+    state: relay?.state,
+    delivered,
+    confirmed,
+    confirming: delivered && !!destinationTx && destinationState === ProgressState.Pending,
+    originState,
+    paused:
+      deliveryMissing || originState === ProgressState.Failed || status === 'Status unavailable',
+  };
+  const estimatedSeconds =
+    lifecycle.paused || (!delivered && (relay?.state.failure || relay?.state.phase === 'dropped'))
+      ? undefined
       : delivered
-        ? destinationTx
-          ? confirmationText(destinationConfirmation)
-          : 'Waiting for destination transaction details'
-        : originConfirmed
-          ? 'Waiting for the destination to receive this message'
-          : confirmationText(originConfirmation);
+        ? destinationConfirmation.estimatedSeconds
+        : estimateDeliverySeconds(
+            origin ? multiProvider.tryGetChainMetadata(origin)?.blocks : undefined,
+            originConfirmation.data,
+          );
+  const explorerUrl = origin ? getHypExplorerLink(multiProvider, origin, message.msgId) : undefined;
   useEffect(() => {
     onDeliveryChange({
       messageId: message.msgId,
       delivered,
       fundsAvailable,
-      status,
-      activity,
+      destinationTxHash: delivered ? destinationTx : undefined,
+      destinationChain: destination,
+      explorerUrl,
     });
-  }, [onDeliveryChange, message.msgId, delivered, fundsAvailable, status, activity]);
-  const body = delivery.message?.body;
-  const token = decodeTransferBody({ label: message.label, body });
+  }, [
+    onDeliveryChange,
+    message.msgId,
+    delivered,
+    fundsAvailable,
+    destinationTx,
+    destination,
+    explorerUrl,
+  ]);
   const authorization = decodeAuthorizationBody(body);
   const fields = {
     'Origin confirmations': confirmationText(originConfirmation),
@@ -271,16 +339,19 @@ function MessageProgressRow({
         }
       : {}),
     'Amount (atomic units)': token?.amount,
-    'Token recipient': token?.recipient,
     Commitment: authorization?.commitment,
     'Security module': authorization?.ism,
   };
   const links = {
-    Sender: { hash: messageSender, url: addressLinks?.[0] },
-    Recipient: { hash: messageRecipient, url: addressLinks?.[1] },
+    'Token recipient': {
+      hash: addressLinks?.tokenRecipient ?? token?.recipient,
+      url: addressLinks?.tokenRecipientUrl,
+    },
+    Sender: { hash: messageSender, url: addressLinks?.senderUrl },
+    Recipient: { hash: messageRecipient, url: addressLinks?.recipientUrl },
     'Message ID': {
       hash: message.msgId,
-      url: origin ? getHypExplorerLink(multiProvider, origin, message.msgId) : undefined,
+      url: explorerUrl,
     },
     'Origin transaction': {
       hash: originTx,
@@ -329,7 +400,13 @@ function MessageProgressRow({
                   {hash.slice(0, 8)}…{hash.slice(-6)}
                 </span>
               )}
-              <CopyButton copyValue={hash} width={12} height={12} />
+              <CopyButton
+                copyValue={hash}
+                width={12}
+                height={12}
+                aria-label={`Copy ${label.toLowerCase()}`}
+                className="text-foreground-muted [&_path]:fill-current [&_rect]:stroke-current"
+              />
             </dd>
           </div>
         ),
@@ -372,11 +449,23 @@ function MessageProgressRow({
           <span className="min-w-0 flex-1">
             <span className="block font-medium">{MESSAGE_LABELS[message.label]}</span>
             {!expanded && (
-              <output className="pointer-events-none block text-xxs tabular-nums text-foreground-muted">
+              <output className="pointer-events-none block truncate text-xxs tabular-nums text-foreground-muted">
                 {subtitle}
               </output>
             )}
           </span>
+          {!expanded && estimatedSeconds != null && (
+            <span
+              className="shrink-0 text-xxs tabular-nums text-foreground-muted"
+              title={
+                delivered
+                  ? 'Estimated time to destination confirmation'
+                  : 'Estimated time to delivery'
+              }
+            >
+              {formatEstimatedTime(estimatedSeconds)}
+            </span>
+          )}
           <span
             aria-hidden="true"
             className="message-disclosure-chevron text-lg text-foreground-muted transition-transform motion-reduce:transition-none"
@@ -390,23 +479,31 @@ function MessageProgressRow({
             diagnostics={diagnostics}
             destination={destination}
             observation={relay}
-            delivered={delivered}
-            confirmed={confirmed}
-            confirming={delivered && !!destinationTx && destinationState === ProgressState.Pending}
+            lifecycle={lifecycle}
             status={subtitle}
+            confirmationSummary={confirmationSummary}
             selectedRelayer={selectedRelayer || relay?.relayer || ''}
             onSelectRelayer={setSelectedRelayer}
-          />
-          <details
-            open={metadataExpanded}
-            onToggle={(event) => setMetadataExpanded(event.currentTarget.open)}
-            className="mt-3 border-t border-gray-400/25 pt-3"
+            onAdvancedToggle={setAdvancedExpanded}
           >
-            <summary className="cursor-pointer text-xxs text-foreground-muted">
-              Transaction details
-            </summary>
-            {metadata}
-          </details>
+            <div className="mt-3">
+              <h3 className="text-xxs text-foreground-muted">Transaction details</h3>
+              {metadata}
+              {addressLinksError && (
+                <p className="mt-2 text-xxs text-foreground-muted">Address links unavailable.</p>
+              )}
+            </div>
+          </MessageRelayProgress>
+          {!primary && explorerUrl && (
+            <a
+              href={explorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1 text-xxs underline"
+            >
+              Track on Hyperlane Explorer <Image src={LinkIcon} width={12} height={12} alt="" />
+            </a>
+          )}
         </div>
       </details>
     </article>
@@ -421,11 +518,12 @@ function confirmationCount(progress: ConfirmationProgress | undefined) {
 function confirmationText({
   data,
   isError,
+  estimatedSeconds,
 }: ReturnType<typeof useTransactionConfirmations>): string {
   if (!data) return isError ? 'Temporarily unavailable' : 'Checking…';
   if (data.confirmations != null && data.required != null)
     return data.state === ProgressState.Confirmed
       ? `Confirmed (${data.required}/${data.required})`
-      : `${data.confirmations}/${data.required} blocks`;
+      : `${data.confirmations}/${data.required} blocks${estimatedSeconds != null ? ` · ${formatEstimatedTime(estimatedSeconds)} remaining` : ''}`;
   return data.reason ?? 'Waiting';
 }

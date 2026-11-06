@@ -1,5 +1,4 @@
 import type { Page, WebSocketRoute } from '@playwright/test';
-import { toFunctionSelector } from 'viem';
 
 import { test, expect } from '../fixtures';
 
@@ -13,15 +12,26 @@ const bridgeToken = `0x${'55'.repeat(20)}`;
 const outputToken = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
 const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
-async function setup(
-  page: Page,
-  scenario: 'empty' | 'offline' | 'replacement' | 'rpc-replacement',
-) {
-  const swap = scenario.endsWith('replacement');
+async function setup(page: Page, scenario: 'empty' | 'offline' | 'replacement') {
+  const swap = scenario === 'replacement';
   let deliveryHash = oldHash;
   let socket: WebSocketRoute | undefined;
   let snapshots = 0;
-  let mailboxReads = 0;
+  const mailboxReads: string[] = [];
+  const message = () => ({
+    msg_id: messageId,
+    sender: recipient,
+    recipient,
+    message_body: null,
+    origin_domain_id: 8453,
+    destination_domain_id: 56,
+    origin_tx_hash: originHash,
+    destination_tx_hash: deliveryHash,
+    origin_block_height: '100',
+    destination_block_height: '100',
+    is_delivered: true,
+    send_occurred_at: '2026-11-04T10:00:00',
+  });
   const checkedReceipts: string[] = [];
   await page.addInitScript(
     ({ messageId, originHash, oldHash, recipient, bridgeToken, outputToken, swap }) => {
@@ -32,8 +42,8 @@ async function setup(
           state: {
             selectedTransactionId: 'delivery-test',
             chainMetadataOverrides: {
-              base: { blocks: { confirmations: 1, reorgPeriod: 1 } },
-              bsc: { blocks: { confirmations: 1, reorgPeriod: 1 } },
+              base: { blocks: { confirmations: 1, reorgPeriod: 1, estimateBlockTime: 2 } },
+              bsc: { blocks: { confirmations: 1, reorgPeriod: 1, estimateBlockTime: 1 } },
             },
             transactionHistory: [
               {
@@ -69,7 +79,17 @@ async function setup(
   );
   await page.routeWebSocket('**/messages?**', (connection) => {
     if (new URL(connection.url()).searchParams.get('diagnostics') === 'true') {
-      connection.send(JSON.stringify({ type: 'diagnostics_unavailable' }));
+      connection.send(
+        JSON.stringify({
+          type: 'diagnostics',
+          data: {
+            version: 1,
+            message_id: messageId,
+            partial: false,
+            activities: [],
+          },
+        }),
+      );
       return;
     }
     socket = connection;
@@ -83,25 +103,7 @@ async function setup(
     await route.fulfill({
       json: {
         data: {
-          message_view:
-            scenario === 'replacement'
-              ? [
-                  {
-                    msg_id: messageId,
-                    sender: recipient,
-                    recipient,
-                    message_body: null,
-                    origin_domain_id: 8453,
-                    destination_domain_id: 56,
-                    origin_tx_hash: originHash,
-                    destination_tx_hash: deliveryHash,
-                    origin_block_height: '100',
-                    destination_block_height: '100',
-                    is_delivered: true,
-                    send_occurred_at: '2026-11-04T10:00:00',
-                  },
-                ]
-              : [],
+          message_view: swap ? [message()] : [],
         },
       },
     });
@@ -137,12 +139,8 @@ async function setup(
         result = '0x6e';
         break;
       case 'eth_call':
-        mailboxReads++;
-        // Mailbox.delivered(bytes32), then processedAt(bytes32).
-        result = `0x${(payload.params[0].data.startsWith(toFunctionSelector('delivered(bytes32)')) ? '1' : '64').padStart(64, '0')}`;
-        break;
       case 'eth_getLogs':
-        result = [log(payload.params[0].address, payload.params[0].topics)];
+        mailboxReads.push(payload.method);
         break;
       case 'eth_getTransactionReceipt': {
         const hash = payload.params[0];
@@ -178,7 +176,9 @@ async function setup(
   await page.goto('http://localhost:3000');
   return {
     snapshots: () => snapshots,
-    mailboxReads: () => mailboxReads,
+    connected: () => !!socket,
+    mailboxReads,
+    deliver: () => socket?.send(JSON.stringify({ type: 'message_upsert', data: message() })),
     checkedReceipts,
     reconnectWithReplacement: () => {
       deliveryHash = newHash;
@@ -188,19 +188,67 @@ async function setup(
 }
 
 for (const scenario of ['empty', 'offline'] as const) {
-  test(`mailbox completes a transfer when the explorer is ${scenario}`, async ({ page }) => {
+  test(`stream supplies delivery when the snapshot is ${scenario}, without mailbox polling`, async ({
+    page,
+  }) => {
     const state = await setup(page, scenario);
+    const bridge = page.getByRole('article', { name: 'Bridge funds' });
+    await expect(bridge).toBeVisible({ timeout: 60_000 });
+    await expect(bridge.locator(':scope > .message-disclosure')).toHaveAttribute('open', '');
+    await expect(bridge.locator('.ism-disclosure')).not.toHaveAttribute('open', '');
+    const explorerLink = page.getByTestId('transfer-footer').getByRole('link', {
+      name: 'Track on Hyperlane Explorer',
+    });
+    await expect(explorerLink).toHaveAttribute('href', new RegExp(messageId));
+    const destinationLink = page.getByRole('link', {
+      name: 'View destination transaction on block explorer',
+    });
+    await expect(destinationLink).toHaveCount(0);
+    await expect.poll(state.snapshots).toBeGreaterThan(0);
+    await expect.poll(state.connected).toBe(true);
+    await expect(page.getByTestId('transfer-outcome')).toHaveCount(0);
+    if (scenario === 'empty') {
+      // A known ID with a healthy stream needs no repeated empty snapshot reads.
+      await expect(bridge.getByRole('status')).toHaveText(
+        'Waiting for relayer to pick up the message',
+      );
+      await expect(
+        bridge.getByRole('listitem', { name: 'Dispatched', exact: true }),
+      ).toHaveAttribute('data-reached', 'true');
+      await expect(
+        bridge.getByRole('listitem', { name: 'Origin confirmed', exact: true }),
+      ).toHaveAttribute('data-reached', 'true');
+      const proof = bridge.getByRole('listitem', { name: 'Proof ready', exact: true });
+      await expect(proof).toHaveAttribute('aria-current', 'step');
+      await expect(proof).toHaveText('Waiting for relayer');
+      await expect(bridge.locator('.relay-live-status')).toHaveAttribute('data-live', 'true');
+      await expect(bridge.locator('.relay-live-dot')).toHaveCSS('animation-name', 'relay-breathe');
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await expect(bridge.locator('.relay-live-dot')).toHaveCSS('animation-name', 'none');
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      const snapshots = state.snapshots();
+      await page.waitForTimeout(11_000);
+      expect(state.snapshots()).toBe(snapshots);
+    }
+    state.deliver();
     await expect(page.getByTestId('transfer-outcome')).toContainText('Funds are available to use', {
       timeout: 60_000,
     });
+    await expect(page.getByTestId('transfer-outcome')).toHaveClass(/sr-only/);
+    await expect(explorerLink).toBeVisible();
+    await expect(explorerLink).toHaveAttribute('href', new RegExp(messageId));
     await expect(page.getByTestId('transfer-details')).toHaveAttribute(
       'data-status',
       'confirmed-destination',
     );
     await expect(page.getByLabel('Amount to send', { exact: true })).toHaveText('1.5 ETH');
-    expect(state.mailboxReads()).toBeGreaterThan(0);
-    const bridge = page.getByRole('article', { name: 'Bridge funds' });
-    await bridge.getByText('Transaction details', { exact: true }).click();
+    expect(state.mailboxReads).toEqual([]);
+    await expect(destinationLink).toBeVisible();
+    await expect(destinationLink).toHaveAttribute('title', oldHash);
+    await expect(bridge.locator('.relay-stages li[data-reached="true"]')).toHaveCount(5);
+    await expect(bridge.locator('.relay-stages [aria-current="step"]')).toHaveCount(0);
+    await bridge.locator('.ism-disclosure > summary').click();
+    await expect(bridge.getByRole('heading', { name: 'Transaction details' })).toBeVisible();
     await expect(
       bridge.getByRole('link', { name: 'Destination transaction (opens in new tab)' }),
     ).toHaveAttribute('title', oldHash);
@@ -216,34 +264,35 @@ for (const scenario of ['empty', 'offline'] as const) {
   });
 }
 
-for (const scenario of ['replacement', 'rpc-replacement'] as const) {
-  test(`reconnect replaces a stale successful HyperSwap outcome with recovery: ${scenario}`, async ({
-    page,
-  }) => {
-    const state = await setup(page, scenario);
-    await expect(page.getByTestId('transfer-outcome')).toContainText('Funds are available to use', {
-      timeout: 60_000,
-    });
-    const snapshots = state.snapshots();
-    state.reconnectWithReplacement();
-    await expect.poll(state.snapshots).toBeGreaterThan(snapshots);
-    await expect(page.getByTestId('transfer-outcome')).toContainText(
-      'intermediate token was automatically returned',
-      { timeout: 20_000 },
-    );
-    await expect(page.getByTestId('transfer-details')).toHaveAttribute(
-      'data-status',
-      'failed-recovered',
-    );
-    expect(state.checkedReceipts).toContain(newHash);
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () =>
-            JSON.parse(localStorage.getItem('app-state') || '{}').state.transactionHistory[0].data
-              .destinationTxHash,
-        ),
-      )
-      .toBe(newHash);
+test('reconnect replaces a stale successful HyperSwap outcome with recovery', async ({ page }) => {
+  const state = await setup(page, 'replacement');
+  await expect(page.getByTestId('transfer-outcome')).toContainText('Funds are available to use', {
+    timeout: 60_000,
   });
-}
+  const destinationLink = page.getByRole('link', {
+    name: 'View destination transaction on block explorer',
+  });
+  await expect(destinationLink).toHaveAttribute('title', oldHash);
+  const snapshots = state.snapshots();
+  state.reconnectWithReplacement();
+  await expect.poll(state.snapshots).toBeGreaterThan(snapshots);
+  await expect(page.getByTestId('transfer-outcome')).toContainText(
+    'intermediate token was automatically returned',
+    { timeout: 20_000 },
+  );
+  await expect(page.getByTestId('transfer-details')).toHaveAttribute(
+    'data-status',
+    'failed-recovered',
+  );
+  expect(state.checkedReceipts).toContain(newHash);
+  await expect(destinationLink).toHaveAttribute('title', newHash);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem('app-state') || '{}').state.transactionHistory[0].data
+            .destinationTxHash,
+      ),
+    )
+    .toBe(newHash);
+});

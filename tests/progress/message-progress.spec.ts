@@ -8,6 +8,7 @@ const ids = ['11', '22', '33'].map((byte) => `0x${byte.repeat(32)}`);
 const originTx = `0x${'aa'.repeat(32)}`;
 const destinationTx = `0x${'bb'.repeat(32)}`;
 const pendingDestinationTx = `0x${'dd'.repeat(32)}`;
+const revealDestinationTx = `0x${'ee'.repeat(32)}`;
 const address = `0x${'44'.repeat(20)}`;
 const messageSenders = ['55', '66', '77'].map((byte) => `0x${byte.repeat(20)}`);
 const messageRecipients = ['88', '99', '66'].map((byte) => `0x${byte.repeat(20)}`);
@@ -91,6 +92,19 @@ async function expectCompactRoute(stages: Locator) {
   ).toBe(1);
 }
 
+async function expectMutedCopy(button: Locator) {
+  await expect(button).toHaveClass(/text-foreground-muted/);
+  await expect(button.locator('rect')).toHaveCount(2);
+  const { color, strokes } = await button.evaluate((element) => ({
+    color: getComputedStyle(element).color,
+    strokes: Array.from(element.querySelectorAll('rect')).map(
+      (rect) => getComputedStyle(rect).stroke,
+    ),
+  }));
+  expect(color).not.toBe('rgb(0, 0, 0)');
+  expect(new Set(strokes)).toEqual(new Set([color]));
+}
+
 for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recovery', 'finalized']) {
   const taggedFinality = kind === 'finalized';
   const directBridge = kind === 'bridge' || kind === 'origin' || taggedFinality;
@@ -138,9 +152,13 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
             version: 6,
             state: {
               chainMetadataOverrides: {
-                base: { blocks: { confirmations: 2, reorgPeriod: 15 } },
+                base: { blocks: { confirmations: 2, reorgPeriod: 15, estimateBlockTime: 2 } },
                 bsc: {
-                  blocks: { confirmations: 1, reorgPeriod: taggedFinality ? 'finalized' : 5 },
+                  blocks: {
+                    confirmations: 1,
+                    reorgPeriod: taggedFinality ? 'finalized' : 5,
+                    estimateBlockTime: 1,
+                  },
                 },
               },
               selectedTransactionId: 'progress-fixture',
@@ -228,6 +246,26 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     });
     let liveSocket: WebSocketRoute | undefined;
     let diagnosticsSocket: WebSocketRoute | undefined;
+    const sendRelayState = (index: number, state: RelayState, partial = false) =>
+      diagnosticsSocket?.send(
+        JSON.stringify({
+          type: 'diagnostics',
+          data: {
+            version: 1,
+            message_id: ids[index],
+            partial,
+            activities: [
+              {
+                id: '1',
+                relayer: address,
+                version: 1,
+                observed_at: '2026-11-06 15:00:00',
+                activity: { type: 'snapshot', state },
+              },
+            ],
+          },
+        }),
+      );
     let snapshotRequests = 0;
     let originSnapshotRequests = 0;
     let originIndexed = !recoverMessages;
@@ -454,22 +492,71 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       ).toBeVisible();
     }
     const outcome = page.getByTestId('transfer-outcome');
+    const primary = progress.locator('article').first();
+    await expect(primary).toHaveAttribute(
+      'aria-label',
+      directBridge ? 'Bridge funds' : 'Destination delivery',
+    );
+    await expect(primary.locator(':scope > .message-disclosure')).toHaveAttribute('open', '');
+    await expect(primary.locator('.ism-disclosure')).not.toHaveAttribute('open', '');
+    const footer = page.getByTestId('transfer-footer');
+    const explorerLink = footer.getByRole('link', { name: 'Track on Hyperlane Explorer' });
+    await expect(explorerLink).toBeVisible();
+    await expect(explorerLink).toHaveAttribute('href', new RegExp(ids[directBridge ? 0 : 2]));
+    await expect(explorerLink).toHaveAttribute('target', '_blank');
+    expect(
+      await progress.evaluate((element) =>
+        Boolean(
+          element.compareDocumentPosition(
+            document.querySelector('[data-testid="transfer-footer"]')!,
+          ) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+      ),
+    ).toBe(true);
+    const destinationLink = page.getByRole('link', {
+      name: 'View destination transaction on block explorer',
+    });
+    if (directBridge) {
+      await expect(destinationLink).toBeVisible();
+      await expect(destinationLink).toHaveAttribute('title', pendingDestinationTx);
+      await expect(destinationLink).toHaveText('Binance: 0xdddddddd…dddddddd');
+      await expect(page.getByTestId('transfer-estimate')).toHaveCount(0);
+    } else {
+      await expect(progress.locator(':scope > details')).not.toHaveAttribute('open', '');
+      await expect(
+        progress.getByText('Other transfer messages (2)', { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByTestId('transfer-estimate')).toHaveText('Estimated delivery ~35s');
+      await expect(destinationLink).toHaveCount(0);
+    }
+    await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
+    const desktopViewport = page.viewportSize()!;
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    if (swapStages) await expectCompactRoute(stages);
+    await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
+    await page.setViewportSize(desktopViewport);
     if (directBridge) {
       const bridge = progress.getByRole('article', { name: 'Bridge funds' });
-      await expect(bridge.getByRole('status')).toHaveText(
-        taggedFinality ? 'Delivered' : 'Delivered · 0/5 confirmations',
+      await expect(bridge.getByRole('status')).toHaveText('Delivered');
+      await expect(bridge).toContainText(
+        taggedFinality
+          ? 'Destination confirmations'
+          : 'Destination confirmations · 0/5 · ~5s remaining',
       );
+      if (taggedFinality) await expect(bridge).not.toContainText('remaining');
+      else
+        await expect(
+          bridge.getByText('Destination confirmations · 0/5 · ~5s remaining', { exact: true }),
+        ).toHaveCSS('margin-top', '16px');
       await expect(outcome).toHaveText('Funds are available to use on Binance.');
+      await expect(outcome).toHaveClass(/sr-only/);
       await expect(
         page.getByText('Transfer complete! Funds have arrived.', { exact: true }),
       ).toHaveCount(0);
       await expect(bridge).not.toContainText('Funds are available to use');
       await expect(page.getByTestId('transfer-headline')).toHaveText('Transfer complete');
       await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
-      await page.screenshot({
-        path: testInfo.outputPath('desktop-collapsed.png'),
-        fullPage: true,
-      });
       const dialog = page.getByTestId('transfer-details');
       await expect(dialog.getByText('Sender Address', { exact: true })).toHaveCount(0);
       await expect(dialog.getByText('Recipient Address', { exact: true })).toHaveCount(0);
@@ -478,9 +565,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         0,
       );
       await expect(dialog.getByText('Bridge Message ID', { exact: true })).toHaveCount(0);
-      await bridge.getByText('Transaction details', { exact: true }).click();
+      await bridge.locator('.ism-disclosure > summary').click();
+      await expect(bridge.getByRole('heading', { name: 'Transaction details' })).toBeVisible();
       await expect(bridge).toContainText(
-        taggedFinality ? 'Waiting for finalized block' : '0/5 blocks',
+        taggedFinality ? 'Waiting for finalized block' : '0/5 blocks · ~5s remaining',
       );
       await expect(
         bridge.getByRole('link', { name: 'Sender (opens in new tab)', exact: true }),
@@ -488,6 +576,50 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       await expect(
         bridge.getByRole('link', { name: 'Recipient (opens in new tab)', exact: true }),
       ).toHaveAttribute('title', messageRecipients[0]);
+      const tokenRecipient = bridge.getByRole('link', {
+        name: 'Token recipient (opens in new tab)',
+        exact: true,
+      });
+      await expect(tokenRecipient).toHaveAttribute('title', address);
+      await expect(tokenRecipient).toHaveAttribute(
+        'href',
+        `https://bscscan.com/address/${address}`,
+      );
+      const copyTokenRecipient = bridge.getByRole('button', { name: 'Copy token recipient' });
+      await expectMutedCopy(copyTokenRecipient);
+      if (kind === 'bridge') {
+        const copyDestination = page.getByRole('button', {
+          name: 'Copy destination transaction hash',
+        });
+        await expectMutedCopy(copyDestination);
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'dark');
+        await expectMutedCopy(copyTokenRecipient);
+        await expectMutedCopy(copyDestination);
+        // Capture the Clipboard API boundary without OS permissions or clipboard side effects.
+        await page.evaluate(() => {
+          let copied = '';
+          Object.defineProperty(navigator.clipboard, 'writeText', {
+            value: async (value: string) => {
+              copied = value;
+            },
+          });
+          Object.defineProperty(navigator.clipboard, 'readText', { value: async () => copied });
+        });
+        await copyTokenRecipient.click();
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(address);
+        await expect
+          .poll(() =>
+            copyTokenRecipient.evaluate((element) => {
+              const checkmark = element.querySelector('path');
+              return (
+                !!checkmark && getComputedStyle(checkmark).fill === getComputedStyle(element).color
+              );
+            }),
+          )
+          .toBe(true);
+        await page.emulateMedia({ colorScheme: 'light' });
+      }
       await expect(
         bridge.getByRole('link', { name: 'Origin transaction (opens in new tab)' }),
       ).toHaveAttribute('title', originTx);
@@ -497,17 +629,17 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       await expect(bridge.getByRole('list', { name: 'Message lifecycle stages' })).toHaveCount(1);
       await expect(bridge.getByRole('list', { name: 'Message milestones' })).toHaveCount(0);
       await expect(
-        bridge.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
+        bridge.getByRole('listitem', { name: 'Delivered', exact: true }),
       ).toHaveAttribute('data-reached', 'true');
       await expect(
-        bridge.locator('.relay-stages li').filter({ hasText: /^Confirm$/ }),
+        bridge.getByRole('listitem', { name: 'Confirmed', exact: true }),
       ).toHaveAttribute('aria-current', 'step');
       await page.locator('.transfer-details-modal').evaluate((element) => element.scrollTo(0, 0));
-      await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
+      await page.screenshot({ path: testInfo.outputPath('desktop-details.png'), fullPage: true });
       await page.setViewportSize({ width: 390, height: 844 });
       expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
       if (swapStages) await expectCompactRoute(stages);
-      await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
+      await page.screenshot({ path: testInfo.outputPath('mobile-details.png'), fullPage: true });
       await page.reload();
       await expect(outcome).toContainText('Funds are available to use');
       destinationConfirmed = true;
@@ -547,6 +679,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         }),
       );
       await expect(outcome).toHaveCount(0, { timeout: 25_000 });
+      await expect(destinationLink).toHaveCount(0);
       await expect
         .poll(() =>
           page.evaluate(
@@ -583,6 +716,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         }),
       );
       await expect(outcome).toContainText('Funds are available to use');
+      await expect(destinationLink).toHaveAttribute('title', destinationTx);
       await expect
         .poll(() =>
           page.evaluate(
@@ -603,6 +737,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         }),
       );
       await expect(outcome).toHaveCount(0);
+      await expect(destinationLink).toHaveCount(0);
 
       for (const [status, message] of [
         ['failed', 'Transfer failed.'],
@@ -620,10 +755,17 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       return;
     }
     await expect(outcome).toHaveCount(0);
-    const reveal = progress.locator('article').filter({ hasText: 'Reveal authorization' });
+    const reveal = progress.getByRole('article', { name: 'Destination delivery' });
     const bridge = progress.locator('article').filter({ hasText: 'Bridge funds' });
     const commit = progress.locator('article').filter({ hasText: 'Commit authorization' });
-    await expect(reveal.getByRole('status')).toHaveText('Confirming origin · 0/15');
+    await expect(reveal.getByRole('status')).toHaveText('Confirming origin');
+    await expect(reveal).toContainText('Origin confirmations · 0/15 · ~30s remaining');
+    await expect(reveal).not.toContainText('Destination confirmations');
+    const originStage = reveal.getByRole('listitem', { name: 'Origin confirmed', exact: true });
+    const proofStage = reveal.getByRole('listitem', { name: 'Proof ready', exact: true });
+    await expect(originStage).toHaveAttribute('aria-current', 'step');
+    await expect(originStage).toHaveText('Confirming origin');
+    await expect(originStage).toHaveAttribute('data-reached', 'false');
     const spinner = reveal.locator(
       ':scope > .message-disclosure > summary .message-status-spinner',
     );
@@ -635,13 +777,13 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     await expect(spinner).toHaveCSS('animation-name', 'none');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect(spinner).not.toHaveCSS('animation-name', 'none');
-    await reveal.locator(':scope > .message-disclosure > summary').click();
     await expect(reveal.getByRole('listitem').first().locator(':scope > span').first()).toHaveCSS(
       'height',
       '3px',
     );
     await expect(reveal.getByRole('list', { name: 'Message lifecycle stages' })).toBeVisible();
-    await reveal.getByText('Transaction details', { exact: true }).click();
+    await reveal.locator('.ism-disclosure > summary').click();
+    await expect(reveal.getByRole('heading', { name: 'Transaction details' })).toBeVisible();
     await expect(reveal).toContainText('0/15 blocks');
     liveSocket?.send(
       JSON.stringify({
@@ -652,45 +794,96 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         hash: `0x${'cc'.repeat(32)}`,
       }),
     );
-    await expect(reveal.getByRole('status')).toHaveText('Confirming origin · 1/15');
+    await expect(reveal.getByRole('status')).toHaveText('Confirming origin');
+    await expect(reveal).toContainText('Origin confirmations · 1/15 · ~28s remaining');
     await expect(reveal).toContainText('1/15 blocks');
+    if (kind === 'both') {
+      await reveal.locator(':scope > .message-disclosure > summary').click();
+      await expect(reveal.getByTitle('Estimated time to delivery', { exact: true })).toHaveText(
+        '~33s',
+      );
+      await reveal.locator(':scope > .message-disclosure > summary').click();
+      sendRelayState(2, { phase: 'preparing', modules: [] });
+      await expect(reveal.locator('.relay-live-status')).toHaveAttribute('data-live', 'true');
+      await expect(reveal.getByRole('status')).toHaveText('Confirming origin');
+      await expect(originStage).toHaveAttribute('aria-current', 'step');
+      await expect(proofStage).not.toHaveAttribute('aria-current', 'step');
+    }
     originConfirmed = true;
     sendHeads();
+    await expect(originStage).toHaveAttribute('data-reached', 'true');
+    await expect(proofStage).toHaveAttribute('aria-current', 'step');
+    await expect(proofStage).toHaveText(kind === 'both' ? 'Proving' : 'Waiting for relayer');
+    if (kind === 'both') {
+      await expect(reveal.getByRole('status')).toHaveText('Relayer picked up the message');
+      diagnosticsSocket?.send(
+        JSON.stringify({ type: 'diagnostics_unavailable', message_ids: [ids[2]] }),
+      );
+      await expect(reveal.locator('.relay-live-status')).toHaveText('Updates unavailable');
+      await expect(proofStage).toHaveAttribute('aria-current', 'step');
+    }
+    await progress.getByText('Other transfer messages (2)', { exact: true }).click();
     await expect(bridge.getByRole('status')).toHaveText('Confirmed');
     await expect(commit.getByRole('status')).toHaveText('Confirming destination · 0/5');
     await commit.locator(':scope > .message-disclosure > summary').click();
-    await expect(
-      commit.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
-    ).toHaveAttribute('data-reached', 'true');
-    await expect(
-      commit.locator('.relay-stages li').filter({ hasText: /^Confirm$/ }),
-    ).toHaveAttribute('aria-current', 'step');
-    await commit.getByText('Transaction details', { exact: true }).click();
-    await expect(commit).toContainText('0/5 blocks');
+    await expect(commit).toContainText('Destination confirmations · 0/5 · ~5s remaining');
+    await expect(commit.getByRole('listitem', { name: 'Delivered', exact: true })).toHaveAttribute(
+      'data-reached',
+      'true',
+    );
+    await expect(commit.getByRole('listitem', { name: 'Confirmed', exact: true })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    await commit.locator('.ism-disclosure > summary').click();
+    await expect(commit.getByRole('heading', { name: 'Transaction details' })).toBeVisible();
+    await expect(commit).toContainText('0/5 blocks · ~5s remaining');
     await expect(reveal.getByRole('status')).toHaveText('Awaiting relayer delivery', {
       timeout: 20_000,
     });
-    await expect(
-      reveal.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
-    ).toHaveAttribute('data-reached', 'false');
-    await expect(
-      reveal.locator('.relay-stages li').filter({ hasText: /^Confirm$/ }),
-    ).toHaveAttribute('data-reached', 'false');
+    await expect(reveal.getByRole('listitem', { name: 'Delivered', exact: true })).toHaveAttribute(
+      'data-reached',
+      'false',
+    );
+    await expect(reveal.getByRole('listitem', { name: 'Confirmed', exact: true })).toHaveAttribute(
+      'data-reached',
+      'false',
+    );
     await reveal.locator(':scope > .message-disclosure > summary').click();
     await commit.locator(':scope > .message-disclosure > summary').click();
-    await expect(page.getByTestId('transfer-headline')).toHaveText('Waiting for message delivery');
+    await expect(page.getByTestId('transfer-headline')).toHaveText('Transfer in progress');
     await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
+    await expect(reveal.getByTitle('Estimated time to delivery', { exact: true })).toHaveText(
+      '~5s',
+    );
+    await expect(
+      commit.getByTitle('Estimated time to destination confirmation', { exact: true }),
+    ).toHaveText('~5s');
+    await expect(bridge.locator('summary [title^="Estimated time"]')).toHaveCount(0);
     for (const row of await progress.locator('article').all()) {
+      await expect(row.locator('summary .relay-stages')).toHaveCount(0);
+      expect(
+        await row.evaluate((element) => {
+          const estimate = element.querySelector('summary [title^="Estimated time"]');
+          if (!estimate) return true;
+          const estimateBox = estimate.getBoundingClientRect();
+          const statusBox = element.querySelector('summary output')!.getBoundingClientRect();
+          return (
+            estimateBox.left >= statusBox.right &&
+            estimateBox.right <= element.getBoundingClientRect().right
+          );
+        }),
+      ).toBe(true);
       const box = await row.boundingBox();
       expect(box?.height).toBeLessThanOrEqual(60);
     }
     await page.locator('.transfer-details-modal').evaluate((element) => element.scrollTo(0, 0));
-    await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
+    await page.screenshot({ path: testInfo.outputPath('desktop-collapsed.png'), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(progress).toBeVisible();
     expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     if (swapStages) await expectCompactRoute(stages);
-    await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
+    await page.screenshot({ path: testInfo.outputPath('mobile-collapsed.png'), fullPage: true });
     const panelTop = (await page.getByTestId('transfer-details').boundingBox())?.y;
     await reveal.locator(':scope > .message-disclosure > summary').click();
     expect((await page.getByTestId('transfer-details').boundingBox())?.y).toBe(panelTop);
@@ -706,10 +899,12 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     await expect(messageLink).toHaveAttribute('title', ids[2]);
     await expect(messageLink).toHaveAttribute('target', '_blank');
     await expect(messageLink).toHaveText('0x333333…333333');
+    await expectMutedCopy(reveal.getByRole('button', { name: 'Copy message id' }));
     await page.screenshot({ path: testInfo.outputPath('mobile-details.png'), fullPage: true });
     await page.emulateMedia({ colorScheme: 'dark' });
     await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'dark');
     await expect(page.getByTestId('transfer-headline')).toHaveCSS('color', 'rgb(242, 228, 255)');
+    await expectMutedCopy(reveal.getByRole('button', { name: 'Copy message id' }));
     await page.screenshot({
       path: testInfo.outputPath('mobile-dark.png'),
       fullPage: true,
@@ -718,6 +913,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     await page.reload();
     await expect(progress.locator('article')).toHaveCount(3);
     await expect(stages.locator('.hyperswap-step')).toHaveCount(kind === 'both' ? 3 : 2);
+    await progress.getByText('Other transfer messages (2)', { exact: true }).click();
     await expect(bridge.getByRole('status')).toHaveText('Confirmed');
     reorg = true;
     liveSocket?.send(
@@ -731,9 +927,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     );
     await expect(bridge.getByRole('status')).not.toHaveText('Confirmed', { timeout: 25_000 });
     await bridge.locator(':scope > .message-disclosure > summary').click();
-    await expect(
-      bridge.locator('.relay-stages li').filter({ hasText: /^Deliver$/ }),
-    ).toHaveAttribute('data-reached', 'false');
+    await expect(bridge.getByRole('listitem', { name: 'Delivered', exact: true })).toHaveAttribute(
+      'data-reached',
+      'false',
+    );
 
     // All three message IDs share one diagnostics subscription and keep separate trees.
     expect(
@@ -746,46 +943,32 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         verification: string | null,
         metadata_error: string | null,
         relayState?: RelayState,
+        partial = false,
       ) =>
-        diagnosticsSocket?.send(
-          JSON.stringify({
-            type: 'diagnostics',
-            data: {
-              version: 1,
-              message_id: ids[index],
-              partial: false,
-              activities: [
-                {
-                  id: '1',
-                  relayer: address,
-                  version: 1,
-                  observed_at: '2026-11-06 15:00:00',
-                  activity: {
-                    type: 'snapshot',
-                    state: relayState ?? {
-                      phase: metadata_error ? 'awaiting_signatures' : 'ready_to_submit',
-                      tree_root: 'root',
-                      modules: [
-                        {
-                          node_id: 'root',
-                          ism: address,
-                          module_type: types[index],
-                          discovered: true,
-                          children: [],
-                          metadata_status: metadata_error ? 'blocked' : 'ready',
-                          metadata_error,
-                          verification,
-                        },
-                      ],
-                    },
-                  },
-                },
-              ],
-            },
-          }),
+        sendRelayState(
+          index,
+          relayState ?? {
+            phase: metadata_error ? 'awaiting_signatures' : 'ready_to_submit',
+            tree_root: 'root',
+            modules: [
+              {
+                node_id: 'root',
+                ism: address,
+                module_type: types[index],
+                discovered: true,
+                children: [],
+                metadata_status: metadata_error ? 'blocked' : 'ready',
+                metadata_error,
+                verification,
+              },
+            ],
+          },
+          partial,
         );
       if ((await row.locator(':scope > .message-disclosure').getAttribute('open')) === null)
         await row.locator(':scope > .message-disclosure > summary').click();
+      if ((await row.locator('.ism-disclosure').getAttribute('open')) === null)
+        await row.locator('.ism-disclosure > summary').click();
       if (kind === 'both' && index === 2) {
         sendProof(null, 'Awaiting validator signatures');
         await expect(row.locator('.ism-node')).toHaveAttribute('data-state', 'waiting');
@@ -820,20 +1003,57 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         };
         const routing = row.locator('.ism-node > summary').filter({ hasText: 'Routing' });
         sendProof(null, null, candidate);
+        await expect(row.getByRole('status')).toHaveText('Relayer picked up the message');
+        await expect(
+          row.getByRole('listitem', { name: 'Proof ready', exact: true }),
+        ).toHaveAttribute('aria-current', 'step');
+        await expect(row.getByRole('listitem', { name: 'Proof ready', exact: true })).toHaveText(
+          'Proving',
+        );
         await expect(routing.locator('.ism-status-label')).toHaveText('Waiting');
         await expect(row.locator('.ism-node[data-state="waiting"]')).toHaveCount(2);
         sendProof(null, null, { ...candidate, phase: 'retrying' });
         await expect(row.locator('.ism-node[data-state="failed"]')).toHaveCount(2);
-        sendProof(null, null, {
+        const ready = {
           ...candidate,
           phase: 'ready_to_submit',
           modules: [
             { ...candidate.modules[0], selected_children: ['other'], verified: 1 },
             ...candidate.modules.slice(1),
           ],
-        });
+        };
+        sendProof(null, null, ready);
         await expect(routing.locator('.ism-status-label')).toHaveText('Unused');
         await expect(row.locator('.ism-node[data-state="unused"]')).toHaveCount(2);
+        const delivering = row.getByRole('listitem', { name: 'Delivered', exact: true });
+        await expect(delivering).toHaveAttribute('aria-current', 'step');
+        await expect(delivering).toHaveText('Delivering');
+        sendProof(null, null, ready, true);
+        await expect(row.getByText('Partial data', { exact: true })).toBeVisible();
+        await expect(delivering).toHaveAttribute('aria-current', 'step');
+        diagnosticsSocket?.send(
+          JSON.stringify({ type: 'diagnostics_unavailable', message_ids: [ids[2]] }),
+        );
+        await expect(row.locator('.relay-live-status')).toHaveText('Updates unavailable');
+        await expect(delivering).toHaveAttribute('aria-current', 'step');
+        sendProof(null, null, { ...ready, failure: { reason: 'Submission failed' } });
+        await expect(row.locator('.relay-stages [aria-current="step"]')).toHaveCount(0);
+        await row.locator(':scope > .message-disclosure > summary').click();
+        await expect(row.locator('summary [title^="Estimated time"]')).toHaveCount(0);
+        await row.locator(':scope > .message-disclosure > summary').click();
+        sendProof(null, null, {
+          ...ready,
+          phase: 'submitting',
+          submission: { stage: 'submitting' },
+        });
+        await expect(delivering).toHaveText('Broadcasting');
+        expect(
+          await delivering.evaluate((element) => element.scrollWidth <= element.clientWidth),
+        ).toBe(true);
+        await expect(row.getByRole('status')).toHaveText('Broadcasting transaction');
+        sendProof(null, null, { ...ready, phase: 'confirming', submission: { stage: 'included' } });
+        await expect(delivering).toHaveText('Delivering');
+        await expect(delivering).toHaveAttribute('data-reached', 'false');
       }
       sendProof('succeeded', null);
     }
@@ -842,10 +1062,54 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       await expect(row.locator('.ism-node > summary')).toContainText(labels[index]);
       await expect(row.locator('.ism-status-label')).toHaveText('Passed');
       await expect(row.getByRole('list', { name: 'Message milestones' })).toHaveCount(0);
+      if (kind === 'both' && index === 0) {
+        await row.locator('.ism-node > summary').click();
+        await expectMutedCopy(row.getByRole('button', { name: 'Copy ISM address' }));
+        await row.locator('.ism-node > summary').click();
+      }
     }
     await page.screenshot({
       path: testInfo.outputPath('three-message-proofs.png'),
       fullPage: true,
     });
+    await expect(destinationLink).toHaveCount(0);
+    liveSocket?.send(
+      JSON.stringify({
+        type: 'message_upsert',
+        data: {
+          ...entry(2),
+          is_delivered: true,
+          destination_tx_hash: revealDestinationTx,
+          destination_block_height: '100',
+        },
+      }),
+    );
+    await expect(destinationLink).toHaveAttribute('title', revealDestinationTx);
+    await expect(destinationLink).toHaveAttribute('href', new RegExp(revealDestinationTx));
+    await expect(page.getByTestId('transfer-estimate')).toHaveCount(0);
+    if (kind === 'both') {
+      // A stored route without a destination swap highlights bridge value delivery,
+      // even when historical commit/reveal messages remain on the transfer.
+      await page.evaluate(() => {
+        const persisted = JSON.parse(localStorage.getItem('app-state')!);
+        const transfer = persisted.state.transactionHistory[0].data;
+        transfer.routeSteps = transfer.routeSteps.filter(
+          (step: { type: string; chain: number }) =>
+            step.type !== 'swap' || step.chain !== transfer.dstChain,
+        );
+        delete transfer.destinationOutcome;
+        localStorage.setItem('app-state', JSON.stringify(persisted));
+      });
+      reorg = false;
+      await page.reload();
+      await expect(progress.locator('article')).toHaveCount(3);
+      await expect(progress.locator('article').first()).toHaveAttribute(
+        'aria-label',
+        'Bridge funds',
+      );
+      await expect(explorerLink).toHaveAttribute('href', new RegExp(ids[0]));
+      await expect(page.getByTestId('destination-transaction')).toHaveCount(1);
+      await expect(destinationLink).toHaveAttribute('title', destinationTx);
+    }
   });
 }

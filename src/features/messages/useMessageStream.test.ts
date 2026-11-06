@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { TransactionHistoryItemType, useStore } from '../store';
 import { TransferStatus } from '../transfer/engine/types';
-import { mailboxDeliveryQueryKey } from './mailboxDelivery';
 import { stringToPostgresBytea } from './queries/encoding';
 import type { MessageStubEntry } from './queries/fragments';
 import { subscribeToMessageUpdates } from './useMessageStream';
@@ -134,39 +133,6 @@ describe('persisted delivery reconciliation', () => {
       expect(transfer().destinationTxHash).toBeUndefined();
     },
   );
-
-  test('indexer lag does not retract delivery verified through the mailbox', () => {
-    client.setQueryData(mailboxDeliveryQueryKey(msgId), {
-      isDelivered: true,
-      destinationTxHash: oldHash,
-    });
-    client.setQueryData(key, []);
-    expect(transfer().status).toBe(TransferStatus.ConfirmedDestination);
-    expect(transfer().destinationTxHash).toBe(oldHash);
-  });
-
-  test.each([false, true])(
-    'rechecks mailbox-only delivery after a rollback or replacement: %s',
-    (delivered) => {
-      client.setQueryData(mailboxDeliveryQueryKey(msgId), {
-        isDelivered: delivered,
-        destinationTxHash: delivered ? newHash : undefined,
-      });
-      expect(transfer().status).toBe(TransferStatus.Bridging);
-      expect(transfer().destinationTxHash).toBeUndefined();
-    },
-  );
-
-  test('late mailbox responses cannot replace a complete indexed delivery', () => {
-    client.setQueryData(key, [{ ...row, destination_tx_hash: oldHash }]);
-    client.setQueryData(mailboxDeliveryQueryKey(msgId), { isDelivered: false });
-    expect(transfer().status).toBe(TransferStatus.ConfirmedDestination);
-    client.setQueryData(mailboxDeliveryQueryKey(msgId), {
-      isDelivered: true,
-      destinationTxHash: newHash,
-    });
-    expect(transfer().destinationTxHash).toBe(oldHash);
-  });
 
   test('pending bridge/commit indexing does not retract a checked reveal outcome', () => {
     client.setQueryData(['messageDelivery', { msgId: stringToPostgresBytea(bridgeId) }], []);

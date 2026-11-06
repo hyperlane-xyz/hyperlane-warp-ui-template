@@ -113,17 +113,17 @@ export enum DiagnosticConnection {
 }
 
 const phaseLabels: Record<string, string> = {
-  preparing: 'Preparing verification',
+  preparing: 'Relayer picked up the message',
   awaiting_signatures: 'Collecting signatures',
-  ready_to_submit: 'Ready to submit',
-  retrying: 'Waiting to retry',
-  submitting: 'Submitting transaction',
-  confirming: 'Confirming transaction',
+  ready_to_submit: 'Proof ready · Waiting to broadcast',
+  retrying: 'Waiting for proof',
+  submitting: 'Broadcasting transaction',
+  confirming: 'Waiting for delivery',
   delivered: 'Relayer observed delivery',
-  dropped: 'Relayer stopped processing',
+  dropped: 'Waiting for delivery updates',
 };
 const submissionLabels: Record<string, string> = {
-  submitting: 'Submitting transaction',
+  submitting: 'Broadcasting transaction',
   submitted: 'Accepted by submitter',
   pending_inclusion: 'Waiting for inclusion',
   mempool: 'Transaction in mempool',

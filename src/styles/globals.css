@@ -772,12 +772,17 @@ html[data-theme-mode='dark'] .relay-panel {
   background: currentColor;
   opacity: 0.4;
 }
-.relay-panel[data-active='true'] .relay-live-dot {
-  color: var(--color-primary-500, #9a0dff);
+.relay-live-status[data-live='true'] {
+  color: var(--ism-success);
+}
+.relay-live-status[data-live='true'] .relay-live-dot {
   animation: relay-breathe 2s ease-in-out infinite;
 }
-.relay-stages li {
+.relay-stages > * {
   color: var(--color-foreground-muted, #737380);
+}
+.relay-stages [data-current='true'] {
+  color: var(--color-primary-500, #9a0dff);
 }
 .relay-stage-track {
   display: block;

@@ -1,3 +1,4 @@
+import type { ChainMetadata } from '@hyperlane-xyz/sdk';
 import { parseWarpRouteMessage } from '@hyperlane-xyz/utils';
 
 import type { LabeledMsgId } from '../transfer/engine/types';
@@ -30,6 +31,59 @@ export function confirmationProgress(
     confirmations,
     required,
   };
+}
+
+export function estimateConfirmationSeconds(
+  progress: ConfirmationProgress | undefined,
+  blockTime: number | undefined,
+): number | undefined {
+  if (progress?.state !== ProgressState.Pending || blockTime == null || blockTime <= 0)
+    return undefined;
+  const { confirmations, required } = progress;
+  if (
+    confirmations == null ||
+    required == null ||
+    !Number.isFinite(confirmations) ||
+    !Number.isFinite(required) ||
+    confirmations < 0 ||
+    required <= confirmations
+  )
+    return undefined;
+  const seconds = (required - confirmations) * blockTime;
+  return Number.isFinite(seconds) ? seconds : undefined;
+}
+
+export function estimateDeliverySeconds(
+  blocks: ChainMetadata['blocks'],
+  progress?: ConfirmationProgress,
+): number | undefined {
+  if (progress?.state === ProgressState.Failed) return undefined;
+  const blockTime = blocks?.estimateBlockTime;
+  const confirmations =
+    typeof blocks?.reorgPeriod === 'number' ? blocks.reorgPeriod : blocks?.confirmations;
+  if (
+    blockTime == null ||
+    !Number.isFinite(blockTime) ||
+    blockTime <= 0 ||
+    confirmations == null ||
+    !Number.isFinite(confirmations) ||
+    confirmations < 0
+  )
+    return undefined;
+  const originSeconds =
+    progress?.state === ProgressState.Confirmed
+      ? 0
+      : (estimateConfirmationSeconds(progress, blockTime) ?? confirmations * blockTime);
+  const seconds = originSeconds + 5;
+  return Number.isFinite(seconds) ? seconds : undefined;
+}
+
+export function formatEstimatedTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) throw new Error('Invalid estimated duration');
+  const roundedSeconds = Math.ceil(seconds);
+  if (roundedSeconds < 60) return `~${roundedSeconds}s`;
+  if (roundedSeconds < 3600) return `~${Math.ceil(roundedSeconds / 60)} min`;
+  return `~${Math.ceil(roundedSeconds / 3600)} hr`;
 }
 
 export function decodeTransferBody(

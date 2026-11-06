@@ -9,8 +9,9 @@ import { formatTimestamp } from '../../../utils/date';
 import { getHypExplorerLink } from '../../../utils/links';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
+import { estimateDeliverySeconds, formatEstimatedTime } from '../../messages/progress';
 import { TransferProgress, type TransferDeliveryStatus } from '../../messages/TransferProgress';
-import { getTransferDeliveryMsgId } from '../../messages/utils';
+import { getTransferDeliveryMsgId, getTransferOverviewMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
@@ -32,8 +33,8 @@ const STATUS_HEADLINE: Record<TransferStatus, string> = {
   [TransferStatus.ConfirmingApprove]: 'Confirming token approval',
   [TransferStatus.SigningTransfer]: 'Confirm transfer in your wallet',
   [TransferStatus.ConfirmingOrigin]: 'Confirming origin transaction',
-  [TransferStatus.Bridging]: 'Waiting for message delivery',
-  [TransferStatus.ConfirmingDestination]: 'Checking destination execution',
+  [TransferStatus.Bridging]: 'Transfer in progress',
+  [TransferStatus.ConfirmingDestination]: 'Checking your funds',
   [TransferStatus.ConfirmedDestination]: 'Checking delivery',
   [TransferStatus.DestTransferFailed]: 'Destination execution failed',
   [TransferStatus.FailedRecovered]: 'Funds recovered',
@@ -136,23 +137,23 @@ function TransferDetailsModalInner({
   const approvalComplete =
     status === TransferStatus.CreatingTxs || status === TransferStatus.SigningTransfer;
 
-  // Poll the reveal message when present — its delivery tx IS the ICA
-  // execution on the destination chain, which is what actually completes
-  // the transfer. Direct bridge routes fall back to the bridge/warp
-  // message. Same-chain transfers have no msgIds.
-  const pollingMsgId = getTransferDeliveryMsgId(msgIds);
-  const deliveryStatus = pollingMsgId ? messageStatuses[pollingMsgId] : undefined;
+  // Execution evidence validates the outcome; the overview highlights value delivery.
+  const deliveryMsgId = getTransferDeliveryMsgId(msgIds);
+  const deliveryStatus = deliveryMsgId ? messageStatuses[deliveryMsgId] : undefined;
+  const overviewMsgId = getTransferOverviewMsgId(transfer);
+  const overviewStatus = overviewMsgId ? messageStatuses[overviewMsgId] : undefined;
   const bridgeMsgId = msgIds?.find(
     (message) => message.label === 'bridge' || message.label === 'warp',
   )?.msgId;
   const bridgeDelivered = bridgeMsgId ? messageStatuses[bridgeMsgId]?.delivered : undefined;
 
-  const showTimeline = !!originTxHash && !!pollingMsgId;
-  const singleMessageTimeline = showTimeline && msgIds?.length === 1;
-  const awaitingMessages = !!originTxHash && srcChain !== dstChain && !pollingMsgId && !isFinal;
+  const showTimeline = !!originTxHash && !!overviewMsgId;
+  const awaitingMessages = !!originTxHash && srcChain !== dstChain && !overviewMsgId && !isFinal;
 
   const fundsAvailable = showTimeline
-    ? !!deliveryStatus?.delivered && (deliveryStatus.fundsAvailable || isDelivered)
+    ? !!overviewStatus?.delivered &&
+      !!deliveryStatus?.delivered &&
+      (deliveryStatus.fundsAvailable || isDelivered)
     : isDelivered;
   const outcome = isDestFailed
     ? 'Origin succeeded and delivery completed, but destination execution reverted. Funds may remain in your ICA. Please contact support.'
@@ -176,17 +177,13 @@ function TransferDetailsModalInner({
       ? STATUS_HEADLINE[status]
       : showApprovalFlow && status === TransferStatus.Preparing
         ? 'Checking token permission'
-        : showTimeline && deliveryStatus
-          ? deliveryStatus.delivered
-            ? 'Checking destination execution'
-            : deliveryStatus.status === 'Awaiting delivery'
-              ? 'Waiting for message delivery'
-              : deliveryStatus.status
+        : showTimeline && overviewStatus
+          ? overviewStatus.delivered
+            ? 'Checking your funds'
+            : 'Transfer in progress'
           : STATUS_HEADLINE[status];
   const description = outcomeIsSuccess
-    ? showTimeline
-      ? 'Delivered. Confirmation details are available below.'
-      : 'Your transfer has been delivered.'
+    ? 'Your transfer has been delivered.'
     : outcome
       ? 'See the outcome below for details.'
       : showApprovalFlow && status === TransferStatus.Preparing
@@ -197,11 +194,9 @@ function TransferDetailsModalInner({
             ? 'Waiting for the token permission to confirm on chain. Your transfer has not started yet.'
             : status === TransferStatus.SigningTransfer
               ? 'Token permissions are ready. Confirm this transaction to start your transfer.'
-              : showTimeline && deliveryStatus && !deliveryStatus.delivered
-                ? deliveryStatus.activity
-                : status === TransferStatus.Preparing || status === TransferStatus.CreatingTxs
-                  ? 'Checking the route and preparing your transaction.'
-                  : 'No action needed. We’ll update this as the transaction progresses.';
+              : status === TransferStatus.Preparing || status === TransferStatus.CreatingTxs
+                ? 'Checking the route and preparing your transaction.'
+                : 'No action needed. We’ll update this as the transaction progresses.';
 
   const date = useMemo(
     () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(Date.now())),
@@ -221,9 +216,18 @@ function TransferDetailsModalInner({
   const originTxUrl = originTxHash
     ? multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash })
     : undefined;
-  const destTxUrl = destinationTxHash
-    ? multiProvider.tryGetExplorerTxUrl(destChain, { hash: destinationTxHash })
+  // Live evidence owns this link; persisted hashes can be stale after a rollback.
+  const destinationHash = showTimeline ? overviewStatus?.destinationTxHash : destinationTxHash;
+  const destinationChain = overviewStatus?.destinationChain ?? destChain;
+  const destTxUrl = destinationHash
+    ? multiProvider.tryGetExplorerTxUrl(destinationChain, { hash: destinationHash })
     : undefined;
+  const messageExplorerUrl =
+    overviewStatus?.explorerUrl ??
+    (overviewMsgId ? getHypExplorerLink(multiProvider, originChain, overviewMsgId) : undefined);
+  const estimatedSeconds = estimateDeliverySeconds(
+    multiProvider.tryGetChainMetadata(srcChain)?.blocks,
+  );
 
   return (
     <Modal
@@ -303,7 +307,7 @@ function TransferDetailsModalInner({
         )}
         <div
           className={
-            singleMessageTimeline
+            showTimeline
               ? 'mt-3 border-t border-gray-400/25 pt-3'
               : 'mt-3 min-h-[76px] border-t border-gray-400/25 pt-4'
           }
@@ -317,10 +321,60 @@ function TransferDetailsModalInner({
           >
             {headline}
           </DialogTitle>
-          {!singleMessageTimeline && (
+          {!showTimeline && (
             <p className="mt-1 text-xs leading-relaxed text-foreground-muted">{description}</p>
           )}
+          {!isFinal &&
+            !fundsAvailable &&
+            !overviewStatus?.delivered &&
+            estimatedSeconds != null && (
+              <p
+                data-testid="transfer-estimate"
+                className="mt-1 text-xs text-foreground-muted"
+                title="Based on configured chain timings. Actual times can vary."
+              >
+                Estimated delivery {formatEstimatedTime(estimatedSeconds)}
+              </p>
+            )}
         </div>
+
+        {destinationHash && (
+          <div
+            data-testid="destination-transaction"
+            className={`mt-3 flex items-center gap-3 rounded-lg border p-3 ${outcomeIsSuccess ? 'border-green-50/30 bg-green-50/10' : 'border-gray-400/25 bg-surface'}`}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-xxs text-foreground-muted">
+                {transfer.solanaDestSwapPda ? 'Delivery transaction' : 'Destination transaction'}
+              </p>
+              {destTxUrl ? (
+                <a
+                  href={destTxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="View destination transaction on block explorer"
+                  title={destinationHash}
+                  className="mt-1 inline-flex items-center gap-1 text-xs font-medium underline underline-offset-2"
+                >
+                  <span>
+                    {getChainDisplayName(multiProvider, destinationChain, true)}:{' '}
+                    {destinationHash.slice(0, 10)}…{destinationHash.slice(-8)}
+                  </span>
+                  <Image src={LinkIcon} width={13} height={13} alt="" />
+                </a>
+              ) : (
+                <p className="font-mono mt-1 break-all text-xxs">{destinationHash}</p>
+              )}
+            </div>
+            <CopyButton
+              copyValue={destinationHash}
+              width={14}
+              height={14}
+              aria-label="Copy destination transaction hash"
+              className="text-foreground-muted [&_path]:fill-current [&_rect]:stroke-current"
+            />
+          </div>
+        )}
 
         {(showTimeline || awaitingMessages) && (
           <TransferProgress
@@ -358,42 +412,53 @@ function TransferDetailsModalInner({
             ))}
           </div>
         )}
-        {(!singleMessageTimeline || (outcome && !outcomeIsSuccess)) && (
-          <div className="mt-4 min-h-[52px]">
-            {outcome && (
-              <div
-                data-testid="transfer-outcome"
-                role={outcomeIsSuccess ? 'status' : 'alert'}
-                className={`rounded-lg border p-3 text-xs leading-relaxed ${
-                  outcomeIsSuccess
-                    ? 'border-green-50/30 bg-green-50/10 text-green-600 dark:text-green-50'
-                    : isFailedRecovered
-                      ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
-                      : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
-                }`}
-              >
-                {outcome}
-              </div>
-            )}
+        {outcome && !outcomeIsSuccess && (
+          <div
+            data-testid="transfer-outcome"
+            role="alert"
+            className={`mt-4 rounded-lg border p-3 text-xs leading-relaxed ${
+              isFailedRecovered
+                ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
+                : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
+            }`}
+          >
+            {outcome}
           </div>
         )}
-        <div className="mt-3 flex min-h-[52px] items-center justify-between gap-4 border-t border-gray-400/25 pt-3">
-          {singleMessageTimeline && outcomeIsSuccess ? (
-            <output
-              data-testid="transfer-outcome"
-              className="text-xxs text-green-600 dark:text-green-50"
-            >
-              {outcome}
-            </output>
-          ) : (
-            <span className="text-xxs text-foreground-muted">
-              {originTxHash && !isFinal && !fundsAvailable
-                ? 'You can close this. Your transfer will continue.'
-                : needsWallet
-                  ? 'Your wallet needs your confirmation.'
-                  : ''}
-            </span>
-          )}
+        <div
+          data-testid="transfer-footer"
+          className="mt-3 flex min-h-[52px] items-center justify-between gap-4 border-t border-gray-400/25 pt-3"
+        >
+          <div className="flex min-w-0 flex-col gap-2">
+            {outcomeIsSuccess ? (
+              <output
+                data-testid="transfer-outcome"
+                className={
+                  messageExplorerUrl ? 'sr-only' : 'text-xxs text-green-600 dark:text-green-50'
+                }
+              >
+                {outcome}
+              </output>
+            ) : (
+              <span className="text-xxs text-foreground-muted">
+                {originTxHash && !isFinal && !fundsAvailable
+                  ? 'You can close this. Your transfer will continue.'
+                  : needsWallet
+                    ? 'Your wallet needs your confirmation.'
+                    : ''}
+              </span>
+            )}
+            {messageExplorerUrl && (
+              <a
+                href={messageExplorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xxs underline underline-offset-2"
+              >
+                Track on Hyperlane Explorer <Image src={LinkIcon} width={12} height={12} alt="" />
+              </a>
+            )}
+          </div>
           <button
             type="button"
             onClick={close}
@@ -428,7 +493,12 @@ function TransferProperty({
               <Image src={LinkIcon} width={14} height={14} alt="" />
             </a>
           )}
-          <CopyButton copyValue={value} width={14} height={14} className="opacity-40" />
+          <CopyButton
+            copyValue={value}
+            width={14}
+            height={14}
+            className="text-foreground-muted [&_path]:fill-current [&_rect]:stroke-current"
+          />
         </div>
       </div>
       <div className="mt-1 truncate text-xs leading-normal tracking-wider text-gray-900 dark:text-foreground-primary">

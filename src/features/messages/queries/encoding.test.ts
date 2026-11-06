@@ -3,7 +3,12 @@ import { bufferToBase58, ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 
 import { buildMessagesByOriginTxQuery } from './build';
-import { postgresByteaToAddress, postgresByteaToTxHash, txHashToPostgresBytea } from './encoding';
+import {
+  hexToProtocolAddress,
+  postgresByteaToAddress,
+  postgresByteaToTxHash,
+  txHashToPostgresBytea,
+} from './encoding';
 
 describe('txHashToPostgresBytea', () => {
   test('converts sealevel base58 transaction hashes to bytea hex', () => {
@@ -96,6 +101,48 @@ describe('postgresByteaToAddress', () => {
         protocol: ProtocolType.Aleo,
       } as ChainMetadata),
     ).toBe(`0x${'00'.repeat(32)}`);
+  });
+});
+
+describe('hexToProtocolAddress', () => {
+  test('decodes EVM recipients to checksummed 20-byte addresses', () => {
+    const recipient = `0x${'00'.repeat(12)}52908400098527886e0f7030069857d2e4169ee7`;
+    expect(
+      hexToProtocolAddress(recipient, { protocol: ProtocolType.Ethereum } as ChainMetadata),
+    ).toBe('0x52908400098527886E0F7030069857D2E4169EE7');
+  });
+
+  test('preserves all recipient bytes for Solana and Cosmos contracts', () => {
+    const recipient = `0x${byteRangeHex()}`;
+    expect(
+      hexToProtocolAddress(recipient, { protocol: ProtocolType.Sealevel } as ChainMetadata),
+    ).toBe('4wBqpZM9xaSheZzJSMawUKKwhdpChKbZ5eu5ky4Vigw');
+    expect(
+      hexToProtocolAddress(recipient, {
+        protocol: ProtocolType.Cosmos,
+        bech32Prefix: 'osmo',
+      } as ChainMetadata),
+    ).toBe('osmo1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tpwxqergd3c8g7rusq4z5ese');
+  });
+
+  test('removes account padding for Cosmos Native using the destination prefix', () => {
+    const recipient = `0x${'00'.repeat(12)}${'42'.repeat(20)}`;
+    expect(
+      hexToProtocolAddress(recipient, {
+        protocol: ProtocolType.CosmosNative,
+        bech32Prefix: 'osmo',
+      } as ChainMetadata),
+    ).toBe('osmo1gfpyysjzgfpyysjzgfpyysjzgfpyysjz22cjjt');
+  });
+
+  test('keeps raw hex when metadata is missing or the recipient is zero', () => {
+    const recipient = `0x${byteRangeHex()}`;
+    expect(hexToProtocolAddress(recipient, undefined)).toBe(recipient);
+    expect(hexToProtocolAddress(recipient, null)).toBe(recipient);
+    const zero = `0x${'00'.repeat(32)}`;
+    expect(hexToProtocolAddress(zero, { protocol: ProtocolType.Sealevel } as ChainMetadata)).toBe(
+      zero,
+    );
   });
 });
 

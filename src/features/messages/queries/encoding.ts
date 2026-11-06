@@ -69,7 +69,13 @@ export function postgresByteaToAddress(
   byteString: string,
   chainMetadata: ChainMetadata | null | undefined,
 ): string {
-  const hexString = postgresByteaToString(byteString);
+  return hexToProtocolAddress(postgresByteaToString(byteString), chainMetadata);
+}
+
+export function hexToProtocolAddress(
+  hexString: string,
+  chainMetadata: ChainMetadata | null | undefined,
+): string {
   if (!chainMetadata) return hexString;
   const addressBytes = Buffer.from(strip0x(hexString), 'hex');
   if (!addressBytes.length || addressBytes.every((b) => b === 0)) return hexString;

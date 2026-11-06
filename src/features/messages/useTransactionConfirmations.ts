@@ -4,7 +4,12 @@ import { useEffect, useMemo } from 'react';
 
 import { useMultiProvider } from '../chains/hooks';
 import { LiveConnection } from './messageStream';
-import { confirmationProgress, ProgressState, type ConfirmationProgress } from './progress';
+import {
+  confirmationProgress,
+  estimateConfirmationSeconds,
+  ProgressState,
+  type ConfirmationProgress,
+} from './progress';
 import { useMessageStream } from './useMessageStream';
 
 export function useTransactionConfirmations(
@@ -115,5 +120,11 @@ export function useTransactionConfirmations(
         ? false
         : 10_000,
   });
-  return { ...query, data: liveProgress ?? query.data, isError: !liveProgress && query.isError };
+  const data = liveProgress ?? query.data;
+  return {
+    ...query,
+    data,
+    isError: !liveProgress && query.isError,
+    estimatedSeconds: estimateConfirmationSeconds(data, metadata?.blocks?.estimateBlockTime),
+  };
 }

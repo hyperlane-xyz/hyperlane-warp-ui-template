@@ -1,7 +1,7 @@
 import { convertToProtocolAddress } from '@hyperlane-xyz/utils';
 import { CopyButton, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { useMultiProvider } from '../chains/hooks';
 import {
@@ -11,55 +11,138 @@ import {
   ismProgress,
   type IsmNode,
   type RelayObservation,
+  type RelayState,
 } from './diagnostics';
+import { ProgressState } from './progress';
 import { parseTimestamp } from './queries/encoding';
 import type { DiagnosticsState } from './useMessageDiagnostics';
 
-const stages = ['Prepare', 'Ready', 'Submit', 'Include', 'Deliver', 'Confirm'];
+const stages = [
+  { label: 'Dispatched', pending: 'Dispatching' },
+  { label: 'Origin confirmed', pending: 'Confirming origin' },
+  { label: 'Proof ready', pending: 'Proving' },
+  { label: 'Delivered', pending: 'Delivering' },
+  { label: 'Confirmed', pending: 'Confirming' },
+];
 const phaseStage: Record<string, number> = {
-  preparing: 0,
-  awaiting_signatures: 0,
-  retrying: 0,
-  ready_to_submit: 1,
+  preparing: 1,
+  awaiting_signatures: 1,
+  retrying: 1,
+  ready_to_submit: 2,
   submitting: 2,
-  confirming: 3,
-  delivered: 3,
+  confirming: 2,
+  delivered: 2,
 };
 const shortAddress = (address: string) => `${address.slice(0, 8)}…${address.slice(-6)}`;
 const humanize = (value: string) => value.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
+
+interface MessageLifecycleProps {
+  state?: RelayState;
+  delivered: boolean;
+  confirmed: boolean;
+  confirming: boolean;
+  originState: ProgressState;
+  paused: boolean;
+}
+
+function MessageLifecycleStages({
+  state,
+  delivered,
+  confirmed,
+  confirming,
+  originState,
+  paused,
+}: MessageLifecycleProps) {
+  // Wait for origin finality even if a relayer observes the message earlier.
+  // Delivery and destination finality still require indexed/on-chain evidence.
+  const stage = confirmed
+    ? 4
+    : delivered
+      ? 3
+      : originState === ProgressState.Pending || originState === ProgressState.Failed
+        ? 0
+        : state
+          ? (phaseStage[state.phase] ?? 1)
+          : 1;
+  // Pending stages keep animating between observations.
+  const currentStage =
+    confirmed || paused || (!delivered && (state?.failure || state?.phase === 'dropped'))
+      ? -1
+      : delivered
+        ? confirming
+          ? 4
+          : -1
+        : stage + 1;
+  const broadcasting =
+    state?.phase === 'submitting' && (!state.submission || state.submission.stage === 'submitting');
+  return (
+    <ol className="relay-stages mt-3 grid grid-cols-5 gap-1" aria-label="Message lifecycle stages">
+      {stages.map(({ label, pending }, index) => (
+        <li
+          key={label}
+          aria-label={label}
+          title={
+            index === 1 && originState === ProgressState.Unavailable
+              ? 'Origin confirmation tracking unavailable'
+              : undefined
+          }
+          data-reached={index === 1 ? originState === ProgressState.Confirmed : index <= stage}
+          data-current={index === currentStage}
+          aria-current={index === currentStage ? 'step' : undefined}
+        >
+          <span className="relay-stage-track" aria-hidden="true" />
+          <span className="mt-1.5 block min-h-6 text-xxs leading-tight">
+            {index === currentStage
+              ? index === 2 && !state
+                ? 'Waiting for relayer'
+                : index === 3 && broadcasting
+                  ? 'Broadcasting'
+                  : pending
+              : index === 1 && originState === ProgressState.Unavailable
+                ? 'Not tracked'
+                : label}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 export function MessageRelayProgress({
   diagnostics,
   destination,
   observation,
-  delivered,
-  confirmed,
-  confirming,
+  lifecycle,
   status,
+  confirmationSummary,
   selectedRelayer,
   onSelectRelayer,
+  onAdvancedToggle,
+  children,
 }: {
   diagnostics: DiagnosticsState;
   destination: string | undefined;
   observation?: RelayObservation;
-  delivered: boolean;
-  confirmed: boolean;
-  confirming: boolean;
+  lifecycle: MessageLifecycleProps;
   status: string;
+  confirmationSummary?: string;
   selectedRelayer: string;
   onSelectRelayer: (relayer: string) => void;
+  onAdvancedToggle: (open: boolean) => void;
+  children?: ReactNode;
 }) {
   const { connection, data } = diagnostics;
-  const state = observation?.state;
+  const { state, delivered, confirmed, paused } = lifecycle;
   const stale = connection === DiagnosticConnection.Stale;
   const active =
     connection === DiagnosticConnection.Live &&
     !!state &&
     !data?.partial &&
     !delivered &&
-    !['delivered', 'dropped'].includes(state.phase);
-  const stage = confirmed ? 5 : delivered ? 4 : state ? (phaseStage[state.phase] ?? -1) : -1;
-  const currentStage = confirming ? 5 : active ? stage : -1;
+    !paused &&
+    !state.failure &&
+    state.phase in phaseStage &&
+    !['delivered', 'retrying'].includes(state.phase);
   const modules = new Map(state?.modules.map((node) => [node.node_id, node]));
   const root = state?.tree_root ? modules.get(state.tree_root) : undefined;
   const treeProgress = ismProgress({
@@ -76,7 +159,10 @@ export function MessageRelayProgress({
         <output className="block text-sm font-medium" aria-live="polite">
           <span className="relay-status-text">{status}</span>
         </output>
-        <span className="flex items-center gap-1.5 text-xxs text-foreground-muted">
+        <span
+          className="relay-live-status flex items-center gap-1.5 text-xxs text-foreground-muted"
+          data-live={connection === DiagnosticConnection.Live}
+        >
           <span className="relay-live-dot" aria-hidden="true" />
           {stale
             ? 'Updates unavailable'
@@ -85,74 +171,73 @@ export function MessageRelayProgress({
               : 'Live relay'}
         </span>
       </div>
-      <ol
-        className="relay-stages mt-3 grid grid-cols-6 gap-1"
-        aria-label="Message lifecycle stages"
+      <MessageLifecycleStages {...lifecycle} />
+      {confirmationSummary && (
+        <p className="mt-4 text-xxs tabular-nums text-foreground-muted" aria-live="polite">
+          {confirmationSummary}
+        </p>
+      )}
+      <details
+        className="ism-disclosure mt-3 border-t border-gray-400/25 pt-3"
+        onToggle={(event) => onAdvancedToggle(event.currentTarget.open)}
       >
-        {stages.map((name, index) => (
-          <li
-            key={name}
-            data-reached={index <= stage}
-            data-current={index === currentStage}
-            aria-current={index === currentStage ? 'step' : undefined}
-          >
-            <span className="relay-stage-track" aria-hidden="true" />
-            <span className="mt-1.5 block text-xxs">{name}</span>
-          </li>
-        ))}
-      </ol>
-      {stale && (
-        <p className="mt-3 text-xxs text-foreground-muted">
-          Showing the last observation. Delivery tracking continues.
-        </p>
-      )}
-      {data?.partial && (
-        <p className="mt-3 text-xxs text-foreground-muted">
-          Some relay observations are unavailable. The tree may be incomplete.
-        </p>
-      )}
-      {state?.retry && (
-        <p className="mt-3 text-xxs text-foreground-muted">
-          {humanize(state.retry.reason)}
-          {state.retry.next_attempt_at_millis != null &&
-            ` · Next attempt ${new Date(state.retry.next_attempt_at_millis).toLocaleTimeString()}`}
-        </p>
-      )}
-      {state?.failure?.reason && (
-        <p className="mt-2 text-xxs text-foreground-muted">{humanize(state.failure.reason)}</p>
-      )}
-      {((data?.relayers.length ?? 0) > 1 || (selectedRelayer && !observation)) && (
-        <label className="mt-3 flex items-center justify-between gap-2 text-xxs text-foreground-muted">
-          Reporting relayer
-          <select
-            aria-label="Reporting relayer"
-            value={selectedRelayer}
-            onChange={(event) => onSelectRelayer(event.target.value)}
-            className="text-foreground rounded border border-gray-400/30 bg-surface p-1"
-          >
-            {selectedRelayer && !observation && (
-              <option value={selectedRelayer}>{shortAddress(selectedRelayer)} · Unavailable</option>
-            )}
-            {data?.relayers.map((relayer) => (
-              <option key={relayer.relayer} value={relayer.relayer}>
-                {shortAddress(relayer.relayer)}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      <details className="ism-disclosure mt-4" open>
         <summary className="flex cursor-pointer list-none items-center gap-1 text-xxs text-foreground-muted [&::-webkit-details-marker]:hidden">
           <span className="ism-chevron" aria-hidden="true">
             ›
           </span>
-          Verification path
+          Advanced
+        </summary>
+        {children}
+        {stale && (
+          <p className="mt-3 text-xxs text-foreground-muted">
+            Showing the last observation. Delivery tracking continues.
+          </p>
+        )}
+        {data?.partial && (
+          <p className="mt-3 text-xxs text-foreground-muted">
+            Some relay observations are unavailable. The tree may be incomplete.
+          </p>
+        )}
+        {state?.retry && (
+          <p className="mt-3 text-xxs text-foreground-muted">
+            {humanize(state.retry.reason)}
+            {state.retry.next_attempt_at_millis != null &&
+              ` · Next attempt ${new Date(state.retry.next_attempt_at_millis).toLocaleTimeString()}`}
+          </p>
+        )}
+        {state?.failure?.reason && (
+          <p className="mt-2 text-xxs text-foreground-muted">{humanize(state.failure.reason)}</p>
+        )}
+        {((data?.relayers.length ?? 0) > 1 || (selectedRelayer && !observation)) && (
+          <label className="mt-3 flex items-center justify-between gap-2 text-xxs text-foreground-muted">
+            Reporting relayer
+            <select
+              aria-label="Reporting relayer"
+              value={selectedRelayer}
+              onChange={(event) => onSelectRelayer(event.target.value)}
+              className="text-foreground rounded border border-gray-400/30 bg-surface p-1"
+            >
+              {selectedRelayer && !observation && (
+                <option value={selectedRelayer}>
+                  {shortAddress(selectedRelayer)} · Unavailable
+                </option>
+              )}
+              {data?.relayers.map((relayer) => (
+                <option key={relayer.relayer} value={relayer.relayer}>
+                  {shortAddress(relayer.relayer)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <div className="mt-3 flex items-center gap-2 border-t border-gray-400/25 pt-3 text-xxs text-foreground-muted">
+          <span>Verification path</span>
           <span className="ml-auto flex items-center gap-1.5" aria-live="polite">
             <span
               className="flex h-3 w-3 shrink-0 items-center justify-center text-primary-500"
               aria-hidden="true"
             >
-              {treeProgress.busy ? (
+              {treeProgress.busy && !paused ? (
                 <SpinnerIcon
                   width={12}
                   height={12}
@@ -165,7 +250,7 @@ export function MessageRelayProgress({
             </span>
             {treeProgress.label}
           </span>
-        </summary>
+        </div>
         {root && (
           <div className="mt-2 text-xxs text-foreground-muted">
             <p>Enough checks must pass. Unused alternatives don’t block delivery.</p>
@@ -217,15 +302,16 @@ export function MessageRelayProgress({
                 : 'Waiting for security module observations…'}
           </div>
         )}
+
+        {observation && (
+          <p className="mt-3 text-xxs text-foreground-muted">
+            Observed by <span title={observation.relayer}>{shortAddress(observation.relayer)}</span>
+            {updatedAt != null &&
+              Number.isFinite(updatedAt) &&
+              ` · ${new Date(updatedAt).toLocaleTimeString()}`}
+          </p>
+        )}
       </details>
-      {observation && (
-        <p className="mt-3 text-xxs text-foreground-muted">
-          Observed by <span title={observation.relayer}>{shortAddress(observation.relayer)}</span>
-          {updatedAt != null &&
-            Number.isFinite(updatedAt) &&
-            ` · ${new Date(updatedAt).toLocaleTimeString()}`}
-        </p>
-      )}
     </section>
   );
 }
@@ -453,7 +539,7 @@ function IsmAddress({
         width={12}
         height={12}
         aria-label="Copy ISM address"
-        className="rounded p-1.5 hover:bg-primary-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 [&_path]:fill-current [&_rect]:stroke-current"
+        className="rounded p-1.5 text-foreground-muted hover:bg-primary-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 [&_path]:fill-current [&_rect]:stroke-current"
       />
       {(isError || (data && !data.url)) && <span>Explorer unavailable</span>}
     </div>

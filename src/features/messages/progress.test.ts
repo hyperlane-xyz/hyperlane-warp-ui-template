@@ -4,6 +4,9 @@ import {
   confirmationProgress,
   decodeAuthorizationBody,
   decodeTransferBody,
+  estimateConfirmationSeconds,
+  estimateDeliverySeconds,
+  formatEstimatedTime,
   ProgressState,
 } from './progress';
 
@@ -45,5 +48,72 @@ describe('message progress evidence', () => {
       ism: `0x${ism}`,
       commitment: `0x${commitment}`,
     });
+  });
+});
+
+describe('message timing estimates', () => {
+  test('estimates only remaining confirmations, including fractional block times', () => {
+    expect(estimateConfirmationSeconds(confirmationProgress(100, 102, 5), 0.25)).toBe(0.75);
+    expect(estimateConfirmationSeconds(confirmationProgress(100, 105, 5), 0.25)).toBeUndefined();
+    expect(estimateConfirmationSeconds(confirmationProgress(100, 100, 0), 0.25)).toBeUndefined();
+    expect(estimateConfirmationSeconds(undefined, 12)).toBeUndefined();
+    expect(estimateConfirmationSeconds({ state: ProgressState.Pending }, 12)).toBeUndefined();
+    expect(
+      estimateConfirmationSeconds(
+        { state: ProgressState.Failed, confirmations: 0, required: 5 },
+        12,
+      ),
+    ).toBeUndefined();
+    for (const blockTime of [undefined, 0, -1, NaN, Infinity]) {
+      expect(
+        estimateConfirmationSeconds(confirmationProgress(100, 102, 5), blockTime),
+      ).toBeUndefined();
+    }
+  });
+
+  test('estimates delivery from origin finality plus the relay allowance', () => {
+    expect(
+      estimateDeliverySeconds({ confirmations: 2, reorgPeriod: 15, estimateBlockTime: 13 }),
+    ).toBe(200);
+    expect(
+      estimateDeliverySeconds({ confirmations: 1, reorgPeriod: 5, estimateBlockTime: 0.25 }),
+    ).toBe(6.25);
+    expect(
+      estimateDeliverySeconds({ confirmations: 1, reorgPeriod: 0, estimateBlockTime: 0.4 }),
+    ).toBe(5);
+  });
+
+  test('uses remaining origin confirmations and stops estimating failed origins', () => {
+    const blocks = { confirmations: 2, reorgPeriod: 15, estimateBlockTime: 2 };
+    expect(estimateDeliverySeconds(blocks, confirmationProgress(100, 101, 15))).toBe(33);
+    expect(estimateDeliverySeconds(blocks, confirmationProgress(100, 115, 15))).toBe(5);
+    expect(estimateDeliverySeconds(blocks, { state: ProgressState.Failed })).toBeUndefined();
+  });
+
+  test('uses configured confirmations when the policy is tagged or absent', () => {
+    for (const reorgPeriod of ['safe', 'finalized', undefined]) {
+      expect(
+        estimateDeliverySeconds({ confirmations: 2, reorgPeriod, estimateBlockTime: 0.5 }),
+      ).toBe(6);
+    }
+  });
+
+  test('does not invent estimates for missing or invalid chain timings', () => {
+    expect(estimateDeliverySeconds(undefined)).toBeUndefined();
+    for (const estimateBlockTime of [undefined, 0, -1, NaN, Infinity]) {
+      expect(estimateDeliverySeconds({ confirmations: 2, estimateBlockTime })).toBeUndefined();
+    }
+    for (const reorgPeriod of [-1, NaN, Infinity]) {
+      expect(
+        estimateDeliverySeconds({ confirmations: 2, reorgPeriod, estimateBlockTime: 12 }),
+      ).toBeUndefined();
+    }
+  });
+
+  test('rounds estimates up without showing fractional precision', () => {
+    expect(formatEstimatedTime(4.1)).toBe('~5s');
+    expect(formatEstimatedTime(59.5)).toBe('~1 min');
+    expect(formatEstimatedTime(61)).toBe('~2 min');
+    expect(formatEstimatedTime(3601)).toBe('~2 hr');
   });
 });

@@ -24,8 +24,8 @@ describe('Gully Chain Terms and Privacy on the bridge', () => {
     for (const p of ['/', '/embed', '/terms-x', '/legal/terms']) expect(legalRedirect(p)).toBeNull();
   });
 
-  it('main.tsx replaces the location before the bridge renders', () => {
-    const main = read('src/main.tsx');
+  it('boot.tsx replaces the location before the bridge renders', () => {
+    const main = read('src/boot.tsx');
     expect(main).toContain('const legalTo = legalRedirect(location.pathname);');
     expect(main).toMatch(/if \(legalTo\) \{[\s\S]*?location\.replace\(legalTo\);/);
     expect(main.indexOf('location.replace(legalTo)')).toBeLessThan(main.indexOf('createRoot('));

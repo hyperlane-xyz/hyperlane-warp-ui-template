@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The HTML is the landing page. The embed, a design preview and the legal redirects must not flash it. -->
+    <script>(function(d,l){if((l.pathname!=='/'&&l.pathname!=='/index.html')||/[?&](embed|preview|design)\b/.test(l.search))d.classList.add('gb-spa')})(document.documentElement,location)</script>
     <title>Gully Bridge · Move ETH between %NET_PARENT% and %NET_CHAIN%</title>
     <meta name="description" content="Bridge ETH between %NET_PARENT% and %NET_CHAIN_FULL%. Fast lane in about a minute both ways, or the canonical rollup bridge. Live transfer status, no sign-up." />
     <meta name="robots" content="%ROBOTS%" />
@@ -46,8 +48,9 @@
     <script defer src="https://analytics.gullychain.xyz/script.js" data-website-id="9f3b391e-6c5b-44a5-a988-44158a9b8e5d" data-domains="bridge.gullychain.xyz,testnet-bridge.gullychain.xyz" data-do-not-track="true"></script>
   </head>
   <body>
+    <script src="/gully-x-banner.js" data-bg="var(--gn-ink,#1A1F1E)" data-fg="var(--gn-link,#2CF29A)" data-line="var(--gn-line,#2A3331)"></script>
     <noscript>Gully Bridge needs JavaScript to talk to your wallet and the chains.</noscript>
-    <div id="root"></div>
+    <div id="root"><!--gb-app--></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

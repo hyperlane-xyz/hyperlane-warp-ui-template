@@ -1,5 +1,5 @@
 // The seam between the UI and the bridge logic. The UI only ever calls getBridgeClient().
-// When @gullylabs/bridge-sdk (GullyBridgeRouter, integrator fees) is ready, in main.tsx:
+// When @gullylabs/bridge-sdk (GullyBridgeRouter, integrator fees) is ready, in boot.tsx:
 //   import { createGullyBridgeClient } from '@gullylabs/bridge-sdk';
 //   setBridgeClient(createGullyBridgeClient({ ... }));
 // It must implement BridgeClient; `req.ref` carries the integrator address from ?ref=.

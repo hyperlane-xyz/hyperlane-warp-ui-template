@@ -793,9 +793,11 @@ html[data-theme-mode='dark'] .relay-panel {
   background: color-mix(in srgb, currentColor 18%, transparent);
   transition: background-color 400ms ease;
 }
-.relay-stages [data-reached='true'] .relay-stage-track,
-.relay-stages [data-current='true'] .relay-stage-track {
+.relay-stages [data-reached='true'] .relay-stage-track {
   background: var(--color-primary-500, #9a0dff);
+}
+.relay-stages [data-current='true'] .relay-stage-track {
+  background: color-mix(in srgb, var(--color-primary-500, #9a0dff) 35%, transparent);
 }
 .relay-stages [data-current='true'] .relay-stage-track::after {
   content: '';

@@ -65,21 +65,28 @@ export function TransferDetailsModal() {
 
   const isOpen = selectedTransactionId != null || preparingTransfer != null;
 
-  // Keep the last transfer mounted during the closing transition.
-  const lastIdRef = useRef<string | null>(null);
-  if (selectedTransactionId != null) lastIdRef.current = selectedTransactionId;
-
-  const renderedId = lastIdRef.current;
   const liveRouteSteps = useStore((s) =>
-    !preparingTransfer && renderedId
-      ? s.transferRouteByTransactionId.get(renderedId)?.steps
+    !preparingTransfer && selectedTransactionId
+      ? s.transferRouteByTransactionId.get(selectedTransactionId)?.steps
       : undefined,
   );
   const item =
-    renderedId != null ? transactionHistory.find((entry) => entry.id === renderedId) : undefined;
-  const transfer =
+    selectedTransactionId != null
+      ? transactionHistory.find((entry) => entry.id === selectedTransactionId)
+      : undefined;
+  const liveTransfer =
     preparingTransfer ??
     (item?.type === TransactionHistoryItemType.Transfer ? item.data : undefined);
+  // Preserve the actual visible transfer, including preparation, during exit.
+  const lastTransferRef = useRef<TransferHistoryItem | undefined>(undefined);
+  if (liveTransfer) {
+    lastTransferRef.current = {
+      ...liveTransfer,
+      routeSteps: liveTransfer.routeSteps ?? liveRouteSteps,
+      msgIds: normalizeLabeledTransferMessages(liveTransfer.msgIds),
+    };
+  }
+  const transfer = lastTransferRef.current;
 
   if (!transfer) return <Modal isOpen={false} close={close} />;
   return (
@@ -87,11 +94,7 @@ export function TransferDetailsModal() {
       key={transfer.timestamp}
       isOpen={isOpen}
       close={close}
-      transfer={{
-        ...transfer,
-        routeSteps: transfer.routeSteps ?? liveRouteSteps,
-        msgIds: normalizeLabeledTransferMessages(transfer.msgIds),
-      }}
+      transfer={transfer}
     />
   );
 }
@@ -233,6 +236,7 @@ function TransferDetailsModalInner({
     <Modal
       isOpen={isOpen}
       close={close}
+      dialogProps={{ unmount: false, onClose: close }}
       panelClassname={`transfer-details-modal ${hasDetailedRoute ? 'max-w-xl' : 'max-w-lg'}`}
     >
       <div className="h-1 bg-accent-gradient" />
@@ -344,15 +348,13 @@ function TransferDetailsModalInner({
             className={`mt-3 flex items-center gap-3 rounded-lg border p-3 ${outcomeIsSuccess ? 'border-green-50/30 bg-green-50/10' : 'border-gray-400/25 bg-surface'}`}
           >
             <div className="min-w-0 flex-1">
-              <p className="text-xxs text-foreground-muted">
-                {transfer.solanaDestSwapPda ? 'Delivery transaction' : 'Destination transaction'}
-              </p>
+              <p className="text-xxs text-foreground-muted">Delivery transaction</p>
               {destTxUrl ? (
                 <a
                   href={destTxUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="View destination transaction on block explorer"
+                  aria-label="View delivery transaction on block explorer"
                   title={destinationHash}
                   className="mt-1 inline-flex items-center gap-1 text-xs font-medium underline underline-offset-2"
                 >
@@ -370,7 +372,7 @@ function TransferDetailsModalInner({
               copyValue={destinationHash}
               width={14}
               height={14}
-              aria-label="Copy destination transaction hash"
+              aria-label="Copy delivery transaction hash"
               className="text-foreground-muted [&_path]:fill-current [&_rect]:stroke-current"
             />
           </div>

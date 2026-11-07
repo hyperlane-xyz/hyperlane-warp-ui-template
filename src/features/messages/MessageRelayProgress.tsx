@@ -20,7 +20,7 @@ import type { DiagnosticsState } from './useMessageDiagnostics';
 const stages = [
   { label: 'Dispatched', pending: 'Dispatching' },
   { label: 'Origin confirmed', pending: 'Confirming origin' },
-  { label: 'Proof ready', pending: 'Proving' },
+  { label: 'Validated', pending: 'Validating' },
   { label: 'Delivered', pending: 'Delivering' },
   { label: 'Confirmed', pending: 'Confirming' },
 ];
@@ -64,17 +64,9 @@ function MessageLifecycleStages({
         : state
           ? (phaseStage[state.phase] ?? 1)
           : 1;
-  // Pending stages keep animating between observations.
-  const currentStage =
-    confirmed || paused || (!delivered && (state?.failure || state?.phase === 'dropped'))
-      ? -1
-      : delivered
-        ? confirming
-          ? 4
-          : -1
-        : stage + 1;
-  const broadcasting =
-    state?.phase === 'submitting' && (!state.submission || state.submission.stage === 'submitting');
+  // Pausing an unfinished step must not give it a completed label.
+  const pendingStage = delivered ? (confirming ? 4 : -1) : stage + 1;
+  const currentStage = confirmed || paused ? -1 : pendingStage;
   return (
     <ol className="relay-stages mt-3 grid grid-cols-5 gap-1" aria-label="Message lifecycle stages">
       {stages.map(({ label, pending }, index) => (
@@ -91,13 +83,18 @@ function MessageLifecycleStages({
           aria-current={index === currentStage ? 'step' : undefined}
         >
           <span className="relay-stage-track" aria-hidden="true" />
-          <span className="mt-1.5 block min-h-6 text-xxs leading-tight">
-            {index === currentStage
-              ? index === 2 && !state
-                ? 'Waiting for relayer'
-                : index === 3 && broadcasting
-                  ? 'Broadcasting'
-                  : pending
+          <span className="mt-1.5 block min-h-6 break-words text-xxs leading-tight">
+            {index >= 2 && index === currentStage && (
+              <SpinnerIcon
+                width={10}
+                height={10}
+                color="currentColor"
+                aria-hidden="true"
+                className="message-status-spinner mr-1 inline-block align-text-bottom"
+              />
+            )}
+            {index === pendingStage
+              ? pending
               : index === 1 && originState === ProgressState.Unavailable
                 ? 'Not tracked'
                 : label}
@@ -161,7 +158,7 @@ export function MessageRelayProgress({
         </output>
         <span
           className="relay-live-status flex items-center gap-1.5 text-xxs text-foreground-muted"
-          data-live={connection === DiagnosticConnection.Live}
+          data-live={!confirmed && connection === DiagnosticConnection.Live}
         >
           <span className="relay-live-dot" aria-hidden="true" />
           {stale
@@ -355,7 +352,7 @@ function IsmBranch({
   const statusLabel = {
     [IsmState.Verified]: 'Passed',
     [IsmState.ThresholdMet]: 'Threshold met',
-    [IsmState.Ready]: 'Proof ready',
+    [IsmState.Ready]: 'Metadata ready',
     [IsmState.Unused]: 'Unused',
     [IsmState.Failed]: 'Attempt failed',
     [IsmState.Waiting]: 'Waiting',
@@ -422,9 +419,9 @@ function IsmBranch({
             Verification:{' '}
             {node.verification ? humanize(node.verification) : 'Not separately reported'}
           </p>
-          {node.metadata_status && <p>Proof data: {humanize(node.metadata_status)}</p>}
+          {node.metadata_status && <p>Verification data: {humanize(node.metadata_status)}</p>}
           {status === IsmState.Ready && (
-            <p>Proof data is prepared; a separate verification result is not available.</p>
+            <p>Verification data is prepared; a separate verification result is not available.</p>
           )}
           {status === IsmState.Unknown && <p>The relayer has not explored this module yet.</p>}
           {node.verified != null && node.threshold != null && (

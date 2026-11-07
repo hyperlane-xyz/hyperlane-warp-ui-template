@@ -163,7 +163,10 @@ describe('live message status', () => {
   });
   it('retracts delivery and confirmation evidence on rollback', () => {
     client.setQueryData(key, [row]);
-    client.setQueryData(['transactionConfirmations', 'bsc', 'hash'], { state: 'confirmed' });
+    const destinationConfirmation = ['transactionConfirmations', 56, 'bsc', 'hash'];
+    const originConfirmation = ['transactionConfirmations', 8453, 'base', 'hash'];
+    client.setQueryData(destinationConfirmation, { state: 'confirmed' });
+    client.setQueryData(originConfirmation, { state: 'confirmed' });
     const update = vi.fn();
     stop = connectMessageStream('ws://test', client, update);
     socket().send({ type: 'block', domain: 56, headHeight: '210' });
@@ -178,9 +181,11 @@ describe('live message status', () => {
       },
     ]);
     expect(update).toHaveBeenLastCalledWith({ heads: { 56: 199 } });
-    expect(client.getQueryData(['transactionConfirmations', 'bsc', 'hash'])).toBeUndefined();
+    expect(client.getQueryData(destinationConfirmation)).toBeUndefined();
+    expect(client.getQueryData(originConfirmation)).toEqual({ state: 'confirmed' });
     socket().send({ type: 'rollback', domain: 8453, toHeight: '99' });
     expect(client.getQueryData(key)).toEqual([]);
+    expect(client.getQueryData(originConfirmation)).toBeUndefined();
   });
   it('leaves unaffected transactions intact and conservatively retracts missing heights', () => {
     expect(rollbackMessage(row, 1, 0)).toBe(row);

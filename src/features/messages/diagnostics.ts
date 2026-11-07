@@ -60,6 +60,7 @@ const envelopeSchema = z.object({
 export type IsmNode = z.infer<typeof moduleSchema>;
 export type RelayState = z.infer<typeof stateSchema>;
 export interface RelayObservation {
+  activityId: string;
   relayer: string;
   observedAt: string;
   state: RelayState;
@@ -98,7 +99,36 @@ export function readDiagnostics(value: unknown, messageId: string): MessageDiagn
       for (const node of state.modules) modules.set(node.node_id, node);
       state = { ...state, modules: [...modules.values()] };
     }
-    relayers.set(row.relayer, { relayer: row.relayer, observedAt: row.observed_at, state });
+    relayers.set(row.relayer, {
+      activityId: row.id,
+      relayer: row.relayer,
+      observedAt: row.observed_at,
+      state,
+    });
+  }
+  return {
+    partial,
+    relayers: [...relayers.values()].sort((a, b) => a.relayer.localeCompare(b.relayer)),
+  };
+}
+
+/** Preserve complete reporter observations across incomplete or older snapshots. */
+export function reconcileDiagnostics(
+  previous: MessageDiagnostics | undefined,
+  next: MessageDiagnostics,
+): MessageDiagnostics {
+  if (!previous) return next;
+  const relayers = new Map(next.relayers.map((relay) => [relay.relayer, relay]));
+  let partial = next.partial;
+  for (const relay of previous.relayers) {
+    const incoming = relayers.get(relay.relayer);
+    if (
+      (!incoming && next.partial) ||
+      (incoming && BigInt(incoming.activityId) < BigInt(relay.activityId))
+    ) {
+      relayers.set(relay.relayer, relay);
+      partial = true;
+    }
   }
   return {
     partial,
@@ -113,27 +143,39 @@ export enum DiagnosticConnection {
 }
 
 const phaseLabels: Record<string, string> = {
-  preparing: 'Relayer picked up the message',
-  awaiting_signatures: 'Collecting signatures',
-  ready_to_submit: 'Proof ready · Waiting to broadcast',
-  retrying: 'Waiting for proof',
-  submitting: 'Broadcasting transaction',
+  preparing: 'Validating',
+  awaiting_signatures: 'Validating · Collecting signatures',
+  ready_to_submit: 'Validated · Preparing submission',
+  retrying: 'Waiting for validation',
+  submitting: 'Submitting transaction',
   confirming: 'Waiting for delivery',
   delivered: 'Relayer observed delivery',
   dropped: 'Waiting for delivery updates',
 };
 const submissionLabels: Record<string, string> = {
-  submitting: 'Broadcasting transaction',
+  submitting: 'Submitting transaction',
   submitted: 'Accepted by submitter',
   pending_inclusion: 'Waiting for inclusion',
   mempool: 'Transaction in mempool',
   included: 'Transaction included',
   finalized: 'Transaction finalized',
 };
+const submittedStages = ['submitted', 'pending_inclusion', 'mempool', 'included', 'finalized'];
+// A reveal cannot simulate successfully until its commit is visible on-chain.
+export function isWaitingForCommit(state?: RelayState): boolean {
+  return (
+    state?.phase === 'retrying' &&
+    state.retry?.reason === 'AwaitingIcaReveal' &&
+    (!state.failure ||
+      (state.failure.stage === 'simulate' && state.failure.reason === 'contract_call_failed'))
+  );
+}
 export function relayLabel(state: RelayState) {
+  if (isWaitingForCommit(state)) return 'Waiting for commit confirmation';
+  if (state.failure) return 'Waiting for relay update';
   if (['submitting', 'confirming'].includes(state.phase) && state.submission)
     return submissionLabels[state.submission.stage] ?? 'Submission update';
-  return phaseLabels[state.phase] ?? 'Waiting for relay observations';
+  return phaseLabels[state.phase] ?? 'Validating';
 }
 
 export enum IsmState {
@@ -195,15 +237,13 @@ export function ismProgress({
   if (connection === DiagnosticConnection.Connecting) return { label: 'Loading', busy: true };
   if (partial) return { label: 'Partial data' };
   if (!state) return { label: 'Waiting' };
+  if (isWaitingForCommit(state)) return { label: 'Waiting for commit confirmation', busy: true };
   if (state.failure) return { label: 'Attempt failed' };
   switch (state.phase) {
     case 'ready_to_submit':
       return { label: 'Ready', complete: true };
     case 'submitting':
-      return state.submission &&
-        ['submitted', 'pending_inclusion', 'mempool', 'included', 'finalized'].includes(
-          state.submission.stage,
-        )
+      return state.submission && submittedStages.includes(state.submission.stage)
         ? { label: 'Submitted', complete: true }
         : { label: 'Submitting', busy: true };
     case 'confirming':
@@ -217,7 +257,7 @@ export function ismProgress({
     case 'awaiting_signatures':
       return { label: 'Signatures', busy: true };
     case 'preparing':
-      return { label: 'Preparing', busy: true };
+      return { label: 'Validating', busy: true };
     default:
       return { label: 'Waiting for update' };
   }

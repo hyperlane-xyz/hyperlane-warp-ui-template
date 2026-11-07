@@ -7,7 +7,7 @@ import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { getHypExplorerLink } from '../../utils/links';
 import { useMultiProvider } from '../chains/hooks';
 import type { LabeledMsgId, TransferHistoryItem } from '../transfer/engine/types';
-import { DiagnosticConnection, relayLabel } from './diagnostics';
+import { isWaitingForCommit, relayLabel } from './diagnostics';
 import { MessageRelayProgress } from './MessageRelayProgress';
 import { normalizeMessageId } from './messageStream';
 import {
@@ -34,6 +34,12 @@ const MESSAGE_LABELS: Record<LabeledMsgId['label'], string> = {
   commit: 'Commit authorization',
   reveal: 'Destination delivery',
 };
+const MESSAGE_ORDER: Record<LabeledMsgId['label'], number> = {
+  reveal: 0,
+  commit: 1,
+  bridge: 2,
+  warp: 2,
+};
 
 export interface TransferDeliveryStatus {
   messageId: string;
@@ -57,35 +63,27 @@ export function TransferProgress({
     transfer.msgIds?.map((message) => message.msgId) ?? [],
     enabled,
   );
-  const messages = transfer.msgIds ?? [];
-  const primaryId = getTransferOverviewMsgId(transfer);
-  const primary = messages.find(({ msgId }) => msgId === primaryId);
-  const otherMessages = messages.filter(({ msgId }) => msgId !== primary?.msgId);
-  const renderMessage = (message: LabeledMsgId) => (
-    <MessageProgressRow
-      key={message.msgId}
-      message={message}
-      primary={message.msgId === primary?.msgId}
-      diagnostics={diagnostics[normalizeMessageId(message.msgId)] ?? connectingDiagnostics}
-      transfer={transfer}
-      enabled={enabled}
-      onDeliveryChange={onDeliveryChange}
-    />
+  const messages = [...(transfer.msgIds ?? [])].sort(
+    (a, b) => MESSAGE_ORDER[a.label] - MESSAGE_ORDER[b.label],
   );
+  const overviewId = getTransferOverviewMsgId(transfer);
   return (
     <section aria-label="Transfer progress" className="mt-4 space-y-2">
       {!transfer.msgIds?.length && (
         <OriginTransactionProgress transfer={transfer} enabled={enabled} />
       )}
-      {primary && renderMessage(primary)}
-      {otherMessages.length > 0 && (
-        <details className="pt-2">
-          <summary className="cursor-pointer text-xxs text-foreground-muted">
-            Other transfer messages ({otherMessages.length})
-          </summary>
-          <div className="mt-2 space-y-2">{otherMessages.map(renderMessage)}</div>
-        </details>
-      )}
+      {messages.map((message, index) => (
+        <MessageProgressRow
+          key={message.msgId}
+          message={message}
+          initiallyExpanded={index === 0}
+          showExplorerLink={message.msgId !== overviewId}
+          diagnostics={diagnostics[normalizeMessageId(message.msgId)] ?? connectingDiagnostics}
+          transfer={transfer}
+          enabled={enabled}
+          onDeliveryChange={onDeliveryChange}
+        />
+      ))}
     </section>
   );
 }
@@ -101,6 +99,9 @@ function OriginTransactionProgress({
   const multiProvider = useMultiProvider();
   const origin = multiProvider.tryGetChainName(transfer.srcChain) ?? undefined;
   const confirmation = useTransactionConfirmations(origin, transfer.originTxHash, enabled);
+  const failed = confirmation.data?.state === ProgressState.Failed;
+  const unavailable =
+    confirmation.isError || confirmation.data?.state === ProgressState.Unavailable;
   const count = confirmationCount(confirmation.data);
   const status = confirmation.isError
     ? 'Origin status unavailable'
@@ -122,12 +123,18 @@ function OriginTransactionProgress({
         aria-hidden="true"
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500/10 text-primary-700 dark:text-primary-200"
       >
-        <SpinnerIcon
-          width={14}
-          height={14}
-          color="currentColor"
-          className="message-status-spinner"
-        />
+        {failed ? (
+          '!'
+        ) : unavailable ? (
+          '?'
+        ) : (
+          <SpinnerIcon
+            width={14}
+            height={14}
+            color="currentColor"
+            className="message-status-spinner"
+          />
+        )}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-medium">Origin transaction</span>
@@ -154,21 +161,24 @@ function OriginTransactionProgress({
 
 function MessageProgressRow({
   message,
-  primary,
+  initiallyExpanded,
+  showExplorerLink,
   diagnostics,
   transfer,
   enabled,
   onDeliveryChange,
 }: {
   message: LabeledMsgId;
-  primary: boolean;
+  initiallyExpanded: boolean;
+  showExplorerLink: boolean;
   diagnostics: DiagnosticsState;
   transfer: TransferHistoryItem;
   enabled: boolean;
   onDeliveryChange: (status: TransferDeliveryStatus) => void;
 }) {
   const multiProvider = useMultiProvider();
-  const [expanded, setExpanded] = useState(primary);
+  const [expanded, setExpanded] = useState(initiallyExpanded);
+  useEffect(() => setExpanded(initiallyExpanded), [initiallyExpanded]);
   const [selectedRelayer, setSelectedRelayer] = useState('');
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const relayers = diagnostics.data?.relayers;
@@ -269,13 +279,7 @@ function MessageProgressRow({
               ? 'Confirming origin'
               : 'Awaiting delivery';
   const phaseLabel =
-    relay && diagnostics.connection === DiagnosticConnection.Live && status === 'Awaiting delivery'
-      ? relayLabel(relay.state)
-      : status === 'Awaiting delivery'
-        ? diagnostics.connection === DiagnosticConnection.Live
-          ? 'Waiting for relayer to pick up the message'
-          : 'Awaiting relayer delivery'
-        : status;
+    status === 'Awaiting delivery' ? (relay ? relayLabel(relay.state) : 'Validating') : status;
   const confirmation = delivered ? destinationConfirmation : originConfirmation;
   const confirmationCountText = delivered ? destinationCount : originCount;
   const confirmationSummary =
@@ -293,17 +297,21 @@ function MessageProgressRow({
     confirming: delivered && !!destinationTx && destinationState === ProgressState.Pending,
     originState,
     paused:
-      deliveryMissing || originState === ProgressState.Failed || status === 'Status unavailable',
+      deliveryMissing ||
+      originState === ProgressState.Failed ||
+      status === 'Status unavailable' ||
+      (!delivered &&
+        (relay?.state.phase === 'dropped' ||
+          (!!relay?.state.failure && !isWaitingForCommit(relay.state)))),
   };
-  const estimatedSeconds =
-    lifecycle.paused || (!delivered && (relay?.state.failure || relay?.state.phase === 'dropped'))
-      ? undefined
-      : delivered
-        ? destinationConfirmation.estimatedSeconds
-        : estimateDeliverySeconds(
-            origin ? multiProvider.tryGetChainMetadata(origin)?.blocks : undefined,
-            originConfirmation.data,
-          );
+  const estimatedSeconds = lifecycle.paused
+    ? undefined
+    : delivered
+      ? destinationConfirmation.estimatedSeconds
+      : estimateDeliverySeconds(
+          origin ? multiProvider.tryGetChainMetadata(origin)?.blocks : undefined,
+          originConfirmation.data,
+        );
   const explorerUrl = origin ? getHypExplorerLink(multiProvider, origin, message.msgId) : undefined;
   useEffect(() => {
     onDeliveryChange({
@@ -355,7 +363,7 @@ function MessageProgressRow({
           ? multiProvider.tryGetExplorerTxUrl(origin, { hash: originTx })
           : undefined,
     },
-    'Destination transaction': {
+    'Delivery transaction': {
       hash: destinationTx,
       url:
         destination && destinationTx
@@ -432,6 +440,8 @@ function MessageProgressRow({
               '!'
             ) : status === 'Status unavailable' ? (
               '?'
+            ) : lifecycle.paused ? (
+              '…'
             ) : (
               <SpinnerIcon
                 width={14}
@@ -489,7 +499,7 @@ function MessageProgressRow({
               )}
             </div>
           </MessageRelayProgress>
-          {!primary && explorerUrl && (
+          {showExplorerLink && explorerUrl && (
             <a
               href={explorerUrl}
               target="_blank"

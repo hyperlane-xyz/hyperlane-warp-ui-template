@@ -22,14 +22,13 @@ export function useTransactionConfirmations(
   const metadata = chain ? multiProvider.tryGetChainMetadata(chain) : undefined;
   const protocol = metadata?.protocol;
   const required = metadata?.blocks?.reorgPeriod;
-  const head = useMessageStream((state) =>
-    metadata ? state.heads[metadata.domainId ?? Number(metadata.chainId)] : undefined,
-  );
+  const domain = metadata ? (metadata.domainId ?? Number(metadata.chainId)) : undefined;
+  const head = useMessageStream((state) => (domain == null ? undefined : state.heads[domain]));
   const connected = useMessageStream((state) => state.connection === LiveConnection.Connected);
   const client = useQueryClient();
   const queryKey = useMemo(
-    () => ['transactionConfirmations', chain, txHash, required, metadata?.rpcUrls],
-    [chain, txHash, required, metadata?.rpcUrls],
+    () => ['transactionConfirmations', domain, chain, txHash, required, metadata?.rpcUrls],
+    [domain, chain, txHash, required, metadata?.rpcUrls],
   );
   const liveProgress = useMemo(
     () =>

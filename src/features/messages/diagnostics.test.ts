@@ -6,8 +6,10 @@ import {
   IsmState,
   ismState,
   readDiagnostics,
+  reconcileDiagnostics,
   relayLabel,
   type IsmNode,
+  type RelayState,
 } from './diagnostics';
 
 const id = `0x${'11'.repeat(32)}`;
@@ -86,6 +88,53 @@ describe('message diagnostics', () => {
       'different message',
     );
   });
+  it('retains omitted reporters only for partial snapshots, without mixing their trees', () => {
+    const previous = readDiagnostics(
+      envelope([row('10', 'snapshot', { ...state, phase: 'ready_to_submit' })]),
+      id,
+    );
+    const partial = readDiagnostics(
+      {
+        ...envelope([row('11', 'snapshot', { phase: 'preparing', modules: [] }, 'relayer-b')]),
+        partial: true,
+      },
+      id,
+    );
+    const retained = reconcileDiagnostics(previous, partial);
+    expect(retained.partial).toBe(true);
+    expect(retained.relayers.map((relay) => relay.relayer)).toEqual(['relayer-a', 'relayer-b']);
+    expect(retained.relayers[0]).toBe(previous.relayers[0]);
+    expect(retained.relayers[1].state.modules).toEqual([]);
+    const missingAnchor = readDiagnostics(envelope([row('12', 'snapshot_update', state)]), id);
+    expect(reconcileDiagnostics(previous, missingAnchor)).toEqual({ ...previous, partial: true });
+    expect(reconcileDiagnostics(retained, readDiagnostics(envelope([]), id)).relayers).toEqual([]);
+    const terminal = readDiagnostics(
+      envelope([row('13', 'snapshot', { phase: 'delivered', modules: [] })]),
+      id,
+    );
+    expect(reconcileDiagnostics(retained, terminal)).toEqual(terminal);
+  });
+  it('rejects older reporter snapshots but accepts a newer retry and equal-ID refresh', () => {
+    const previous = readDiagnostics(
+      envelope([row('9007199254740993', 'snapshot', { ...state, phase: 'ready_to_submit' })]),
+      id,
+    );
+    const older = readDiagnostics(envelope([row('9007199254740992', 'snapshot', state)]), id);
+    const retained = reconcileDiagnostics(previous, older);
+    expect(retained).toEqual({ ...previous, partial: true });
+    expect(reconcileDiagnostics(retained, previous)).toEqual(previous);
+    const retry = readDiagnostics(
+      envelope([
+        row('9007199254740994', 'snapshot', {
+          phase: 'retrying',
+          modules: [],
+          failure: { stage: 'simulate', reason: 'rpc_timeout' },
+        }),
+      ]),
+      id,
+    );
+    expect(reconcileDiagnostics(retained, retry)).toEqual(retry);
+  });
   it('never equates signatures or metadata readiness with verification', () => {
     expect(
       ismState({ ...node, metadata_status: 'ready', signatures: { collected: 2, threshold: 2 } }),
@@ -94,6 +143,9 @@ describe('message diagnostics', () => {
     expect(ismState({ ...node, verification: 'failed' })).toBe(IsmState.Failed);
     expect(ismState({ ...node, discovered: false })).toBe(IsmState.Unknown);
     expect(relayLabel({ ...state, phase: 'delivered' })).toBe('Relayer observed delivery');
+    expect(relayLabel({ ...state, phase: 'preparing', failure: { reason: 'RPC failed' } })).toBe(
+      'Waiting for relay update',
+    );
     expect(relayLabel({ ...state, phase: 'submitting', submission: { stage: 'mempool' } })).toBe(
       'Transaction in mempool',
     );
@@ -102,6 +154,36 @@ describe('message diagnostics', () => {
 
 describe('ISM header progress', () => {
   const live = { connection: DiagnosticConnection.Live, delivered: false, confirmed: false };
+  it('treats the known reveal commit dependency as a wait, preserving other failures', () => {
+    const waiting: RelayState = {
+      ...state,
+      phase: 'retrying',
+      retry: { reason: 'AwaitingIcaReveal', count: 0 },
+      failure: { stage: 'simulate', reason: 'contract_call_failed' },
+    };
+    for (const failure of [undefined, waiting.failure]) {
+      const pending = { ...waiting, failure };
+      expect(relayLabel(pending)).toBe('Waiting for commit confirmation');
+      expect(ismProgress({ ...live, state: pending })).toEqual({
+        label: 'Waiting for commit confirmation',
+        busy: true,
+      });
+    }
+    for (const failed of [
+      { ...waiting, phase: 'preparing' },
+      { ...waiting, phase: 'dropped' },
+      { ...waiting, retry: { reason: 'ErrorSubmitting' } },
+      { ...waiting, failure: { stage: 'submit', reason: 'contract_call_failed' } },
+      { ...waiting, failure: { stage: 'simulate', reason: 'rpc_error' } },
+    ]) {
+      expect(relayLabel(failed)).toBe('Waiting for relay update');
+      expect(ismProgress({ ...live, state: failed })).toEqual({ label: 'Attempt failed' });
+    }
+    expect(ismProgress({ ...live, state: waiting, delivered: true })).toEqual({
+      label: 'Delivered',
+      complete: true,
+    });
+  });
   it('spins only while connecting or actively preparing/submitting', () => {
     expect(ismProgress({ ...live, connection: DiagnosticConnection.Connecting })).toEqual({
       label: 'Loading',
@@ -125,7 +207,7 @@ describe('ISM header progress', () => {
       });
     }
   });
-  it('distinguishes metadata readiness, submission, and authoritative confirmation', () => {
+  it('distinguishes metadata readiness, submission, delivery, and finality', () => {
     expect(ismProgress({ ...live, state: { ...state, phase: 'ready_to_submit' } }).label).toBe(
       'Ready',
     );
@@ -142,14 +224,16 @@ describe('ISM header progress', () => {
     expect(ismProgress({ ...live, state: { ...state, phase: 'delivered' } }).label).toBe(
       'Delivery observed',
     );
-    expect(
-      ismProgress({
-        ...live,
-        confirmed: true,
-        delivered: true,
-        connection: DiagnosticConnection.Stale,
-      }),
-    ).toEqual({ label: 'Confirmed', complete: true });
+    for (const confirmed of [false, true]) {
+      expect(
+        ismProgress({
+          ...live,
+          delivered: true,
+          confirmed,
+          connection: DiagnosticConnection.Stale,
+        }),
+      ).toEqual({ label: confirmed ? 'Confirmed' : 'Delivered', complete: true });
+    }
   });
 });
 

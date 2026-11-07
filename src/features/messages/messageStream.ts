@@ -147,7 +147,7 @@ export function connectMessageStream(
                 return next ? [next] : [];
               }),
             );
-            void client.resetQueries({ queryKey: ['transactionConfirmations'] });
+            void client.resetQueries({ queryKey: ['transactionConfirmations', domain] });
             refresh();
             break;
           }

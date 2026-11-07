@@ -1,4 +1,5 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
@@ -14,6 +15,7 @@ import {
   postgresByteaToString,
   postgresByteaToAddress,
 } from './queries/encoding';
+import type { MessageStubEntry } from './queries/fragments';
 import { useMessageStream } from './useMessageStream';
 import { getTransferDeliveryMsgId } from './utils';
 
@@ -56,6 +58,7 @@ export function useMessageDeliveryStatus(
           multiProvider.tryGetChainMetadata(lookup.originDomainId),
         ));
   const byOriginTx = lookup && 'originTxHash' in lookup;
+  const route = byOriginTx ? lookup.route : undefined;
   const { data: entries, error } = useQuery({
     queryKey: ['messageDelivery', request?.variables],
     queryFn: ({ signal }) => (request ? fetchMessages(request, signal) : []),
@@ -63,36 +66,27 @@ export function useMessageDeliveryStatus(
     staleTime: 30_000,
     refetchInterval: (query) =>
       // Discover indexed messages before their IDs can enter the targeted stream.
-      (byOriginTx && !query.state.data?.length) ||
+      (byOriginTx && !recoverMessageIds(query.state.data, route, multiProvider)) ||
       connection !== LiveConnection.Connected ||
       query.state.status === 'error'
         ? 10_000
         : false,
   });
-  const route = byOriginTx ? lookup.route : undefined;
   const data = useMemo(() => {
     if (!entries?.length) return { isDelivered: false };
     const originMetadata = multiProvider.tryGetChainMetadata(entries[0].origin_domain_id);
-    const msgIds = byOriginTx
-      ? labelTransferMessages(
-          entries.map((row) => ({
-            msgId: postgresByteaToString(row.msg_id),
-            sender: postgresByteaToAddress(row.sender, originMetadata),
-            body: row.message_body ? postgresByteaToString(row.message_body) : undefined,
-          })),
-          route,
-        )
-      : undefined;
+    const msgIds = byOriginTx ? recoverMessageIds(entries, route, multiProvider) : undefined;
     const deliveryId = getTransferDeliveryMsgId(msgIds);
     const entry =
       entries.find((row) => postgresByteaToString(row.msg_id) === deliveryId) ??
       entries[entries.length - 1];
     const destinationMetadata = multiProvider.tryGetChainMetadata(entry.destination_domain_id);
+    const isDelivered = entry.is_delivered && (!byOriginTx || !!msgIds);
     return {
       msgIds,
-      isDelivered: entry.is_delivered,
+      isDelivered,
       destinationTxHash:
-        entry.is_delivered && entry.destination_tx_hash
+        isDelivered && entry.destination_tx_hash
           ? postgresByteaToTxHash(entry.destination_tx_hash, destinationMetadata)
           : undefined,
       originTimestamp: parseTimestamp(entry.send_occurred_at),
@@ -109,4 +103,33 @@ export function useMessageDeliveryStatus(
     };
   }, [entries, byOriginTx, route, multiProvider]);
   return { ...data, error };
+}
+
+/** Wait for a known EVM CCS route's full dispatch set before choosing its delivery message. */
+export function recoverMessageIds(
+  entries: MessageStubEntry[] | undefined,
+  route: RouteResponse | undefined,
+  multiProvider: MultiProtocolProvider,
+): LabeledMsgId[] | undefined {
+  if (!entries?.length) return undefined;
+  const originMetadata = multiProvider.tryGetChainMetadata(entries[0].origin_domain_id);
+  const messages = labelTransferMessages(
+    entries.map((row) => ({
+      msgId: postgresByteaToString(row.msg_id),
+      sender: postgresByteaToAddress(row.sender, originMetadata),
+      body: row.message_body ? postgresByteaToString(row.message_body) : undefined,
+    })),
+    route,
+  );
+  const bridge = route?.steps.find((step) => step.type === 'bridge');
+  // Solana destinations use a different dispatch shape; callCommitment alone
+  // does not imply separate commit and reveal messages there.
+  if (
+    route?.callCommitment &&
+    bridge &&
+    multiProvider.tryGetChainMetadata(bridge.destChain)?.protocol === ProtocolType.Ethereum &&
+    !['bridge', 'commit', 'reveal'].every((label) => messages.some((msg) => msg.label === label))
+  )
+    return undefined;
+  return messages;
 }

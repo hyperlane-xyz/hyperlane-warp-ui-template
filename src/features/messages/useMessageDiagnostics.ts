@@ -3,7 +3,12 @@ import { z } from 'zod';
 
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
-import { DiagnosticConnection, readDiagnostics, type MessageDiagnostics } from './diagnostics';
+import {
+  DiagnosticConnection,
+  readDiagnostics,
+  reconcileDiagnostics,
+  type MessageDiagnostics,
+} from './diagnostics';
 import { normalizeMessageId } from './messageStream';
 
 export interface DiagnosticsState {
@@ -140,7 +145,12 @@ export function useMessageDiagnostics(messageIds: string[], enabled: boolean) {
     return connectDiagnostics(ids, (id, next) =>
       setStates((previous) => ({
         ...previous,
-        [id]: { ...next, data: next.data ?? previous[id]?.data },
+        [id]: {
+          ...next,
+          data: next.data
+            ? reconcileDiagnostics(previous[id]?.data, next.data)
+            : previous[id]?.data,
+        },
       })),
     );
   }, [key, enabled]);

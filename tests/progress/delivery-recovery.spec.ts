@@ -201,7 +201,7 @@ for (const scenario of ['empty', 'offline'] as const) {
     });
     await expect(explorerLink).toHaveAttribute('href', new RegExp(messageId));
     const destinationLink = page.getByRole('link', {
-      name: 'View destination transaction on block explorer',
+      name: 'View delivery transaction on block explorer',
     });
     await expect(destinationLink).toHaveCount(0);
     await expect.poll(state.snapshots).toBeGreaterThan(0);
@@ -209,18 +209,16 @@ for (const scenario of ['empty', 'offline'] as const) {
     await expect(page.getByTestId('transfer-outcome')).toHaveCount(0);
     if (scenario === 'empty') {
       // A known ID with a healthy stream needs no repeated empty snapshot reads.
-      await expect(bridge.getByRole('status')).toHaveText(
-        'Waiting for relayer to pick up the message',
-      );
+      await expect(bridge.getByRole('status')).toHaveText('Validating');
       await expect(
         bridge.getByRole('listitem', { name: 'Dispatched', exact: true }),
       ).toHaveAttribute('data-reached', 'true');
       await expect(
         bridge.getByRole('listitem', { name: 'Origin confirmed', exact: true }),
       ).toHaveAttribute('data-reached', 'true');
-      const proof = bridge.getByRole('listitem', { name: 'Proof ready', exact: true });
-      await expect(proof).toHaveAttribute('aria-current', 'step');
-      await expect(proof).toHaveText('Waiting for relayer');
+      const verification = bridge.getByRole('listitem', { name: 'Validated', exact: true });
+      await expect(verification).toHaveAttribute('aria-current', 'step');
+      await expect(verification).toHaveText('Validating');
       await expect(bridge.locator('.relay-live-status')).toHaveAttribute('data-live', 'true');
       await expect(bridge.locator('.relay-live-dot')).toHaveCSS('animation-name', 'relay-breathe');
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -245,12 +243,18 @@ for (const scenario of ['empty', 'offline'] as const) {
     expect(state.mailboxReads).toEqual([]);
     await expect(destinationLink).toBeVisible();
     await expect(destinationLink).toHaveAttribute('title', oldHash);
+    await expect(bridge.getByRole('status')).toHaveText('Confirmed');
+    await expect(bridge.locator('.relay-stages li')).toHaveCount(5);
     await expect(bridge.locator('.relay-stages li[data-reached="true"]')).toHaveCount(5);
     await expect(bridge.locator('.relay-stages [aria-current="step"]')).toHaveCount(0);
+    await expect(bridge.locator('.message-status-spinner')).toHaveCount(0);
+    await expect(bridge.locator('.relay-live-status')).toHaveAttribute('data-live', 'false');
+    await expect(bridge.locator('.relay-live-dot')).toHaveCSS('animation-name', 'none');
     await bridge.locator('.ism-disclosure > summary').click();
     await expect(bridge.getByRole('heading', { name: 'Transaction details' })).toBeVisible();
+    await expect(bridge).toContainText('Destination confirmations');
     await expect(
-      bridge.getByRole('link', { name: 'Destination transaction (opens in new tab)' }),
+      bridge.getByRole('link', { name: 'Delivery transaction (opens in new tab)' }),
     ).toHaveAttribute('title', oldHash);
     await expect
       .poll(() =>
@@ -270,7 +274,7 @@ test('reconnect replaces a stale successful HyperSwap outcome with recovery', as
     timeout: 60_000,
   });
   const destinationLink = page.getByRole('link', {
-    name: 'View destination transaction on block explorer',
+    name: 'View delivery transaction on block explorer',
   });
   await expect(destinationLink).toHaveAttribute('title', oldHash);
   const snapshots = state.snapshots();

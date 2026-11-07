@@ -130,21 +130,6 @@ describe('live message status', () => {
     await pending;
     expect(client.getQueryData(key)).toEqual([row]);
   });
-  it('fetches the complete origin transaction batch on matching upserts', async () => {
-    const fetch = vi.fn(async () => [row, { ...row, msg_id: '\\x22' }]);
-    const observer = new QueryObserver(client, {
-      queryKey: ['messageDelivery', { originTxHash: '\\xaa', originDomainId: 8453 }],
-      queryFn: fetch,
-    });
-    const unsubscribe = observer.subscribe(() => {});
-    await vi.advanceTimersByTimeAsync(0);
-    stop = connectMessageStream('ws://test', client, vi.fn());
-    socket().send({ type: 'message_upsert', data: row });
-    await vi.advanceTimersByTimeAsync(0);
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(observer.getCurrentResult().data).toHaveLength(2);
-    unsubscribe();
-  });
   it('reconnects and refreshes snapshots after a gap; cleans up timers', async () => {
     const fetch = vi.fn(async () => [row]);
     const observer = new QueryObserver(client, { queryKey: key, queryFn: fetch });

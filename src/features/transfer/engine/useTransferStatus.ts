@@ -128,10 +128,7 @@ export function useTransferStatus(
     );
 
     // No destination execution step on this ICA route: cross-chain delivery is success.
-    if (
-      !destinationOutcome &&
-      (!route?.callCommitment || !destinationSwapStep || destinationSwapStep.type !== 'swap')
-    ) {
+    if (!destinationOutcome && (!route?.callCommitment || !destinationSwapStep)) {
       updateStatus(transactionId, TransferStatus.ConfirmedDestination);
       notifyTransferOutcome(transactionId, TransferStatus.ConfirmedDestination);
       return undefined;
@@ -168,16 +165,14 @@ export function useTransferStatus(
     )
       .then((outcome) => {
         if (cancelled) return;
-        if (outcome === 'success') {
-          updateStatus(transactionId, TransferStatus.ConfirmedDestination);
-          notifyTransferOutcome(transactionId, TransferStatus.ConfirmedDestination);
-        } else if (outcome === 'failed_recovered') {
-          updateStatus(transactionId, TransferStatus.FailedRecovered);
-          notifyTransferOutcome(transactionId, TransferStatus.FailedRecovered);
-        } else {
-          updateStatus(transactionId, TransferStatus.DestFailed);
-          notifyTransferOutcome(transactionId, TransferStatus.DestFailed);
-        }
+        const outcomeStatus =
+          outcome === 'success'
+            ? TransferStatus.ConfirmedDestination
+            : outcome === 'failed_recovered'
+              ? TransferStatus.FailedRecovered
+              : TransferStatus.DestFailed;
+        updateStatus(transactionId, outcomeStatus);
+        notifyTransferOutcome(transactionId, outcomeStatus);
       })
       .catch(() => {
         if (cancelled) return;

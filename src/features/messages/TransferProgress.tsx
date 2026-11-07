@@ -100,12 +100,7 @@ function OriginTransactionProgress({
 }) {
   const multiProvider = useMultiProvider();
   const origin = multiProvider.tryGetChainName(transfer.srcChain) ?? undefined;
-  const confirmation = useTransactionConfirmations(
-    origin,
-    transfer.originTxHash,
-    enabled,
-    transfer.originBlockNumber,
-  );
+  const confirmation = useTransactionConfirmations(origin, transfer.originTxHash, enabled);
   const count = confirmationCount(confirmation.data);
   const status = confirmation.isError
     ? 'Origin status unavailable'
@@ -230,7 +225,7 @@ function MessageProgressRow({
     origin,
     originTx,
     enabled,
-    delivery.originBlockHeight ?? transfer.originBlockNumber,
+    delivery.originBlockHeight,
   );
   const destinationConfirmation = useTransactionConfirmations(
     destination,

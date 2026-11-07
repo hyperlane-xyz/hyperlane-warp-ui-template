@@ -99,11 +99,10 @@ export function decodeTransferBody(
 /** Layout from InterchainAccountMessage.sol. Unknown/extended formats stay raw. */
 export function decodeAuthorizationBody(
   body: string | null | undefined,
-): { owner?: string; ism: string; salt?: string; commitment: string } | undefined {
+): { ism: string; commitment: string } | undefined {
   if (!body) return undefined;
   const word = (byte: number) => `0x${body.slice(2 + byte * 2, 2 + (byte + 32) * 2)}`;
-  if (/^0x01[0-9a-fA-F]{256}$/.test(body))
-    return { owner: word(1), ism: word(33), salt: word(65), commitment: word(97) };
+  if (/^0x01[0-9a-fA-F]{256}$/.test(body)) return { ism: word(33), commitment: word(97) };
   if (/^0x02[0-9a-fA-F]{128}$/.test(body)) return { ism: word(1), commitment: word(33) };
   return undefined;
 }

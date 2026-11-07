@@ -1,10 +1,23 @@
 import { describe, expect, test } from 'vitest';
 
 import { TransferStatus, type TransferHistoryItem } from '../transfer/engine/types';
-import { prioritizeSelectedTarget, shouldUpdateFromOriginTx } from './TransactionDeliveryWatcher';
+import {
+  prioritizeSelectedTarget,
+  shouldUpdateFromOriginTx,
+  shouldWatchTransfer,
+} from './TransactionDeliveryWatcher';
 import type { MessageDeliveryResult } from './useMessageDeliveryStatus';
 
 const MSG_ID = `0x${'11'.repeat(32)}`;
+
+test('only cross-chain hash-bearing failures need message recovery', () => {
+  const transfer = transferItem({
+    status: TransferStatus.Failed,
+    originTxHash: `0x${'22'.repeat(32)}`,
+  });
+  expect(shouldWatchTransfer(transfer)).toBe(true);
+  expect(shouldWatchTransfer({ ...transfer, dstChain: transfer.srcChain })).toBe(false);
+});
 
 describe('shouldUpdateFromOriginTx', () => {
   test('does not update when recovered origin tx data is already stored', () => {

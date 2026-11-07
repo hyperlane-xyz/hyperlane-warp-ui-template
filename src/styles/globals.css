@@ -779,7 +779,7 @@ html[data-theme-mode='dark'] .relay-panel {
   animation: relay-breathe 2s ease-in-out infinite;
 }
 .relay-stages > * {
-  color: var(--color-foreground-muted, #737380);
+  color: var(--color-text-muted);
 }
 .relay-stages [data-current='true'] {
   color: var(--color-primary-500, #9a0dff);
@@ -838,7 +838,7 @@ html[data-theme-mode='dark'] .relay-panel {
   height: 14px;
   border-radius: 50%;
   border: 1px solid currentColor;
-  color: var(--color-foreground-muted, #737380);
+  color: var(--color-text-muted);
 }
 .ism-node:is([data-state='unknown'], [data-state='unused']) > summary .ism-state-icon {
   border-radius: 3px;

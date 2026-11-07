@@ -114,6 +114,17 @@ describe('ISM header progress', () => {
     expect(ismProgress({ ...live, partial: true, state }).busy).not.toBe(true);
     expect(ismProgress({ ...live, state: { ...state, phase: 'retrying' } }).busy).not.toBe(true);
   });
+  it('stops active or ready indicators on failure while keeping indexed delivery authoritative', () => {
+    const failure = { stage: 'prepare', reason: 'contract_call_failed' };
+    for (const phase of ['preparing', 'awaiting_signatures', 'ready_to_submit', 'submitting']) {
+      const failed = { ...state, phase, failure };
+      expect(ismProgress({ ...live, state: failed })).toEqual({ label: 'Attempt failed' });
+      expect(ismProgress({ ...live, state: failed, delivered: true })).toEqual({
+        label: 'Delivered',
+        complete: true,
+      });
+    }
+  });
   it('distinguishes metadata readiness, submission, and authoritative confirmation', () => {
     expect(ismProgress({ ...live, state: { ...state, phase: 'ready_to_submit' } }).label).toBe(
       'Ready',

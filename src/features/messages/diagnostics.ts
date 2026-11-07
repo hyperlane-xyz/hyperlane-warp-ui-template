@@ -195,6 +195,7 @@ export function ismProgress({
   if (connection === DiagnosticConnection.Connecting) return { label: 'Loading', busy: true };
   if (partial) return { label: 'Partial data' };
   if (!state) return { label: 'Waiting' };
+  if (state.failure) return { label: 'Attempt failed' };
   switch (state.phase) {
     case 'ready_to_submit':
       return { label: 'Ready', complete: true };

@@ -42,6 +42,16 @@ const STATUS_HEADLINE: Record<TransferStatus, string> = {
   [TransferStatus.Failed]: 'Transfer failed',
 };
 
+const FAILURE_OUTCOME: Partial<Record<TransferStatus, string>> = {
+  [TransferStatus.DestTransferFailed]:
+    'Origin succeeded and delivery completed, but destination execution reverted. Funds may remain in your ICA. Please contact support.',
+  [TransferStatus.FailedRecovered]:
+    'Destination execution reverted and the intermediate token was automatically returned to your wallet on the destination chain.',
+  [TransferStatus.DestFailed]:
+    'The destination execution ran but both the transfer and fallback failed. The intermediate token remains in your ICA. Please contact support.',
+  [TransferStatus.Failed]: 'Transfer failed. Check the transaction details before trying again.',
+};
+
 export function TransferDetailsModal() {
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
   const transactionHistory = useStore((s) => s.transactionHistory);
@@ -126,11 +136,7 @@ function TransferDetailsModalInner({
   const isApproving =
     status === TransferStatus.SigningApprove || status === TransferStatus.ConfirmingApprove;
 
-  const isFailed = status === TransferStatus.Failed;
-  const isDestFailed = status === TransferStatus.DestTransferFailed;
   const isDelivered = status === TransferStatus.ConfirmedDestination;
-  const isFailedRecovered = status === TransferStatus.FailedRecovered;
-  const isRevealFailed = status === TransferStatus.DestFailed;
   const isFinal = FinalTransferStatuses.includes(status);
   const showApprovalFlow =
     isApproving || (!!transfer.approvalRequired && !originTxHash && !isFinal);
@@ -155,19 +161,13 @@ function TransferDetailsModalInner({
       !!deliveryStatus?.delivered &&
       (deliveryStatus.fundsAvailable || isDelivered)
     : isDelivered;
-  const outcome = isDestFailed
-    ? 'Origin succeeded and delivery completed, but destination execution reverted. Funds may remain in your ICA. Please contact support.'
-    : isFailedRecovered
-      ? 'Destination execution reverted and the intermediate token was automatically returned to your wallet on the destination chain.'
-      : isRevealFailed
-        ? 'The destination execution ran but both the transfer and fallback failed. The intermediate token remains in your ICA. Please contact support.'
-        : isFailed
-          ? 'Transfer failed. Check the transaction details before trying again.'
-          : fundsAvailable
-            ? `Funds are available to use on ${getChainDisplayName(multiProvider, destChain, true)}.`
-            : undefined;
-  const outcomeIsSuccess =
-    !!fundsAvailable && !isFailed && !isDestFailed && !isRevealFailed && !isFailedRecovered;
+  const failureOutcome = FAILURE_OUTCOME[status];
+  const outcomeIsSuccess = fundsAvailable && !failureOutcome;
+  const outcome =
+    failureOutcome ??
+    (fundsAvailable
+      ? `Funds are available to use on ${getChainDisplayName(multiProvider, destChain, true)}.`
+      : undefined);
 
   const needsWallet =
     status === TransferStatus.SigningApprove || status === TransferStatus.SigningTransfer;
@@ -395,13 +395,6 @@ function TransferDetailsModalInner({
                 url={originTxUrl}
               />
             )}
-            {destinationTxHash && (
-              <TransferProperty
-                name="Destination Transaction Hash"
-                value={destinationTxHash}
-                url={destTxUrl}
-              />
-            )}
             {msgIds?.map(({ msgId: id, label }) => (
               <TransferProperty
                 key={id}
@@ -417,7 +410,7 @@ function TransferDetailsModalInner({
             data-testid="transfer-outcome"
             role="alert"
             className={`mt-4 rounded-lg border p-3 text-xs leading-relaxed ${
-              isFailedRecovered
+              status === TransferStatus.FailedRecovered
                 ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200'
                 : 'border-red-300 bg-red-100/20 text-red-600 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200'
             }`}

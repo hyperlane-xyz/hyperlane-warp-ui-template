@@ -69,6 +69,7 @@ export function TransactionDeliveryWatcher() {
   // Watch every message in each active swap, including bridge, commit, and reveal.
   const watchedTransfers = transactionHistory.flatMap((item) =>
     item.type === TransactionHistoryItemType.Transfer &&
+    item.data.srcChain !== item.data.dstChain &&
     (item.id === selectedTransactionId || targets.some((target) => target.id === item.id)) &&
     (item.data.originTxHash || item.data.msgIds?.length)
       ? [item.data]
@@ -198,7 +199,8 @@ export function prioritizeSelectedTarget<T extends { id: string }>(
   ];
 }
 
-function shouldWatchTransfer(data: TransferHistoryItem): boolean {
+export function shouldWatchTransfer(data: TransferHistoryItem): boolean {
+  if (data.srcChain === data.dstChain) return false;
   if (!FinalTransferStatuses.includes(data.status)) return true;
   if (data.status === TransferStatus.Failed)
     return !!data.originTxHash || !!getTransferDeliveryMsgId(data.msgIds);

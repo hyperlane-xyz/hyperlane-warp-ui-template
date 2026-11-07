@@ -20,7 +20,7 @@ test.describe('EVM approval flow', () => {
   ]) {
     test(`SDK bridge: ${sdkBridge}, approval required: ${approvalRequired}, close during preparation: ${closeDuringPreparation}, expired quote: ${expiredQuote}`, async ({
       page,
-    }, testInfo) => {
+    }) => {
       const { txs } = await installEvmRpcMock(page, {
         chainUrlMap: [
           {
@@ -164,10 +164,6 @@ test.describe('EVM approval flow', () => {
           else await expect(route.locator('.hyperswap-step')).toHaveCount(1);
           await expect(route.locator('.message-status-spinner')).toHaveCount(0);
           await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
-          await page.screenshot({
-            path: testInfo.outputPath('destination-wallet.png'),
-            fullPage: true,
-          });
           releaseTransfer();
           await expect.poll(() => txs.length).toBeGreaterThan(0);
           expect(txs[0].data?.slice(0, 10).toLowerCase()).not.toBe(APPROVE_SELECTOR);
@@ -200,7 +196,6 @@ test.describe('EVM approval flow', () => {
           expect(history[0].data.status).toBe('confirming-approve');
           expect(history[0].data.originTxHash).toBeUndefined();
           expect(txs).toHaveLength(1);
-          await page.screenshot({ path: testInfo.outputPath('approval.png'), fullPage: true });
           releaseReceipt();
           await expect(page.getByTestId('transfer-headline')).toHaveText(
             'Confirm transfer in your wallet',
@@ -222,7 +217,7 @@ test.describe('EVM approval flow', () => {
 
       // First eth_sendTransaction must be the approval call. Route execution
       // should only dispatch after the approval receipt confirms.
-      await expect.poll(() => txs.length, { timeout: 60_000, intervals: [500] }).toBeGreaterThan(0);
+      await expect.poll(() => txs.length, { timeout: 60_000, intervals: [500] }).toBe(2);
 
       if (closeDuringPreparation) await expect(page.getByTestId('transfer-details')).toBeHidden();
 
@@ -232,15 +227,9 @@ test.describe('EVM approval flow', () => {
       expect(txs[0].chainId).toBe(1);
       expect(txs[0].to?.toLowerCase()).toBe(USDC_ETHEREUM);
 
-      // A follow-up route execution should eventually arrive on the same chain.
-      // If it doesn't (e.g. approve receipt polling stalls under the mock),
-      // the non-approval path below guards the regression we actually care about
-      // — that the first tx is approve, not route execution.
-      if (txs.length > 1) {
-        const secondSelector = txs[1].data!.slice(0, 10).toLowerCase();
-        expect(secondSelector).not.toBe(APPROVE_SELECTOR);
-        expect(txs[1].chainId).toBe(1);
-      }
+      const secondSelector = txs[1].data!.slice(0, 10).toLowerCase();
+      expect(secondSelector).not.toBe(APPROVE_SELECTOR);
+      expect(txs[1].chainId).toBe(1);
     });
   }
 });

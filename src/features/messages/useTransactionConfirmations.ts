@@ -112,7 +112,8 @@ export function useTransactionConfirmations(
       }
       return confirmationProgress(receipt.blockNumber, head, required);
     },
-    staleTime: 5_000,
+    // Recheck receipts immediately when live inclusion evidence disappears.
+    staleTime: 0,
     refetchInterval: (q) =>
       q.state.data?.state === ProgressState.Confirmed ||
       q.state.data?.state === ProgressState.Failed ||

@@ -1,4 +1,4 @@
-import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { logger } from '../../utils/logger';
@@ -79,10 +79,10 @@ export function connectMessageStream(
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let heartbeatTimer: ReturnType<typeof setTimeout> | undefined;
   let heads: Record<number, number> = {};
-  const refresh = (queryKey: QueryKey = ['messageDelivery']) => {
+  const refresh = () => {
     // Cancel older snapshots before a live update or a fresh snapshot can replace them.
-    void client.cancelQueries({ queryKey });
-    void client.invalidateQueries({ queryKey });
+    void client.cancelQueries({ queryKey: ['messageDelivery'] });
+    void client.invalidateQueries({ queryKey: ['messageDelivery'] });
   };
   const reconnect = () => {
     if (stopped || retryTimer) return;
@@ -134,14 +134,6 @@ export function connectMessageStream(
             const queryKey = ['messageDelivery', { msgId: `\\x${normalizeMessageId(row.msg_id)}` }];
             void client.cancelQueries({ queryKey });
             client.setQueriesData<MessageStubEntry[]>({ queryKey }, [row]);
-            // Recover the full dispatch batch, not just its first CCS message.
-            refresh([
-              'messageDelivery',
-              {
-                originTxHash: `\\x${normalizeMessageId(row.origin_tx_hash)}`,
-                originDomainId: row.origin_domain_id,
-              },
-            ]);
             break;
           }
           case 'rollback': {

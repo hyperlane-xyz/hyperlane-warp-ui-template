@@ -154,7 +154,7 @@ export function MessageRelayProgress({
   });
   const updatedAt = observation ? parseTimestamp(observation.observedAt) : undefined;
   return (
-    <section className="relay-panel" aria-label="Message lifecycle" data-active={active}>
+    <section className="relay-panel" aria-label="Message lifecycle">
       <div className="grid min-h-10 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <output className="block text-sm font-medium" aria-live="polite">
           <span className="relay-status-text">{status}</span>

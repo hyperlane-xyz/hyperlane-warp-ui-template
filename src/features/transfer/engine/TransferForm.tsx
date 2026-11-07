@@ -645,11 +645,11 @@ function TransferFormContent() {
       (step): step is Extract<(typeof bestRoute.raw.steps)[number], { type: 'swap' }> =>
         step.type === 'swap' && step.chain === values.dstChain,
     );
+    const hasEmbeddedApproval = getRouteTxs(bestRoute.raw).some(isApprovalRouteTx);
     const timestamp = Date.now();
     const item: TransferHistoryItem = {
       status: TransferStatus.Preparing,
-      approvalRequired:
-        approvalTransactionCount > 0 || getRouteTxs(bestRoute.raw).some(isApprovalRouteTx),
+      approvalRequired: approvalTransactionCount > 0 || hasEmbeddedApproval,
       routeSteps: bestRoute.raw.steps,
       timestamp,
       srcChain: values.srcChain,
@@ -714,9 +714,7 @@ function TransferFormContent() {
       }
       const executionItem = {
         ...item,
-        approvalRequired:
-          !!executionApprovalPlan?.needsApprove ||
-          getRouteTxs(bestRoute.raw).some(isApprovalRouteTx),
+        approvalRequired: !!executionApprovalPlan?.needsApprove || hasEmbeddedApproval,
       };
       if (useStore.getState().preparingTransfer === item) setPreparingTransfer(executionItem);
       const approvalCount = getApprovalPlanTransactionCount(executionApprovalPlan);

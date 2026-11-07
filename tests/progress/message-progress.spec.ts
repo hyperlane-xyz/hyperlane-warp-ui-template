@@ -118,17 +118,16 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
             kind === 'destination' || kind === 'both' || kind === 'legacy' || recoverMessages,
         };
   const routeSteps = routeStepsFor(!!swapStages?.origin, !!swapStages?.destination);
-  test(`${kind}: tracks route stages, message delivery, and reloads`, async ({
-    page,
-  }, testInfo) => {
+  test(`${kind}: tracks route stages, message delivery, and reloads`, async ({ page }) => {
     test.setTimeout(90_000);
     let reorg = false;
+    let originReorg = false;
+    let originReceiptRequests = 0;
     let originConfirmed = directBridge;
     let destinationConfirmed = false;
     await page.addInitScript(
       ({
         ids,
-        bodies,
         originTx,
         address,
         directBridge,
@@ -205,7 +204,6 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       },
       {
         ids,
-        bodies,
         originTx,
         address,
         directBridge,
@@ -315,13 +313,15 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       await route.fulfill({
         json: {
           data: {
-            message_view: byOriginTx
-              ? originIndexed
-                ? ids.map((_, i) => entry(i))
-                : []
-              : index < 0
-                ? []
-                : [entry(index)],
+            message_view: originReorg
+              ? []
+              : byOriginTx
+                ? originIndexed
+                  ? ids.map((_, i) => entry(i))
+                  : []
+                : index < 0
+                  ? []
+                  : [entry(index)],
           },
         },
       });
@@ -337,6 +337,8 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       if (!payload || !('method' in payload) || !String(payload.method).startsWith('eth_'))
         return route.fallback();
       expect(payload.method).not.toBe('eth_sendTransaction');
+      if (payload.method === 'eth_getTransactionReceipt' && payload.params?.[0] === originTx)
+        originReceiptRequests++;
       if (payload.method === 'eth_getBlockByNumber') {
         expect(payload.params[0]).toBe('finalized');
         await route.fulfill({
@@ -377,7 +379,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       };
       const result =
         payload.method === 'eth_getTransactionReceipt'
-          ? receipt
+          ? originReorg && payload.params?.[0] === originTx
+            ? null
+            : receipt
           : payload.method === 'eth_blockNumber'
             ? destinationConfirmed
               ? '0x105'
@@ -403,14 +407,15 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         'href',
         new RegExp(originTx),
       );
+      // Unknown IDs cannot receive targeted upserts; discovery uses its normal poll.
       originIndexed = true;
-      // One pushed message must recover the entire origin transaction, including reveal.
-      liveSocket?.send(JSON.stringify({ type: 'message_upsert', data: entry(0) }));
     }
 
     const progress = page.getByRole('region', { name: 'Transfer progress' });
     await expect(progress).toBeVisible({ timeout: 60_000 });
-    await expect(progress.locator('article')).toHaveCount(directBridge ? 1 : 3);
+    await expect(progress.locator('article')).toHaveCount(directBridge ? 1 : 3, {
+      timeout: 15_000,
+    });
     await expect(
       page.getByRole('article', { name: 'Origin transaction', exact: true }),
     ).toHaveCount(0);
@@ -529,12 +534,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       await expect(page.getByTestId('transfer-estimate')).toHaveText('Estimated delivery ~35s');
       await expect(destinationLink).toHaveCount(0);
     }
-    await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
     const desktopViewport = page.viewportSize()!;
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     if (swapStages) await expectCompactRoute(stages);
-    await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
     await page.setViewportSize(desktopViewport);
     if (directBridge) {
       const bridge = progress.getByRole('article', { name: 'Bridge funds' });
@@ -635,11 +638,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         bridge.getByRole('listitem', { name: 'Confirmed', exact: true }),
       ).toHaveAttribute('aria-current', 'step');
       await page.locator('.transfer-details-modal').evaluate((element) => element.scrollTo(0, 0));
-      await page.screenshot({ path: testInfo.outputPath('desktop-details.png'), fullPage: true });
       await page.setViewportSize({ width: 390, height: 844 });
       expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
       if (swapStages) await expectCompactRoute(stages);
-      await page.screenshot({ path: testInfo.outputPath('mobile-details.png'), fullPage: true });
       await page.reload();
       await expect(outcome).toContainText('Funds are available to use');
       destinationConfirmed = true;
@@ -738,6 +739,29 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       );
       await expect(outcome).toHaveCount(0);
       await expect(destinationLink).toHaveCount(0);
+
+      if (kind === 'bridge') {
+        // An old persisted inclusion height cannot prove a tx survived an origin reorg.
+        const originStage = bridge.getByRole('listitem', {
+          name: 'Origin confirmed',
+          exact: true,
+        });
+        for (const reconnect of [false, true]) {
+          originReorg = true;
+          const beforeSnapshot = snapshotRequests;
+          const beforeOriginReceipt = originReceiptRequests;
+          if (reconnect) liveSocket?.close();
+          else liveSocket?.send(JSON.stringify({ type: 'rollback', domain: 8453, toHeight: '99' }));
+          await expect.poll(() => snapshotRequests).toBeGreaterThan(beforeSnapshot);
+          await expect.poll(() => originReceiptRequests).toBeGreaterThan(beforeOriginReceipt);
+          liveSocket?.send(JSON.stringify({ type: 'block', domain: 8453, headHeight: '120' }));
+          await expect(originStage).toHaveAttribute('data-reached', 'false');
+          await expect(bridge.getByRole('status')).toHaveText('Confirming origin');
+          originReorg = false;
+          liveSocket?.send(JSON.stringify({ type: 'message_upsert', data: entry(0) }));
+          await expect(originStage).toHaveAttribute('data-reached', 'true');
+        }
+      }
 
       for (const [status, message] of [
         ['failed', 'Transfer failed.'],
@@ -878,12 +902,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       expect(box?.height).toBeLessThanOrEqual(60);
     }
     await page.locator('.transfer-details-modal').evaluate((element) => element.scrollTo(0, 0));
-    await page.screenshot({ path: testInfo.outputPath('desktop-collapsed.png'), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(progress).toBeVisible();
     expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     if (swapStages) await expectCompactRoute(stages);
-    await page.screenshot({ path: testInfo.outputPath('mobile-collapsed.png'), fullPage: true });
     const panelTop = (await page.getByTestId('transfer-details').boundingBox())?.y;
     await reveal.locator(':scope > .message-disclosure > summary').click();
     expect((await page.getByTestId('transfer-details').boundingBox())?.y).toBe(panelTop);
@@ -900,16 +922,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     await expect(messageLink).toHaveAttribute('target', '_blank');
     await expect(messageLink).toHaveText('0x333333…333333');
     await expectMutedCopy(reveal.getByRole('button', { name: 'Copy message id' }));
-    await page.screenshot({ path: testInfo.outputPath('mobile-details.png'), fullPage: true });
     await page.emulateMedia({ colorScheme: 'dark' });
     await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'dark');
     await expect(page.getByTestId('transfer-headline')).toHaveCSS('color', 'rgb(242, 228, 255)');
     await expectMutedCopy(reveal.getByRole('button', { name: 'Copy message id' }));
-    await page.screenshot({
-      path: testInfo.outputPath('mobile-dark.png'),
-      fullPage: true,
-      animations: 'disabled',
-    });
     await page.reload();
     await expect(progress.locator('article')).toHaveCount(3);
     await expect(stages.locator('.hyperswap-step')).toHaveCount(kind === 'both' ? 3 : 2);
@@ -1068,10 +1084,6 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         await row.locator('.ism-node > summary').click();
       }
     }
-    await page.screenshot({
-      path: testInfo.outputPath('three-message-proofs.png'),
-      fullPage: true,
-    });
     await expect(destinationLink).toHaveCount(0);
     liveSocket?.send(
       JSON.stringify({

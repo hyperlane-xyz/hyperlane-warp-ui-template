@@ -7,7 +7,6 @@ import {
   ensure0x,
   hexToBech32mPrefix,
   hexToRadixCustomPrefix,
-  isAddressEvm,
   isValidTransactionHash,
   ProtocolType,
   strip0x,
@@ -21,11 +20,6 @@ export function stringToPostgresBytea(hexString: string): string {
 export function postgresByteaToString(byteString: string): string {
   if (!byteString || byteString.length < 4) throw new Error('Invalid byte string');
   return ensure0x(byteString.substring(2));
-}
-
-export function addressToPostgresBytea(address: string): string {
-  const hexString = isAddressEvm(address) ? address : addressToByteHexString(address);
-  return stringToPostgresBytea(hexString);
 }
 
 export function txHashToPostgresBytea(
@@ -75,7 +69,13 @@ export function postgresByteaToAddress(
   byteString: string,
   chainMetadata: ChainMetadata | null | undefined,
 ): string {
-  const hexString = postgresByteaToString(byteString);
+  return hexToProtocolAddress(postgresByteaToString(byteString), chainMetadata);
+}
+
+export function hexToProtocolAddress(
+  hexString: string,
+  chainMetadata: ChainMetadata | null | undefined,
+): string {
   if (!chainMetadata) return hexString;
   const addressBytes = Buffer.from(strip0x(hexString), 'hex');
   if (!addressBytes.length || addressBytes.every((b) => b === 0)) return hexString;

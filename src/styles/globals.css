@@ -734,120 +734,248 @@ html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
   background: rgba(255, 255, 255, 0.12) !important;
 }
 
+/* Status routes show completion on the connectors, keeping assets unchanged. */
+.hyperswap-step[data-state='confirmed'] {
+  color: #3c835e;
+}
+.hyperswap-step[data-state='failed'] {
+  color: #ef4444;
+}
+.hyperswap-step[aria-current='step'] {
+  color: var(--color-primary-500, #9a0dff);
+}
+.message-status-spinner {
+  color: inherit !important;
+  animation-duration: 1.2s;
+}
+
+/* Relay animation follows reported state; it never advances a fabricated percentage. */
+.relay-panel {
+  --ism-success: #236a45;
+}
+html[data-theme-mode='dark'] .relay-panel {
+  --ism-success: #00c467;
+}
+.relay-card {
+  border: 1px solid color-mix(in srgb, var(--color-primary-500, #9a0dff) 20%, transparent);
+  border-radius: 12px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-primary-500, #9a0dff) 5%, transparent),
+    transparent 65%
+  );
+}
+.relay-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+}
+.relay-live-status[data-live='true'] {
+  color: var(--ism-success);
+}
+.relay-live-status[data-live='true'] .relay-live-dot {
+  animation: relay-breathe 2s ease-in-out infinite;
+}
+.relay-stages > * {
+  color: var(--color-text-muted);
+}
+.relay-stages [data-current='true'] {
+  color: var(--color-primary-500, #9a0dff);
+}
+.relay-stage-track {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  height: 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  transition: background-color 400ms ease;
+}
+.relay-stages [data-reached='true'] .relay-stage-track {
+  background: var(--color-primary-500, #9a0dff);
+}
+.relay-stages [data-current='true'] .relay-stage-track {
+  background: color-mix(in srgb, var(--color-primary-500, #9a0dff) 35%, transparent);
+}
+.relay-stages [data-current='true'] .relay-stage-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #ffffffaa, transparent);
+  animation: relay-flow 1.8s ease-in-out infinite;
+}
+.relay-status-text {
+  display: inline-block;
+  animation: ism-reveal 250ms ease-out;
+}
+.ism-branch {
+  min-width: 0;
+  animation: ism-reveal 300ms ease-out;
+}
+/* Keep unselected details readable; only mute the collapsed row. */
+.ism-branch[data-selected='false'] > .ism-node > summary {
+  opacity: 0.7;
+}
+.ism-node > summary {
+  border: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+  background: color-mix(in srgb, var(--color-surface, #fff) 90%, transparent);
+  transition:
+    border-color 450ms ease,
+    background-color 450ms ease;
+}
+.ism-node[data-complete='true'] > summary {
+  border-color: #3c835e60;
+  background: #3c835e0b;
+}
+.ism-node[data-state='failed'] > summary {
+  border-color: #e2a22c80;
+}
+.ism-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  color: var(--color-text-muted);
+}
+.ism-node:is([data-state='unknown'], [data-state='unused']) > summary .ism-state-icon {
+  border-radius: 3px;
+  border-style: dashed;
+}
+.ism-node[data-complete='true'] > summary .ism-state-icon {
+  color: var(--ism-success);
+  animation: ism-verified 400ms ease-out;
+}
+.ism-node[data-state='failed'] > summary .ism-state-icon {
+  color: #b88321;
+}
+.ism-node[data-working='true'] > summary .ism-state-icon {
+  color: var(--color-primary-500, #9a0dff);
+  animation: relay-breathe 2s ease-in-out infinite;
+}
+.ism-node[data-complete='true'] > summary .ism-status-label {
+  color: var(--ism-success);
+}
+.ism-chevron {
+  transition: transform 180ms ease;
+}
+.message-disclosure[open] > summary .message-disclosure-chevron,
+.ism-node[open] > summary .ism-chevron,
+.ism-disclosure[open] > summary .ism-chevron {
+  transform: rotate(90deg);
+}
+.ism-children {
+  margin: 0 0 0 7px;
+  padding-left: 9px;
+  border-left: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+.ism-children > .ism-branch {
+  position: relative;
+  margin-top: 3px;
+}
+.ism-children > .ism-branch::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 15px;
+  width: 9px;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  transition: border-color 450ms ease;
+}
+.ism-children > .ism-branch[data-complete='true']::before {
+  border-color: var(--ism-success);
+}
+.ism-children > .ism-branch[data-working='true']::before {
+  border-color: var(--color-primary-500, #9a0dff);
+  animation: relay-breathe 2s ease-in-out infinite;
+}
+.ism-quorum-track {
+  height: 3px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #88888820;
+}
+.ism-quorum-track > span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary-500, #9a0dff);
+  transition: width 450ms ease;
+}
+@keyframes relay-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes relay-flow {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes ism-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ism-verified {
+  0% {
+    transform: scale(0.8);
+  }
+  55% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Anchor the receipt so expanding messages never recenters the dialog. */
+.transfer-details-modal {
+  align-self: flex-start;
+  transition-property: opacity, transform, translate, scale;
+  margin-top: clamp(0rem, 8vh, 5rem);
+  max-height: calc(100dvh - clamp(0rem, 8vh, 5rem) - 2rem);
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-status-spinner,
+  .relay-panel *,
+  .relay-panel *::before,
+  .relay-panel *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .transfer-details-modal {
+    transition: none;
+  }
+}
+
 html[data-theme-mode='dark'] .transfer-details-modal {
   border: 1px solid rgba(185, 89, 255, 0.42) !important;
-  background: var(--dark-surface) !important;
+  background: var(--color-surface) !important;
   color: var(--dark-text-primary) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme-mode='dark'] .transfer-details-modal .bg-primary-200 {
-  background: rgba(185, 89, 255, 0.2) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-900,
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-800 {
-  color: var(--dark-text-primary) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-600,
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-500,
-html[data-theme-mode='dark'] .transfer-details-modal .text-gray-350 {
-  color: var(--dark-text-secondary) !important;
-}
-
-/* Card gradient and shadow — dark surface variant */
-html[data-theme-mode='dark'] .transfer-details-modal .bg-card-gradient {
-  background: linear-gradient(
-    180deg,
-    var(--dark-surface-card) 0%,
-    rgba(20, 10, 30, 0.8) 100%
-  ) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-modal .shadow-card {
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3) !important;
-}
-
 html[data-theme-mode='dark'] .transfer-details-modal .border-gray-400\/25 {
   border-color: var(--dark-border) !important;
-}
-
-/* Timeline section — text and icons */
-html[data-theme-mode='dark'] .transfer-details-modal h4 {
-  color: var(--dark-text-primary) !important;
-}
-
-/* Timeline stage labels (Sent, Finalized, Validated, Relayed) */
-html[data-theme-mode='dark'] .transfer-details-modal .htw-text-gray-700 {
-  color: var(--dark-text-primary) !important;
-}
-
-/* Timeline bar and icon circles — accent purple instead of blue */
-html[data-theme-mode='dark'] .transfer-details-modal .htw-bg-blue-500 {
-  background-color: rgb(var(--dark-accent-rgb)) !important;
-}
-
-/* Timeline — arrow-shaped segments via clip-path [=> >=> >=> >=] */
-/* Middle segments: V-notch left, point right */
-.transfer-details-modal .htw-bg-blue-500 {
-  clip-path: polygon(
-    0 0,
-    calc(100% - 10px) 0,
-    100% 50%,
-    calc(100% - 10px) 100%,
-    0 100%,
-    10px 50%
-  ) !important;
-}
-
-/* First segment: flat left, point right */
-.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 {
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%) !important;
-}
-
-/* Last segment: V-notch left, flat right */
-.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 {
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%) !important;
-}
-
-/* Hide widget chevrons — clip-path handles the shape */
-.transfer-details-modal .htw-bg-blue-500 > :not(:first-child) {
-  opacity: 0 !important;
-}
-
-/* Center icons within clip-path chevron shapes */
-/* First segment (flat left, arrow right): visual center is ~5px left of CSS center */
-.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 > :first-child {
-  transform: translateX(-5px);
-}
-
-/* Middle segments: cancel widget's htw-pl-2 that pushes icons right */
-.transfer-details-modal
-  .htw-flex-1:not(:first-child):not(:last-child)
-  .htw-bg-blue-500
-  > :first-child {
-  padding-left: 0 !important;
-}
-
-/* Last segment (V-notch left, flat right): visual center is ~5px right of CSS center */
-.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 > :first-child {
-  transform: translateX(5px);
-}
-
-/* Close gaps between arrow segments */
-.transfer-details-modal .htw-flex-0 {
-  width: 0 !important;
-}
-
-/* Arrow between amount/ticker pairs (e.g. "1 USDC → 1 USDC") */
-html[data-theme-mode='dark'] .transfer-details-modal .font-secondary img {
-  filter: brightness(0) invert(1) opacity(0.85);
-}
-
-/* Wide chevrons between origin/dest token icons */
-html[data-theme-mode='dark'] .transfer-details-modal .mb-6 svg path {
-  fill: rgba(185, 89, 255, 0.6) !important;
 }
 
 /* Link icons */
@@ -862,18 +990,6 @@ html[data-theme-mode='dark'] .transfer-details-modal .opacity-40 {
 
 html[data-theme-mode='dark'] .transfer-details-modal a {
   color: var(--dark-text-primary) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-spinner {
-  color: var(--dark-text-primary) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-spinner circle {
-  stroke: rgba(185, 89, 255, 0.35) !important;
-}
-
-html[data-theme-mode='dark'] .transfer-details-spinner path {
-  fill: rgb(var(--dark-accent-rgb)) !important;
 }
 
 /* Fix wallet icons being cropped to circles by widget's htw-rounded-full + htw-overflow-hidden */

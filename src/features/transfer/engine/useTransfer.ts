@@ -9,6 +9,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
@@ -16,7 +17,7 @@ import { logger } from '../../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../../analytics/refiner';
 import { EVENT_NAME } from '../../analytics/types';
 import { getAnalyticsChains, getAnalyticsToken, trackEvent } from '../../analytics/utils';
-import { getRouteTxs } from '../../api/routeTx';
+import { getRouteTxs, isApprovalRouteTx } from '../../api/routeTx';
 import { useMultiProvider } from '../../chains/hooks';
 import { isBridgeOnlyRoute } from '../../routeSecurity/validateWarpRoute';
 import { useStore } from '../../store';
@@ -56,6 +57,7 @@ interface ExecuteArgs {
 // transaction adapters.
 export function useTransfer() {
   const multiProvider = useMultiProvider();
+  const queryClient = useQueryClient();
   const transactionFns = useTransactionFns(multiProvider);
   const chainAddresses = useStore((s) => s.chainAddresses);
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
@@ -146,6 +148,7 @@ export function useTransfer() {
               logger.error('Approve tx reverted', new Error(`tx=${hash}`));
               throw new Error('Approve transaction reverted on chain');
             }
+            void queryClient.invalidateQueries({ queryKey: ['erc20-allowance', srcChainName] });
           };
           if (needsApprove && needsRevoke) await doApprove(0n);
           if (needsApprove) await doApprove(args.approvalAmount);
@@ -170,7 +173,11 @@ export function useTransfer() {
         let hash: string | undefined;
         let receipt: TypedTransactionReceipt | undefined;
         for (const routeTx of routeTxs) {
-          updateTransferTransactionStatus(transactionId, TransferStatus.SigningTransfer);
+          const isApproval = isApprovalRouteTx(routeTx);
+          updateTransferTransactionStatus(
+            transactionId,
+            isApproval ? TransferStatus.SigningApprove : TransferStatus.SigningTransfer,
+          );
           const sent = await fns.sendTransaction({
             tx: (await prepareRouteTransaction(routeTx, {
               protocol: protocol as ProtocolType,
@@ -180,6 +187,16 @@ export function useTransfer() {
             })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
             chainName: srcChainName,
           });
+          // SDK routes include approval/revoke transactions in the route itself.
+          // They must confirm before sending, without starting origin progress.
+          if (isApproval) {
+            updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmingApprove);
+            if (isReverted(await sent.confirm())) {
+              throw new Error('Approve transaction reverted on chain');
+            }
+            void queryClient.invalidateQueries({ queryKey: ['erc20-allowance', srcChainName] });
+            continue;
+          }
           hash = sent.hash;
 
           updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmingOrigin, {
@@ -282,12 +299,16 @@ export function useTransfer() {
         setError(err as Error);
         throw err;
       } finally {
+        void queryClient.invalidateQueries({
+          queryKey: ['erc20-allowance', analyticsSrcChainName],
+        });
         setIsPending(false);
       }
     },
     [
       transactionFns,
       multiProvider,
+      queryClient,
       chainAddresses,
       updateTransferTransactionStatus,
       setTransferRoute,

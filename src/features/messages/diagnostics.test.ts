@@ -8,7 +8,9 @@ import {
   readDiagnostics,
   reconcileDiagnostics,
   relayLabel,
+  selectRelayObservation,
   type IsmNode,
+  type RelayObservation,
   type RelayState,
 } from './diagnostics';
 
@@ -149,6 +151,73 @@ describe('message diagnostics', () => {
     expect(relayLabel({ ...state, phase: 'submitting', submission: { stage: 'mempool' } })).toBe(
       'Transaction in mempool',
     );
+  });
+});
+
+describe('relay observation selection', () => {
+  const observation = (relayer: string, state: RelayState, activityId = '1'): RelayObservation => ({
+    relayer,
+    activityId,
+    observedAt: '2026-11-06 12:00:00',
+    state,
+  });
+  const preparing = observation('main', { phase: 'preparing', modules: [] }, '999999');
+
+  it('follows the furthest current relayer phase instead of cross-relayer activity IDs', () => {
+    const phases = ['preparing', 'ready_to_submit', 'submitting', 'confirming', 'delivered'];
+    for (let index = 1; index < phases.length; index++) {
+      const main = { ...preparing, state: { ...preparing.state, phase: phases[index - 1] } };
+      const fast = observation('fast', { phase: phases[index], modules: [] });
+      expect(selectRelayObservation([main, fast], main.relayer)).toBe(fast);
+    }
+  });
+
+  it('keeps the preferred reporter on equal progress, including an expected commit wait', () => {
+    const signatures = observation('signatures', { phase: 'awaiting_signatures', modules: [] });
+    const waiting = observation('waiting', {
+      phase: 'retrying',
+      modules: [],
+      retry: { reason: 'AwaitingIcaReveal', count: 0 },
+      failure: { stage: 'simulate', reason: 'contract_call_failed' },
+    });
+    expect(selectRelayObservation([preparing, signatures], signatures.relayer)).toBe(signatures);
+    expect(selectRelayObservation([signatures, preparing], signatures.relayer)).toBe(signatures);
+    expect(selectRelayObservation([preparing, waiting], waiting.relayer)).toBe(waiting);
+    expect(selectRelayObservation([waiting, preparing], preparing.relayer)).toBe(preparing);
+  });
+
+  it('demotes current retries and failures even with a stale accepted submission', () => {
+    const retrying = observation('retrying', {
+      phase: 'retrying',
+      modules: [],
+      retry: { reason: 'ErrorSubmitting' },
+    });
+    for (const state of [
+      { phase: 'retrying', modules: [], retry: { reason: 'ErrorSubmitting' } },
+      { phase: 'delivered', modules: [], failure: { stage: 'submit', reason: 'rpc_error' } },
+      { phase: 'dropped', modules: [] },
+      { phase: 'unknown', modules: [] },
+    ]) {
+      const retry = observation('fast', { ...state, submission: { stage: 'included' } }, '9999999');
+      expect(selectRelayObservation([retry, preparing], retry.relayer)).toBe(preparing);
+      if (state.phase !== 'retrying')
+        expect(selectRelayObservation([retry, retrying], retry.relayer)).toBe(retrying);
+    }
+  });
+
+  it('uses only the current snapshot when the leader retries, disappears, or all reporters leave', () => {
+    const fast = observation('fast', { phase: 'ready_to_submit', modules: [] });
+    expect(selectRelayObservation([preparing, fast])).toBe(fast);
+    const retry = {
+      ...fast,
+      activityId: '2',
+      state: { phase: 'retrying', modules: [], retry: { reason: 'ErrorSubmitting' } },
+    };
+    expect(selectRelayObservation([preparing, retry], fast.relayer)).toBe(preparing);
+    expect(selectRelayObservation([retry], fast.relayer)).toBe(retry);
+    expect(selectRelayObservation([preparing], fast.relayer)).toBe(preparing);
+    expect(selectRelayObservation([], fast.relayer)).toBeUndefined();
+    expect(selectRelayObservation(undefined, fast.relayer)).toBeUndefined();
   });
 });
 

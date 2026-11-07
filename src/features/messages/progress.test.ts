@@ -88,6 +88,15 @@ describe('message timing estimates', () => {
     expect(estimateDeliverySeconds(blocks, { state: ProgressState.Failed })).toBeUndefined();
   });
 
+  test('omits origin confirmation time once relaying starts, but preserves actual failures', () => {
+    const blocks = { confirmations: 2, reorgPeriod: 15, estimateBlockTime: 2 };
+    const pending = confirmationProgress(100, 101, 15);
+    expect(estimateDeliverySeconds(blocks, pending, false)).toBe(33);
+    expect(estimateDeliverySeconds(blocks, pending, true)).toBe(5);
+    expect(estimateDeliverySeconds(blocks, undefined, true)).toBe(5);
+    expect(estimateDeliverySeconds(blocks, { state: ProgressState.Failed }, true)).toBeUndefined();
+  });
+
   test('uses configured confirmations when the policy is tagged or absent', () => {
     for (const reorgPeriod of ['safe', 'finalized', undefined]) {
       expect(
@@ -108,10 +117,13 @@ describe('message timing estimates', () => {
     }
   });
 
-  test('rounds estimates up without showing fractional precision', () => {
+  test('rounds minute and hour estimates down without fractional precision', () => {
     expect(formatEstimatedTime(4.1)).toBe('~5s');
-    expect(formatEstimatedTime(59.5)).toBe('~1 min');
-    expect(formatEstimatedTime(61)).toBe('~2 min');
-    expect(formatEstimatedTime(3601)).toBe('~2 hr');
+    expect(formatEstimatedTime(59.5)).toBe('~60s');
+    expect(formatEstimatedTime(61)).toBe('~1 min');
+    expect(formatEstimatedTime(119.9)).toBe('~1 min');
+    expect(formatEstimatedTime(200)).toBe('~3 min');
+    expect(formatEstimatedTime(3599.9)).toBe('~59 min');
+    expect(formatEstimatedTime(3601)).toBe('~1 hr');
   });
 });

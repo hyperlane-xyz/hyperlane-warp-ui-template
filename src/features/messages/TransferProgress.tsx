@@ -7,7 +7,7 @@ import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { getHypExplorerLink } from '../../utils/links';
 import { useMultiProvider } from '../chains/hooks';
 import type { LabeledMsgId, TransferHistoryItem } from '../transfer/engine/types';
-import { isWaitingForCommit, relayLabel } from './diagnostics';
+import { isWaitingForCommit, relayLabel, selectRelayObservation } from './diagnostics';
 import { MessageRelayProgress } from './MessageRelayProgress';
 import { normalizeMessageId } from './messageStream';
 import {
@@ -180,15 +180,16 @@ function MessageProgressRow({
   const [expanded, setExpanded] = useState(initiallyExpanded);
   useEffect(() => setExpanded(initiallyExpanded), [initiallyExpanded]);
   const [selectedRelayer, setSelectedRelayer] = useState('');
+  const [automaticRelayer, setAutomaticRelayer] = useState('');
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const relayers = diagnostics.data?.relayers;
+  const automaticRelay = selectRelayObservation(relayers, automaticRelayer);
   const relay = selectedRelayer
     ? relayers?.find((item) => item.relayer === selectedRelayer)
-    : relayers?.[0];
+    : automaticRelay;
   useEffect(() => {
-    // Keep the first observed reporter, even as new anchors/reporters arrive.
-    if (!selectedRelayer && relay) setSelectedRelayer(relay.relayer);
-  }, [selectedRelayer, relay]);
+    if (automaticRelay) setAutomaticRelayer(automaticRelay.relayer);
+  }, [automaticRelay]);
   const delivery = useMessageDeliveryStatus({ msgId: message.msgId }, enabled, multiProvider);
   const origin =
     multiProvider.tryGetChainName(delivery.message?.originDomain ?? transfer.srcChain) ?? undefined;
@@ -258,6 +259,8 @@ function MessageProgressRow({
     originConfirmation.data?.state ??
     (originConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);
   const originConfirmed = originState === ProgressState.Confirmed;
+  const relaying =
+    !!relay && originState !== ProgressState.Failed && originConfirmation.data?.included !== false;
   const destinationState =
     destinationConfirmation.data?.state ??
     (destinationConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);
@@ -275,19 +278,23 @@ function MessageProgressRow({
           ? 'Origin transaction failed'
           : delivery.error && !delivery.message
             ? 'Status unavailable'
-            : !originConfirmed && originState === ProgressState.Pending
+            : !relaying && !originConfirmed && originState === ProgressState.Pending
               ? 'Confirming origin'
               : 'Awaiting delivery';
   const phaseLabel =
     status === 'Awaiting delivery' ? (relay ? relayLabel(relay.state) : 'Validating') : status;
   const confirmation = delivered ? destinationConfirmation : originConfirmation;
   const confirmationCountText = delivered ? destinationCount : originCount;
+  const showConfirmations = delivered || !relaying;
   const confirmationSummary =
-    !deliveryMissing && confirmation.data?.state === ProgressState.Pending
+    !deliveryMissing && showConfirmations && confirmation.data?.state === ProgressState.Pending
       ? `${delivered ? 'Destination' : 'Origin'} confirmations${confirmationCountText ? ` · ${confirmationCountText}` : ''}${confirmation.estimatedSeconds != null ? ` · ${formatEstimatedTime(confirmation.estimatedSeconds)} remaining` : ''}`
       : undefined;
   const subtitle =
-    !expanded && confirmationCountText && confirmation.data?.state === ProgressState.Pending
+    !expanded &&
+    showConfirmations &&
+    confirmationCountText &&
+    confirmation.data?.state === ProgressState.Pending
       ? `${phaseLabel} · ${confirmationCountText}`
       : phaseLabel;
   const lifecycle = {
@@ -296,11 +303,13 @@ function MessageProgressRow({
     confirmed,
     confirming: delivered && !!destinationTx && destinationState === ProgressState.Pending,
     originState,
+    relaying,
     paused:
       deliveryMissing ||
       originState === ProgressState.Failed ||
       status === 'Status unavailable' ||
       (!delivered &&
+        relaying &&
         (relay?.state.phase === 'dropped' ||
           (!!relay?.state.failure && !isWaitingForCommit(relay.state)))),
   };
@@ -311,6 +320,7 @@ function MessageProgressRow({
       : estimateDeliverySeconds(
           origin ? multiProvider.tryGetChainMetadata(origin)?.blocks : undefined,
           originConfirmation.data,
+          relaying,
         );
   const explorerUrl = origin ? getHypExplorerLink(multiProvider, origin, message.msgId) : undefined;
   useEffect(() => {
@@ -487,7 +497,7 @@ function MessageProgressRow({
             lifecycle={lifecycle}
             status={subtitle}
             confirmationSummary={confirmationSummary}
-            selectedRelayer={selectedRelayer || relay?.relayer || ''}
+            selectedRelayer={selectedRelayer}
             onSelectRelayer={setSelectedRelayer}
             onAdvancedToggle={setAdvancedExpanded}
           >

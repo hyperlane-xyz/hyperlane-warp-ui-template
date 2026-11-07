@@ -42,6 +42,7 @@ interface MessageLifecycleProps {
   confirmed: boolean;
   confirming: boolean;
   originState: ProgressState;
+  relaying: boolean;
   paused: boolean;
 }
 
@@ -51,15 +52,22 @@ function MessageLifecycleStages({
   confirmed,
   confirming,
   originState,
+  relaying,
   paused,
 }: MessageLifecycleProps) {
-  // Wait for origin finality even if a relayer observes the message earlier.
-  // Delivery and destination finality still require indexed/on-chain evidence.
+  // Fast relayers can proceed before the metadata finality threshold.
+  // Pickup does not prove origin finality or indexed delivery.
+  const pickedUp = relaying && originState !== ProgressState.Confirmed;
+  const originTitle = pickedUp
+    ? 'Picked up by relayer. Origin confirmations remain available in Advanced.'
+    : originState === ProgressState.Unavailable
+      ? 'Origin confirmation tracking unavailable'
+      : undefined;
   const stage = confirmed
     ? 4
     : delivered
       ? 3
-      : originState === ProgressState.Pending || originState === ProgressState.Failed
+      : (originState === ProgressState.Pending && !relaying) || originState === ProgressState.Failed
         ? 0
         : state
           ? (phaseStage[state.phase] ?? 1)
@@ -72,13 +80,11 @@ function MessageLifecycleStages({
       {stages.map(({ label, pending }, index) => (
         <li
           key={label}
-          aria-label={label}
-          title={
-            index === 1 && originState === ProgressState.Unavailable
-              ? 'Origin confirmation tracking unavailable'
-              : undefined
+          aria-label={index === 1 && pickedUp ? 'Relayer picked up' : label}
+          title={index === 1 ? originTitle : undefined}
+          data-reached={
+            index === 1 ? originState === ProgressState.Confirmed || pickedUp : index <= stage
           }
-          data-reached={index === 1 ? originState === ProgressState.Confirmed : index <= stage}
           data-current={index === currentStage}
           aria-current={index === currentStage ? 'step' : undefined}
         >
@@ -95,9 +101,11 @@ function MessageLifecycleStages({
             )}
             {index === pendingStage
               ? pending
-              : index === 1 && originState === ProgressState.Unavailable
-                ? 'Not tracked'
-                : label}
+              : index === 1 && pickedUp
+                ? 'Relayer picked up'
+                : index === 1 && originState === ProgressState.Unavailable
+                  ? 'Not tracked'
+                  : label}
           </span>
         </li>
       ))}
@@ -205,7 +213,7 @@ export function MessageRelayProgress({
         {state?.failure?.reason && (
           <p className="mt-2 text-xxs text-foreground-muted">{humanize(state.failure.reason)}</p>
         )}
-        {((data?.relayers.length ?? 0) > 1 || (selectedRelayer && !observation)) && (
+        {((data?.relayers.length ?? 0) > 1 || selectedRelayer) && (
           <label className="mt-3 flex items-center justify-between gap-2 text-xxs text-foreground-muted">
             Reporting relayer
             <select
@@ -214,6 +222,7 @@ export function MessageRelayProgress({
               onChange={(event) => onSelectRelayer(event.target.value)}
               className="text-foreground rounded border border-gray-400/30 bg-surface p-1"
             >
+              <option value="">Automatic</option>
               {selectedRelayer && !observation && (
                 <option value={selectedRelayer}>
                   {shortAddress(selectedRelayer)} · Unavailable

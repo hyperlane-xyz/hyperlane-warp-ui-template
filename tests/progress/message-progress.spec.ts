@@ -248,7 +248,11 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     let diagnosticsSocket: WebSocketRoute | undefined;
     let diagnosticsClosed = 0;
     let relaySequence = 0;
-    const sendRelayState = (index: number, state: RelayState, partial = false) =>
+    const sendRelayStates = (
+      index: number,
+      reports: Array<{ relayer: string; state: RelayState }>,
+      partial = false,
+    ) =>
       diagnosticsSocket?.send(
         JSON.stringify({
           type: 'diagnostics',
@@ -256,18 +260,18 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
             version: 1,
             message_id: ids[index],
             partial,
-            activities: [
-              {
-                id: String(++relaySequence),
-                relayer: address,
-                version: 1,
-                observed_at: '2026-11-06 15:00:00',
-                activity: { type: 'snapshot', state },
-              },
-            ],
+            activities: reports.map(({ relayer, state }) => ({
+              id: String(++relaySequence),
+              relayer,
+              version: 1,
+              observed_at: '2026-11-06 15:00:00',
+              activity: { type: 'snapshot', state },
+            })),
           },
         }),
       );
+    const sendRelayState = (index: number, state: RelayState, partial = false) =>
+      sendRelayStates(index, [{ relayer: address, state }], partial);
     let snapshotRequests = 0;
     let originSnapshotRequests = 0;
     let originIndexed = !recoverMessages;
@@ -763,6 +767,8 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
           name: 'Origin confirmed',
           exact: true,
         });
+        sendRelayState(0, { phase: 'ready_to_submit', modules: [] });
+        await expect(bridge.getByRole('status')).toHaveText('Validated · Preparing submission');
         for (const reconnect of [false, true]) {
           originReorg = true;
           const beforeSnapshot = snapshotRequests;
@@ -774,6 +780,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
           liveSocket?.send(JSON.stringify({ type: 'block', domain: 8453, headHeight: '120' }));
           await expect(originStage).toHaveAttribute('data-reached', 'false');
           await expect(bridge.getByRole('status')).toHaveText('Confirming origin');
+          await expect(
+            bridge.getByRole('listitem', { name: 'Validated', exact: true }),
+          ).toHaveAttribute('data-reached', 'false');
           originReorg = false;
           liveSocket?.send(JSON.stringify({ type: 'message_upsert', data: entry(0) }));
           await expect(originStage).toHaveAttribute('data-reached', 'true');
@@ -850,11 +859,89 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         '~33s',
       );
       await reveal.locator(':scope > .message-disclosure > summary').click();
-      sendRelayState(2, { phase: 'preparing', modules: [] });
+      await expect(reveal.locator(':scope > .message-disclosure > summary output')).toHaveCount(0);
+      const fastRelayer = `0x${'88'.repeat(20)}`;
+      const waiting: RelayState = {
+        phase: 'retrying',
+        retry: { reason: 'CouldNotFetchMetadata', count: 1 },
+        tree_root: 'main',
+        modules: [
+          { node_id: 'main', ism: address, module_type: 'MessageIdMultisig', children: [] },
+        ],
+      };
+      const preparing: RelayState = {
+        phase: 'preparing',
+        tree_root: 'fast',
+        modules: [{ node_id: 'fast', ism: fastRelayer, module_type: 'CcipRead', children: [] }],
+      };
+      sendRelayState(2, waiting);
+      await expect(reveal.getByRole('status')).toHaveText('Waiting for validation');
+      const pickupStage = reveal.getByRole('listitem', { name: 'Relayer picked up', exact: true });
+      await expect(pickupStage).toHaveAttribute('data-reached', 'true');
+      sendRelayStates(2, [
+        { relayer: address, state: waiting },
+        { relayer: fastRelayer, state: preparing },
+      ]);
       await expect(reveal.locator('.relay-live-status')).toHaveAttribute('data-live', 'true');
-      await expect(reveal.getByRole('status')).toHaveText('Confirming origin');
-      await expect(originStage).toHaveAttribute('aria-current', 'step');
-      await expect(verificationStage).not.toHaveAttribute('aria-current', 'step');
+      await expect(reveal.getByRole('status')).toHaveText('Validating');
+      await expect(verificationStage).toHaveAttribute('aria-current', 'step');
+      await expect(reveal).toContainText('1/15 blocks');
+      await expect(
+        reveal.getByText('Origin confirmations · 1/15 · ~28s remaining', { exact: true }),
+      ).toHaveCount(0);
+      const reporter = reveal.getByRole('combobox', { name: 'Reporting relayer' });
+      await expect(reporter).toHaveValue('');
+      await expect(reveal.locator('.ism-node > summary')).toContainText('CCIP Read');
+      await expect(reveal.locator('.ism-node > summary')).not.toContainText('Message ID Multisig');
+      const ready: RelayState = {
+        ...preparing,
+        phase: 'ready_to_submit',
+        modules: [{ ...preparing.modules[0], metadata_status: 'ready', verification: 'succeeded' }],
+      };
+      // Main reports later than fast, but its slower phase must not take over Auto.
+      for (const count of [1, 2]) {
+        sendRelayStates(2, [
+          { relayer: fastRelayer, state: ready },
+          {
+            relayer: address,
+            state: { ...waiting, retry: { reason: 'CouldNotFetchMetadata', count } },
+          },
+        ]);
+        await expect(reveal.getByRole('status')).toHaveText('Validated · Preparing submission');
+        await expect(verificationStage).toHaveAttribute('data-reached', 'true');
+        await expect(
+          reveal.getByRole('listitem', { name: 'Delivered', exact: true }),
+        ).toHaveAttribute('aria-current', 'step');
+      }
+      await reporter.selectOption(address);
+      await expect(reveal.getByRole('status')).toHaveText('Waiting for validation');
+      await expect(reveal.locator('.ism-node > summary')).toContainText('Message ID Multisig');
+      await expect(reveal.locator('.ism-node > summary')).not.toContainText('CCIP Read');
+      sendRelayStates(2, [
+        { relayer: address, state: waiting },
+        { relayer: fastRelayer, state: ready },
+      ]);
+      await expect(reporter).toHaveValue(address);
+      await expect(reveal.getByRole('status')).toHaveText('Waiting for validation');
+      sendRelayState(2, waiting);
+      await expect(reporter).toBeVisible();
+      await expect(reporter).toHaveValue(address);
+      await expect(reporter.locator('option')).toHaveCount(2);
+      sendRelayStates(2, [
+        { relayer: address, state: waiting },
+        { relayer: fastRelayer, state: ready },
+      ]);
+      await reporter.selectOption('');
+      await expect(reveal.getByRole('status')).toHaveText('Validated · Preparing submission');
+      await expect(reveal.locator('.ism-node > summary')).toContainText('CCIP Read');
+      await reveal.locator(':scope > .message-disclosure > summary').click();
+      await expect(reveal.getByTitle('Estimated time to delivery', { exact: true })).toHaveText(
+        '~5s',
+      );
+      await reveal.locator(':scope > .message-disclosure > summary').click();
+      await expect(reveal.locator(':scope > .message-disclosure > summary output')).toHaveCount(0);
+      sendRelayState(2, { phase: 'preparing', modules: [] });
+      await expect(reveal.getByRole('status')).toHaveText('Validating');
     }
     originConfirmed = true;
     sendHeads();
@@ -1251,6 +1338,13 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     await expect(reveal.locator('.relay-live-dot')).toHaveCSS('animation-name', 'none');
     await expect(reveal).toContainText('Destination confirmations');
     if (kind === 'both') {
+      sendRelayState(2, {
+        phase: 'retrying',
+        modules: [],
+        retry: { reason: 'CouldNotFetchMetadata' },
+      });
+      await expect(reveal.getByRole('status')).toHaveText('Confirmed');
+      await expect(reveal.locator('.relay-stages li[data-reached="true"]')).toHaveCount(5);
       // A stored route without a destination swap highlights bridge value delivery,
       // even when historical commit/reveal messages remain on the transfer.
       await page.evaluate(() => {

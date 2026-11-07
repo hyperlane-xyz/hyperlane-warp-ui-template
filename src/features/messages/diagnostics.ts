@@ -161,6 +161,34 @@ const submissionLabels: Record<string, string> = {
   finalized: 'Transaction finalized',
 };
 const submittedStages = ['submitted', 'pending_inclusion', 'mempool', 'included', 'finalized'];
+const relayPhaseRank: Record<string, number> = {
+  retrying: 1,
+  preparing: 2,
+  awaiting_signatures: 2,
+  ready_to_submit: 3,
+  submitting: 4,
+  confirming: 5,
+  delivered: 6,
+};
+
+function relayRank(state: RelayState) {
+  if (isWaitingForCommit(state)) return relayPhaseRank.preparing;
+  if (state.failure) return 0;
+  return relayPhaseRank[state.phase] ?? 0;
+}
+
+/** Follow current progress without combining reporters' trees or switching on ties. */
+export function selectRelayObservation(
+  relayers: RelayObservation[] | undefined,
+  preferredRelayer?: string,
+): RelayObservation | undefined {
+  let selected = relayers?.find((relay) => relay.relayer === preferredRelayer) ?? relayers?.[0];
+  for (const relay of relayers ?? []) {
+    if (!selected || relayRank(relay.state) > relayRank(selected.state)) selected = relay;
+  }
+  return selected;
+}
+
 // A reveal cannot simulate successfully until its commit is visible on-chain.
 export function isWaitingForCommit(state?: RelayState): boolean {
   return (

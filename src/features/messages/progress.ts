@@ -56,6 +56,7 @@ export function estimateConfirmationSeconds(
 export function estimateDeliverySeconds(
   blocks: ChainMetadata['blocks'],
   progress?: ConfirmationProgress,
+  relaying = false,
 ): number | undefined {
   if (progress?.state === ProgressState.Failed) return undefined;
   const blockTime = blocks?.estimateBlockTime;
@@ -71,7 +72,7 @@ export function estimateDeliverySeconds(
   )
     return undefined;
   const originSeconds =
-    progress?.state === ProgressState.Confirmed
+    relaying || progress?.state === ProgressState.Confirmed
       ? 0
       : (estimateConfirmationSeconds(progress, blockTime) ?? confirmations * blockTime);
   const seconds = originSeconds + 5;
@@ -80,10 +81,9 @@ export function estimateDeliverySeconds(
 
 export function formatEstimatedTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) throw new Error('Invalid estimated duration');
-  const roundedSeconds = Math.ceil(seconds);
-  if (roundedSeconds < 60) return `~${roundedSeconds}s`;
-  if (roundedSeconds < 3600) return `~${Math.ceil(roundedSeconds / 60)} min`;
-  return `~${Math.ceil(roundedSeconds / 3600)} hr`;
+  if (seconds < 60) return `~${Math.ceil(seconds)}s`;
+  if (seconds < 3600) return `~${Math.floor(seconds / 60)} min`;
+  return `~${Math.floor(seconds / 3600)} hr`;
 }
 
 export function decodeTransferBody(

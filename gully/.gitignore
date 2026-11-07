@@ -6,3 +6,4 @@ test-results/
 screenshots/
 .env.local
 *.local
+.ssr/

@@ -72,7 +72,7 @@ export const DEFAULT_FAST_ROUTE_ID = data.defaultRouteId;
 /** retired routes whose GullyChain token can still be redeemed (synthetic or collateral tokens a wallet can hold) */
 export const LEGACY_ROUTES = FAST_ROUTES.filter((r) => r.legacy && r.tokens.gullychaintestnet.tokenType !== 'native');
 
-/** Gully Warp Mirror routes, filled once at startup (main.tsx -> setMirrorRoutes); empty when /mirrors.json is absent. */
+/** Gully Warp Mirror routes, filled once at startup (boot.tsx -> setMirrorRoutes); empty when /mirrors.json is absent. */
 export const MIRROR_ROUTES: FastRoute[] = [];
 export function setMirrorRoutes(routes: FastRoute[]) {
   MIRROR_ROUTES.splice(0, MIRROR_ROUTES.length, ...routes.filter((r) => r.warp));

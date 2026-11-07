@@ -258,3 +258,6 @@ table.sr { display: block; }
 .amount-on { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .legal-redirect { max-width: 34rem; margin: 0 auto; padding: 64px 16px; text-align: center; color: var(--gn-text-2); }
 .legal-redirect a { color: var(--gn-link, var(--gc-green)); display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+
+/* index.html: not the landing page, so its HTML stays hidden until the app renders this route. */
+.gb-spa #root > * { display: none; }

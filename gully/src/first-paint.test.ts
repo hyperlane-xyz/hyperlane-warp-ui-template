@@ -16,7 +16,9 @@ describe('first paint', () => {
     expect(boot).toContain("classList.remove('gb-spa')");
   });
   it('the embed, previews and other paths never flash the landing page', () => {
-    expect(text('index.html')).toContain("d.classList.add('gb-spa')");
+    expect(text('index.html')).toContain('<script src="/first-route.js"></script>');
+    expect(text('index.html')).not.toMatch(/<script>/); // the site CSP allows no inline script
+    expect(text('public/first-route.js')).toContain("d.classList.add('gb-spa')");
     expect(text('src/styles/base.css')).toContain('.gb-spa #root > *');
   });
   it('the service worker registers even when the load event fired before this chunk arrived', () => {

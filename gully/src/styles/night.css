@@ -63,7 +63,7 @@ a:hover { color: var(--gn-link-hover); }
 .foot-brand img { display: block; width: 32px; height: 32px; max-width: none; }
 .gc-badge { display: inline-flex; line-height: 0; }
 .gc-badge img { width: 180px; height: 48px; }
-.badge-link img { width: 190px; height: 48px; }
+.badge-link img { width: 140px; height: 48px; }
 .foot-links a { color: var(--gn-text-2); gap: 6px; }
 .foot-links a:hover { color: var(--gn-text); }
 .credit, .credit a { color: var(--gn-text-3); }

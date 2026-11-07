@@ -6,7 +6,7 @@ import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ops = process.argv[2] || new URL('../../../gully-ops', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
-const labs = process.argv[3] || 'C:/Users/Admin/Desktop/GULLY LABS GRAPHICS/Gully Labs/brand-kit';
+const labs = process.argv[3] || 'C:/Users/Admin/Desktop/GRAPHICS/Gully Labs branding kit (1)/kit';
 const shared = join(ops, 'sites/_shared');
 const kit = join(shared, 'brand/kit-v4');
 const pub = new URL('../public/', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
@@ -25,7 +25,7 @@ for (const f of ['gully-core-powered-by-dark.svg', 'gully-core-powered-by-dark.p
   'gully-core-mark-dark.svg', 'gully-core-mark-dark.png', 'gully-core-mark-dark-2x.png', 'gully-core-mark-dark-3x.png']) {
   cp(join(kit, 'badges/gully-core', f), `brand/badges/${f}`);
 }
-for (const f of readdirSync(join(labs, 'badges')).filter((f) => f.startsWith('powered-by-gully-labs-dark'))) cp(join(labs, 'badges', f), `brand/badges/${f}`);
+cp(join(labs, 'badges/powered-by-dark.svg'), 'brand/badges/gully-labs-powered-by-dark.svg');
 
 writeFileSync(join(pub, 'site.webmanifest'), JSON.stringify({
   name: 'Gully Bridge', short_name: 'Gully Bridge',

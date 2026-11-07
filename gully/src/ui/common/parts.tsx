@@ -672,13 +672,7 @@ export function Footer({ minimal }: { minimal?: boolean }) {
             <img src="brand/badges/badge-dark.png" width={180} height={48} alt="Powered by GullyChain" />
           </a>
           <Ext href={LINKS.gullyLabs} className="badge-link" newTab>
-            <img
-              src="brand/badges/powered-by-gully-labs-dark.svg"
-              srcSet="brand/badges/powered-by-gully-labs-dark.png 1x, brand/badges/powered-by-gully-labs-dark-2x.png 2x, brand/badges/powered-by-gully-labs-dark-3x.png 3x"
-              width={190}
-              height={48}
-              alt="Powered by Gully Labs"
-            />
+            <img src="brand/badges/gully-labs-powered-by-dark.svg" width={140} height={48} alt="Powered by Gully Labs" />
           </Ext>
           <p className="credit">
             Fast lane secured by <Ext href={LINKS.hyperlane}>Hyperlane</Ext>. Canonical lane: the GullyChain Arbitrum Nitro

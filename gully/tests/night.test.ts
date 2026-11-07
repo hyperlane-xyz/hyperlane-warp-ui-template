@@ -25,10 +25,7 @@ const KIT: Record<string, string> = {
   'public/android-chrome-192.png': '124e2bda6af687339242b20a0153587400c184033fb242528626bacb3451f1e1',
   'public/android-chrome-512.png': '129e80e570c1a00ab6f49bfbeea63ad7d14dff0d6941bb32f1e6d02f7f49de56',
   'public/og-image.png': '507fef5e1112d90010e342b3067516c790b1ca222bce194d40c4045345543d8a',
-  'public/brand/badges/powered-by-gully-labs-dark.svg': '9dbacd2deedf4ea0606a9697cd74f627589a1456d7fea9b600bd81461b57c41b',
-  'public/brand/badges/powered-by-gully-labs-dark.png': '49f4b242ca6fb6016f47981a82f4858534a0485375b83cf9e0bedbd86ec73134',
-  'public/brand/badges/powered-by-gully-labs-dark-2x.png': '15cee9a5612d6065ddf0feea5f5373e86dca68dbf1376b72364f6b201c8672dd',
-  'public/brand/badges/powered-by-gully-labs-dark-3x.png': '78861a7b54bf7a35c1baab3328c7000aad901f9b1fa1b213f8409255e41082ce',
+  'public/brand/badges/gully-labs-powered-by-dark.svg': '25b50f55dea2a2fc1573af73b12daf84c490af07c2f7c4e7bf51d9abe21dd862',
   // "Powered by Gully Core" (kit v4 badges/gully-core, README.md SHA-256 list 2026-10-30), dark ground only
   'public/brand/badges/gully-core-powered-by-dark.svg': 'b93e952ac9d89c632ddeabd457bfdef2beb2a34751d9a676715ffc45b4a7b43c',
   'public/brand/badges/gully-core-powered-by-dark.png': '9f0ba1967c13e7c06a8cc09b3cd01afa6ba061141d51c1a0039e8a60b755412e',

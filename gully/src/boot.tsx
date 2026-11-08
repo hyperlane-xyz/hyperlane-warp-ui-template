@@ -52,10 +52,13 @@ if (legalTo) {
   );
   // The HTML is the landing page with no query: that one takes over in place. A deep link or the embed renders fresh.
   const landing = direction === 'c' && indexable && !location.search;
+  // Mirror routes are added before the first render, so the page then differs from the prerendered one (it has none):
+  // hydrating it fails with React error #418, so a page with mirror routes renders fresh instead of taking over.
+  let mirrored = false;
   const render = () => {
     document.documentElement.classList.remove('gb-spa');
     const root = document.getElementById('root')!;
-    if (landing) hydrateRoot(root, tree);
+    if (landing && !mirrored) hydrateRoot(root, tree);
     else createRoot(root).render(tree);
   };
 
@@ -63,7 +66,10 @@ if (legalTo) {
   // route per active coin mirror before the first render, so a deep link ?token=&to= can preselect it. Missing file,
   // timeout or bad JSON = no mirror routes; the ETH routes and the default are unchanged either way.
   fetchMirrorRoutes(MIRRORS_URL, url.mirror ? 3000 : 1500)
-    .then(setMirrorRoutes)
+    .then((routes) => {
+      mirrored = routes.length > 0;
+      setMirrorRoutes(routes);
+    })
     .finally(render);
 }
 

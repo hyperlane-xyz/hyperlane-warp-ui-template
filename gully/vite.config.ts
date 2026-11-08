@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
             .replaceAll('%ROBOTS%', env.VITE_ROBOTS || 'index, follow'),
       },
       {
-        // sitemap.xml with the build date as lastmod (the bridge is one indexable page; /embed is noindex)
+        // sitemap.xml with the build date as lastmod (the bridge is one indexable page; /embed is noindex; /terms and /privacy redirect to gullychain.xyz, so they are not listed)
         name: 'gully-sitemap',
         apply: 'build',
         generateBundle() {
@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
           this.emitFile({
             type: 'asset',
             fileName: 'sitemap.xml',
-            source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${site}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n  <url><loc>${site}terms</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>\n  <url><loc>${site}privacy</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>\n</urlset>\n`,
+            source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${site}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n</urlset>\n`,
           });
         },
       },

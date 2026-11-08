@@ -2,7 +2,7 @@
 // sites/_shared/gc-add-usdc.js. The logo is Circle's own file; ?v= is its hash, so a wallet that cached the old logo fetches this one.
 const RPCS = ['https://testnet-rpc.gullychain.xyz', 'https://rpc.gullyrpc.xyz/gullychain/evm/485590', 'https://rpc2.gullychain.xyz']
 export const USDCE = '0x65Ba03c6FA90Ed549f465D4c8f2e784D6eEB7E76'
-export const CHAIN_PARAMS = { chainId: '0x768d6', chainName: 'Gully Chain Testnet', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: RPCS, blockExplorerUrls: ['https://testnet-explorer.gullychain.xyz'] }
+export const CHAIN_PARAMS = { chainId: '0x768d6', chainName: 'Gully Chain Testnet', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: RPCS, blockExplorerUrls: ['https://testnet.gullyscan.xyz'] }
 export const TOKEN = { address: USDCE, symbol: 'USDC.e', decimals: 6, image: `https://gullychain.xyz/tokens/logos/485590/${USDCE}.png?v=5b1dbf78` }
 
 export type Say = (kind: 'ok' | 'warn', title: string, body: string) => void

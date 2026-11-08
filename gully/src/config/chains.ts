@@ -51,7 +51,7 @@ const TESTNET_CHAINS: Record<ChainKey, ChainInfo> = {
     // VITE_GULLY_RPC (optional, comma-separated) goes first, then same-origin /rpc, then the public list (config/rpc.ts)
     rpcs: gullyRpcList(env.VITE_GULLY_RPC, undefined, GULLY_PUBLIC_RPCS),
     walletRpcs: [...GULLY_WALLET_RPCS],
-    explorer: 'https://testnet-explorer.gullychain.xyz',
+    explorer: 'https://testnet.gullyscan.xyz',
     mailbox: '0x5b875dac092FcA7cE0DfEe8B7C1dbBD2c2a0cfDe',
     fromBlock: 0n,
     fastFromBlock: 0n,

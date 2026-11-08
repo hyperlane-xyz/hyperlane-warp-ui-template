@@ -100,13 +100,13 @@ describe('mainnet build (VITE_NETWORK=mainnet)', () => {
     expect(m.CHAINS.arbitrumsepolia.name).toBe('Arbitrum One');
     expect(m.CHAINS.arbitrumsepolia.explorer).toBe('https://arbiscan.io');
     expect(m.CHAINS.gullychaintestnet.id).toBe(48559);
-    expect(m.CHAINS.gullychaintestnet.explorer).toBe('https://explorer.gullychain.xyz');
+    expect(m.CHAINS.gullychaintestnet.explorer).toBe('https://gullyscan.xyz');
     const rpcs = m.CHAINS.gullychaintestnet.rpcs;
     expect(rpcs).toEqual(['https://rpc.gullychain.xyz', 'https://rpc.gullyrpc.xyz/gullychain/evm/48559']);
     for (const u of [...rpcs, ...m.CHAINS.gullychaintestnet.walletRpcs, ...m.CHAINS.arbitrumsepolia.rpcs])
       expect(u, u).not.toMatch(/testnet|sepolia|485590|rpc2\.|bridge\.gullychain\.xyz\/rpc/);
     expect(m.LINKS.faucet).toBeNull();
-    expect(m.LINKS.explorer).toBe('https://explorer.gullychain.xyz');
+    expect(m.LINKS.explorer).toBe('https://gullyscan.xyz');
     // on bridge.gullychain.xyz the same-origin /rpc still proxies to the testnet, so the mainnet list never uses it
     const { gullyRpcList, GULLY_MAINNET_PUBLIC_RPCS } = await import('./rpc');
     const host = { origin: 'https://bridge.gullychain.xyz', hostname: 'bridge.gullychain.xyz' };

@@ -54,3 +54,29 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 /.playwright-mcp/
+
+# Secrets (leak sweep 2026-10-30): env files, keys, keystores, secret dirs and DB dumps never go in git.
+# Templates stay committable: .env.example, .env.*.example, .env.sample, .env.template.
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+!.env.template
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+keystore.properties
+keystore/*
+!keystore/.gitkeep
+secrets/
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.dump
+*.sql.gz

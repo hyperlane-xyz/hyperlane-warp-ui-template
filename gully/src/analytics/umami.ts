@@ -1,5 +1,5 @@
 /**
- * Gully Chain analytics: self-hosted Umami at analytics.gullychain.xyz (gully-ops gully/umami). The tag in index.html
+ * Gully analytics: the one self-hosted Umami at analytics.gullylabs.xyz. The loader tag in index.html
  * is cookieless and honours Do Not Track, so there is no consent banner (gullychain.xyz/privacy).
  * `track` is a no-op when the script is blocked or missing. Props are coarse labels only: never an address or email.
  */

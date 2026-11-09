@@ -74,10 +74,14 @@ function MessageLifecycleStages({
 }: MessageLifecycleProps) {
   // Fast relayers can proceed before the metadata finality threshold.
   // Pickup does not prove origin finality or indexed delivery.
-  const pickedUp = relaying && originState !== ProgressState.Confirmed;
+  const originCompletedByDelivery = delivered || confirmed;
+  const pickedUp =
+    !originCompletedByDelivery && relaying && originState !== ProgressState.Confirmed;
+  const originReached =
+    originCompletedByDelivery || originState === ProgressState.Confirmed || pickedUp;
   const originTitle = pickedUp
     ? 'Picked up by relayer. Origin confirmations remain available in Advanced.'
-    : originState === ProgressState.Unavailable
+    : !originCompletedByDelivery && originState === ProgressState.Unavailable
       ? 'Origin confirmation tracking unavailable'
       : undefined;
   const stage = confirmed
@@ -99,9 +103,7 @@ function MessageLifecycleStages({
           key={label}
           aria-label={index === 1 && pickedUp ? 'Relayer picked up' : label}
           title={index === 1 ? originTitle : undefined}
-          data-reached={
-            index === 1 ? originState === ProgressState.Confirmed || pickedUp : index <= stage
-          }
+          data-reached={index === 1 ? originReached : index <= stage}
           data-current={index === currentStage}
           aria-current={index === currentStage ? 'step' : undefined}
         >
@@ -120,7 +122,9 @@ function MessageLifecycleStages({
               ? pending
               : index === 1 && pickedUp
                 ? 'Relayer picked up'
-                : index === 1 && originState === ProgressState.Unavailable
+                : index === 1 &&
+                    !originCompletedByDelivery &&
+                    originState === ProgressState.Unavailable
                   ? 'Not tracked'
                   : label}
           </span>

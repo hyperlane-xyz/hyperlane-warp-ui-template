@@ -345,10 +345,16 @@ function TransferDetailsModalInner({
         {destinationHash && (
           <div
             data-testid="destination-transaction"
-            className={`mt-3 flex items-center gap-3 rounded-lg border p-3 ${outcomeIsSuccess ? 'border-green-50/30 bg-green-50/10' : 'border-gray-400/25 bg-surface'}`}
+            className="mt-3 rounded-md border border-green-300/70 bg-green-50/10 p-3 text-green-800 dark:border-green-400 dark:bg-green-900/60 dark:text-green-100"
           >
-            <div className="min-w-0 flex-1">
-              <p className="text-xxs text-foreground-muted">Delivery transaction</p>
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
+              <p className="flex items-center gap-2 font-medium">
+                {(overviewStatus?.delivered || isDelivered) && <span aria-hidden="true">✓</span>}
+                Delivery transaction
+              </p>
+              {outcomeIsSuccess && <span>Successful delivery</span>}
+            </div>
+            <div className="mt-2 flex items-center gap-2">
               {destTxUrl ? (
                 <a
                   href={destTxUrl}
@@ -356,25 +362,25 @@ function TransferDetailsModalInner({
                   rel="noopener noreferrer"
                   aria-label="View delivery transaction on block explorer"
                   title={destinationHash}
-                  className="mt-1 inline-flex items-center gap-1 text-xs font-medium underline underline-offset-2"
+                  className="inline-flex min-w-0 items-center gap-1 text-xs font-medium underline decoration-green-300 underline-offset-4 dark:decoration-green-400"
                 >
-                  <span>
+                  <span className="break-all text-green-800 dark:text-green-100">
                     {getChainDisplayName(multiProvider, destinationChain, true)}:{' '}
                     {destinationHash.slice(0, 10)}…{destinationHash.slice(-8)}
                   </span>
                   <Image src={LinkIcon} width={13} height={13} alt="" />
                 </a>
               ) : (
-                <p className="font-mono mt-1 break-all text-xxs">{destinationHash}</p>
+                <p className="font-mono min-w-0 break-all text-xxs">{destinationHash}</p>
               )}
+              <CopyButton
+                copyValue={destinationHash}
+                width={14}
+                height={14}
+                aria-label="Copy delivery transaction hash"
+                className="shrink-0 text-foreground-muted [&_path]:fill-current [&_rect]:stroke-current"
+              />
             </div>
-            <CopyButton
-              copyValue={destinationHash}
-              width={14}
-              height={14}
-              aria-label="Copy delivery transaction hash"
-              className="text-foreground-muted [&_path]:fill-current [&_rect]:stroke-current"
-            />
           </div>
         )}
 

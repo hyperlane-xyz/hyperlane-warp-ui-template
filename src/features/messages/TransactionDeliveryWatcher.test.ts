@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { TransferStatus, type TransferHistoryItem } from '../transfer/engine/types';
 import {
+  getNextDeliveryStatus,
   prioritizeSelectedTarget,
   shouldUpdateFromOriginTx,
   shouldWatchTransfer,
@@ -9,6 +10,12 @@ import {
 import type { MessageDeliveryResult } from './useMessageDeliveryStatus';
 
 const MSG_ID = `0x${'11'.repeat(32)}`;
+
+test('keeps direct delivery pending until destination confirmation', () => {
+  expect(getNextDeliveryStatus(true, false, false)).toBe(TransferStatus.ConfirmingDestination);
+  expect(getNextDeliveryStatus(true, false, true)).toBe(TransferStatus.ConfirmedDestination);
+  expect(getNextDeliveryStatus(true, true, true)).toBe(TransferStatus.ConfirmingDestination);
+});
 
 test('only cross-chain hash-bearing failures need message recovery', () => {
   const transfer = transferItem({

@@ -33,11 +33,11 @@ export function useWatchMessages(domains: number[], messageIds: string[]) {
       useMessageStream.setState({ connection: LiveConnection.Connecting, heads: {} });
       return;
     }
-    return connectMessageStream(url, client, useMessageStream.setState);
+    return connectMessageStream(url, client, useMessageStream.setState, reconcileMessageRollback);
   }, [client, url]);
 }
 
-/** Reconcile both streamed updates and reconnect snapshots with persisted outcomes. */
+/** Reconcile streamed and reconnect snapshots when the delivery hash changes. */
 export function subscribeToMessageUpdates(client: QueryClient) {
   return client.getQueryCache().subscribe((event) => {
     if (
@@ -56,6 +56,7 @@ export function subscribeToMessageUpdates(client: QueryClient) {
       return;
     const messageId = normalizeMessageId(variables.msgId);
     const row = client.getQueryData<MessageStubEntry[]>(event.query.queryKey)?.[0];
+    if (!row?.is_delivered || !row.destination_tx_hash) return;
     // Only the execution message owns the persisted outcome. Other messages may
     // still be catching up in the indexer after a successful reveal.
     const state = useStore.getState();
@@ -67,21 +68,16 @@ export function subscribeToMessageUpdates(client: QueryClient) {
         (!item.data.destinationTxHash && item.data.status !== TransferStatus.ConfirmedDestination)
       )
         return item;
-      if (row?.is_delivered) {
-        const metadata = state.multiProvider.tryGetChainMetadata(item.data.dstChain);
-        const previousHash =
-          item.data.destinationTxHash &&
-          txHashToPostgresBytea(item.data.destinationTxHash, metadata);
-        const destinationHash = row.destination_tx_hash;
-        // A reconnect can miss both rollback and redelivery. Even a delivered
-        // snapshot must invalidate an outcome checked against a different tx.
-        if (
-          !previousHash ||
-          !destinationHash ||
-          normalizeMessageId(previousHash) === normalizeMessageId(destinationHash)
-        )
-          return item;
-      }
+      const metadata = state.multiProvider.tryGetChainMetadata(item.data.dstChain);
+      const previousHash =
+        item.data.destinationTxHash && txHashToPostgresBytea(item.data.destinationTxHash, metadata);
+      // A reconnect can miss rollback and redelivery. A conflicting delivered
+      // snapshot is still enough to invalidate the outcome checked before it.
+      if (
+        !previousHash ||
+        normalizeMessageId(previousHash) === normalizeMessageId(row.destination_tx_hash!)
+      )
+        return item;
       changed = true;
       return {
         ...item,
@@ -90,4 +86,50 @@ export function subscribeToMessageUpdates(client: QueryClient) {
     });
     if (changed) useStore.setState({ transactionHistory });
   });
+}
+
+/** Retract persisted progress only when the live stream explicitly reports a rollback. */
+export function reconcileMessageRollback(
+  previous: MessageStubEntry,
+  next: MessageStubEntry | null,
+) {
+  const messageId = normalizeMessageId(previous.msg_id);
+  const originRolledBack = next === null;
+  const state = useStore.getState();
+  let changed = false;
+  const transactionHistory = state.transactionHistory.map((item) => {
+    if (item.type !== TransactionHistoryItemType.Transfer) return item;
+    const matchesMessage = item.data.msgIds?.some(
+      ({ msgId }) => normalizeMessageId(msgId) === messageId,
+    );
+    if (!matchesMessage) return item;
+
+    if (originRolledBack) {
+      changed = true;
+      return {
+        ...item,
+        data: {
+          ...item.data,
+          status: TransferStatus.ConfirmingOrigin,
+          msgIds: undefined,
+          originBlockNumber: undefined,
+          originTxTimestamp: undefined,
+          destinationTxHash: undefined,
+        },
+      };
+    }
+
+    if (
+      next.is_delivered ||
+      normalizeMessageId(getTransferDeliveryMsgId(item.data.msgIds) ?? '') !== messageId
+    )
+      return item;
+
+    changed = true;
+    return {
+      ...item,
+      data: { ...item.data, status: TransferStatus.Bridging, destinationTxHash: undefined },
+    };
+  });
+  if (changed) useStore.setState({ transactionHistory });
 }

@@ -9,9 +9,11 @@ import {
   type TransferHistoryItem,
 } from '../transfer/engine/types';
 import { notifyTransferOutcome, useTransferStatus } from '../transfer/engine/useTransferStatus';
+import { ProgressState } from './progress';
 import { useMessageDeliveryStatus, type MessageDeliveryResult } from './useMessageDeliveryStatus';
 import { useWatchMessages } from './useMessageStream';
 import { useSolanaDestSwapStatus } from './useSolanaDestSwapStatus';
+import { useTransactionConfirmations } from './useTransactionConfirmations';
 import { getTransferDeliveryMsgId } from './utils';
 
 type DeliveryTarget = {
@@ -117,6 +119,13 @@ function DeliveryTargetWatcher({ target }: { target: DeliveryTarget }) {
   );
   const bridgeDelivered =
     delivery.isDelivered || target.status === TransferStatus.ConfirmingDestination;
+  const destinationConfirmation = useTransactionConfirmations(
+    target.destinationChain,
+    delivery.destinationTxHash,
+    delivery.isDelivered && !target.requiresDestinationOutcome,
+    delivery.destinationBlockHeight,
+  );
+  const destinationConfirmed = destinationConfirmation.data?.state === ProgressState.Confirmed;
   const solanaDestSwap = useSolanaDestSwapStatus({
     pdaAddress: target.solanaDestSwapPda,
     destinationChain: target.destinationChain,
@@ -128,11 +137,11 @@ function DeliveryTargetWatcher({ target }: { target: DeliveryTarget }) {
 
   useEffect(() => {
     if (!delivery.isDelivered && !delivery.msgIds?.length) return;
-    const nextStatus = delivery.isDelivered
-      ? target.requiresDestinationOutcome
-        ? TransferStatus.ConfirmingDestination
-        : TransferStatus.ConfirmedDestination
-      : TransferStatus.Bridging;
+    const nextStatus = getNextDeliveryStatus(
+      delivery.isDelivered,
+      target.requiresDestinationOutcome,
+      destinationConfirmed,
+    );
     if (!shouldUpdateFromOriginTx(transfer, nextStatus, delivery)) return;
     updateTransferTransactionStatus(target.id, nextStatus, {
       msgIds: delivery.msgIds,
@@ -150,10 +159,13 @@ function DeliveryTargetWatcher({ target }: { target: DeliveryTarget }) {
       hasToasted.current = true;
       notifyTransferOutcome(target.id, nextStatus);
     }
-  }, [delivery, target, transfer, updateTransferTransactionStatus]);
+  }, [delivery, destinationConfirmed, target, transfer, updateTransferTransactionStatus]);
 
   // Process execution after delivery updates. Solana uses its swap PDA; EVM uses receipts.
-  useTransferStatus(target.solanaDestSwapPda ? undefined : transfer, target.id);
+  useTransferStatus(
+    target.solanaDestSwapPda || !target.requiresDestinationOutcome ? undefined : transfer,
+    target.id,
+  );
 
   useEffect(() => {
     if (!solanaDestSwap.isDone || target.status === TransferStatus.ConfirmedDestination) return;
@@ -165,6 +177,17 @@ function DeliveryTargetWatcher({ target }: { target: DeliveryTarget }) {
   }, [solanaDestSwap.isDone, target, updateTransferTransactionStatus]);
 
   return null;
+}
+
+export function getNextDeliveryStatus(
+  isDelivered: boolean,
+  requiresDestinationOutcome: boolean,
+  destinationConfirmed: boolean,
+) {
+  if (!isDelivered) return TransferStatus.Bridging;
+  return requiresDestinationOutcome || !destinationConfirmed
+    ? TransferStatus.ConfirmingDestination
+    : TransferStatus.ConfirmedDestination;
 }
 
 export function shouldUpdateFromOriginTx(

@@ -253,8 +253,8 @@ function MessageProgressRow({
     (message.label === 'bridge' || message.label === 'warp') &&
     !transfer.destinationOutcome &&
     !transfer.solanaDestSwapPda;
-  const fundsAvailable = isDirectBridge && delivered;
   const confirmed = delivered && destinationConfirmation.data?.state === ProgressState.Confirmed;
+  const fundsAvailable = isDirectBridge && confirmed;
   const originState =
     originConfirmation.data?.state ??
     (originConfirmation.isError ? ProgressState.Unavailable : ProgressState.Pending);

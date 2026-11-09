@@ -21,6 +21,7 @@ const eventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('block'), domain: z.number().int(), headHeight: blockHeightSchema }),
   z.object({ type: z.literal('rollback'), domain: z.number().int(), toHeight: blockHeightSchema }),
 ]);
+const eventTypes = new Set(['ready', 'heartbeat', 'error', 'message_upsert', 'block', 'rollback']);
 
 export function messageStreamUrl(
   apiUrl: string,
@@ -72,6 +73,7 @@ export function connectMessageStream(
   url: string,
   client: QueryClient,
   update: (state: Partial<MessageStreamState>) => void,
+  onRollback?: (previous: MessageStubEntry, next: MessageStubEntry | null) => void,
 ) {
   let socket: WebSocket | undefined;
   let stopped = false;
@@ -117,7 +119,17 @@ export function connectMessageStream(
     current.onmessage = ({ data }) => {
       if (socket !== current) return;
       try {
-        const event = eventSchema.parse(JSON.parse(data));
+        const frame = JSON.parse(data);
+        if (
+          frame &&
+          typeof frame === 'object' &&
+          typeof frame.type === 'string' &&
+          !eventTypes.has(frame.type)
+        ) {
+          watchHeartbeat();
+          return;
+        }
+        const event = eventSchema.parse(frame);
         watchHeartbeat();
         switch (event.type) {
           case 'ready':
@@ -141,12 +153,18 @@ export function connectMessageStream(
             heads = { ...heads, [domain]: event.toHeight };
             update({ heads });
             void client.cancelQueries({ queryKey: ['messageDelivery'] });
+            const rollbacks: Array<{
+              previous: MessageStubEntry;
+              next: MessageStubEntry | null;
+            }> = [];
             client.setQueriesData<MessageStubEntry[]>({ queryKey: ['messageDelivery'] }, (rows) =>
               rows?.flatMap((row) => {
                 const next = rollbackMessage(row, domain, event.toHeight);
+                if (next !== row) rollbacks.push({ previous: row, next });
                 return next ? [next] : [];
               }),
             );
+            rollbacks.forEach(({ previous, next }) => onRollback?.(previous, next));
             void client.resetQueries({ queryKey: ['transactionConfirmations', domain] });
             refresh();
             break;

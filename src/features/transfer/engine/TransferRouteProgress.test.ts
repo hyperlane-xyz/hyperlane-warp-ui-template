@@ -186,6 +186,16 @@ describe('Transfer route stages', () => {
     ]);
   });
 
+  test('origin rollback clears completed route stages', () => {
+    const stages = getTransferRouteProgress({
+      transfer: transfer({ status: TransferStatus.ConfirmingOrigin, msgIds: undefined }),
+      bridgeDelivered: false,
+      executionDelivered: false,
+      fundsAvailable: false,
+    });
+    expect(stages.map((stage) => stage.description)).toEqual(['Confirming', 'Waiting', 'Waiting']);
+  });
+
   test('legacy records show a transfer without inventing swap details', () => {
     const stages = getTransferRouteProgress({
       transfer: transfer({

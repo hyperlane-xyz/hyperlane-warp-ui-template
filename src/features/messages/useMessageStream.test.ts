@@ -7,7 +7,7 @@ import { TransactionHistoryItemType, useStore } from '../store';
 import { TransferStatus } from '../transfer/engine/types';
 import { stringToPostgresBytea } from './queries/encoding';
 import type { MessageStubEntry } from './queries/fragments';
-import { subscribeToMessageUpdates } from './useMessageStream';
+import { reconcileMessageRollback, subscribeToMessageUpdates } from './useMessageStream';
 
 const msgId = `0x${'11'.repeat(32)}`;
 const bridgeId = `0x${'22'.repeat(32)}`;
@@ -126,13 +126,32 @@ describe('persisted delivery reconciliation', () => {
   });
 
   test.each([{ rows: [] }, { rows: [{ ...row, is_delivered: false, destination_tx_hash: null }] }])(
-    'retracts missing or rolled-back execution evidence: %j',
+    'preserves outcomes when an index snapshot lacks delivery evidence: %j',
     ({ rows }) => {
+      const history = useStore.getState().transactionHistory;
       client.setQueryData(key, rows);
-      expect(transfer().status).toBe(TransferStatus.Bridging);
-      expect(transfer().destinationTxHash).toBeUndefined();
+      expect(useStore.getState().transactionHistory).toBe(history);
+      expect(transfer().status).toBe(TransferStatus.ConfirmedDestination);
+      expect(transfer().destinationTxHash).toBe(oldHash);
     },
   );
+
+  test('explicit destination rollback retracts the persisted outcome', () => {
+    reconcileMessageRollback(row, {
+      ...row,
+      is_delivered: false,
+      destination_tx_hash: null,
+    });
+    expect(transfer().status).toBe(TransferStatus.Bridging);
+    expect(transfer().destinationTxHash).toBeUndefined();
+  });
+
+  test('explicit origin rollback clears stale dispatch evidence', () => {
+    reconcileMessageRollback(row, null);
+    expect(transfer().status).toBe(TransferStatus.ConfirmingOrigin);
+    expect(transfer().msgIds).toBeUndefined();
+    expect(transfer().destinationTxHash).toBeUndefined();
+  });
 
   test('pending bridge/commit indexing does not retract a checked reveal outcome', () => {
     client.setQueryData(['messageDelivery', { msgId: stringToPostgresBytea(bridgeId) }], []);

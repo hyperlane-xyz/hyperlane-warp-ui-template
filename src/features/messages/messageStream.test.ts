@@ -168,7 +168,8 @@ describe('live message status', () => {
     client.setQueryData(destinationConfirmation, { state: 'confirmed' });
     client.setQueryData(originConfirmation, { state: 'confirmed' });
     const update = vi.fn();
-    stop = connectMessageStream('ws://test', client, update);
+    const onRollback = vi.fn();
+    stop = connectMessageStream('ws://test', client, update, onRollback);
     socket().send({ type: 'block', domain: 56, headHeight: '210' });
     expect(update).toHaveBeenLastCalledWith({ heads: { 56: 210 } });
     socket().send({ type: 'rollback', domain: 56, toHeight: '199' });
@@ -183,9 +184,19 @@ describe('live message status', () => {
     expect(update).toHaveBeenLastCalledWith({ heads: { 56: 199 } });
     expect(client.getQueryData(destinationConfirmation)).toBeUndefined();
     expect(client.getQueryData(originConfirmation)).toEqual({ state: 'confirmed' });
+    expect(onRollback).toHaveBeenCalledWith(row, {
+      ...row,
+      is_delivered: false,
+      destination_tx_hash: null,
+      destination_block_height: null,
+    });
     socket().send({ type: 'rollback', domain: 8453, toHeight: '99' });
     expect(client.getQueryData(key)).toEqual([]);
     expect(client.getQueryData(originConfirmation)).toBeUndefined();
+    expect(onRollback).toHaveBeenLastCalledWith(
+      expect.objectContaining({ msg_id: row.msg_id }),
+      null,
+    );
   });
   it('leaves unaffected transactions intact and conservatively retracts missing heights', () => {
     expect(rollbackMessage(row, 1, 0)).toBe(row);
@@ -203,5 +214,16 @@ describe('live message status', () => {
     await vi.advanceTimersByTimeAsync(1_000);
     expect(MockSocket.instances).toHaveLength(2);
     warn.mockRestore();
+  });
+  it('ignores unknown frame types without reconnecting', async () => {
+    const update = vi.fn();
+    stop = connectMessageStream('ws://test', client, update);
+    socket().send({ type: 'future_event', data: { value: 1 } });
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(MockSocket.instances).toHaveLength(1);
+    expect(update).not.toHaveBeenCalledWith({
+      connection: LiveConnection.Disconnected,
+      heads: {},
+    });
   });
 });

@@ -4,6 +4,10 @@ import { normalizeMessageId } from './messageStream';
 
 const count = z.number().int().nonnegative();
 const outcome = z.string().nullish();
+const checkpointSignerSchema = z.object({
+  validator: z.string(),
+  location: z.string().nullish(),
+});
 const moduleSchema = z.object({
   node_id: z.string(),
   ism: z.string(),
@@ -23,6 +27,7 @@ const moduleSchema = z.object({
       threshold: count.nullish(),
       index: count.nullish(),
       root: z.string().nullish(),
+      signers: z.array(checkpointSignerSchema),
     })
     .nullish(),
   checks: z.record(z.string(), outcome).nullish(),

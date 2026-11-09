@@ -138,8 +138,26 @@ describe('message diagnostics', () => {
     expect(reconcileDiagnostics(retained, retry)).toEqual(retry);
   });
   it('never equates signatures or metadata readiness with verification', () => {
+    const signatures = {
+      collected: 2,
+      threshold: 2,
+      signers: [
+        { validator: '0x123', location: 's3://validator/checkpoints' },
+        { validator: '0x456', location: null },
+      ],
+    };
     expect(
-      ismState({ ...node, metadata_status: 'ready', signatures: { collected: 2, threshold: 2 } }),
+      readDiagnostics(
+        envelope([row('1', 'snapshot', { ...state, modules: [{ ...node, signatures }] })]),
+        id,
+      ).relayers[0].state.modules[0].signatures?.signers,
+    ).toEqual(signatures.signers);
+    expect(
+      ismState({
+        ...node,
+        metadata_status: 'ready',
+        signatures,
+      }),
     ).toBe(IsmState.Ready);
     expect(ismState({ ...node, verification: 'succeeded' })).toBe(IsmState.Verified);
     expect(ismState({ ...node, verification: 'failed' })).toBe(IsmState.Failed);

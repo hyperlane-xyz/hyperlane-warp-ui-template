@@ -36,6 +36,23 @@ const phaseStage: Record<string, number> = {
 const shortAddress = (address: string) => `${address.slice(0, 8)}…${address.slice(-6)}`;
 const humanize = (value: string) => value.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
 
+function signerKey(value: string) {
+  if (/^0x[\da-f]{40}$/i.test(value)) return value.toLowerCase();
+  if (/^0x0{24}[\da-f]{40}$/i.test(value)) return `0x${value.slice(-40).toLowerCase()}`;
+  return value;
+}
+
+function signatureLocationUrl(location?: string | null) {
+  if (!location || location === 'local') return undefined;
+  try {
+    return ['https:', 'http:', 's3:', 'gs:'].includes(new URL(location).protocol)
+      ? location
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 interface MessageLifecycleProps {
   state?: RelayState;
   delivered: boolean;
@@ -351,14 +368,19 @@ function IsmBranch({
   const memberCount = node.validators?.length ?? node.children.length;
   const aggregation =
     node.module_type === 'Aggregation' && node.threshold != null && node.children.length > 0;
-  const label = aggregation
-    ? node.threshold === node.children.length
-      ? `All ${node.children.length} checks`
-      : `Any ${node.threshold} of ${node.children.length} checks`
-    : node.module_type
-      ? moduleLabel
-      : 'Alternative';
-  const statusLabel = {
+  const hasSignatures = !!(
+    node.module_type?.endsWith('Multisig') ||
+    node.validators ||
+    node.signatures
+  );
+  const requiredCaption = aggregation
+    ? `${node.threshold} of ${node.children.length} checks required`
+    : hasSignatures && signatureThreshold != null
+      ? `${signatureThreshold}${memberCount > 0 ? ` of ${memberCount}` : ''} signatures required`
+      : undefined;
+  const collected = node.signatures?.signers.length;
+  const complete = [IsmState.Verified, IsmState.ThresholdMet, IsmState.Ready].includes(status);
+  const stateLabel = {
     [IsmState.Verified]: 'Passed',
     [IsmState.ThresholdMet]: 'Threshold met',
     [IsmState.Ready]: 'Metadata ready',
@@ -368,7 +390,19 @@ function IsmBranch({
     [IsmState.Pending]: working ? 'Checking' : 'Waiting',
     [IsmState.Unknown]: 'Not explored',
   }[status];
-  const complete = [IsmState.Verified, IsmState.ThresholdMet, IsmState.Ready].includes(status);
+  const statusLabel =
+    complete && aggregation && node.verified != null && node.threshold != null
+      ? `${Math.min(node.verified, node.threshold)}/${node.threshold} checks passed`
+      : complete && hasSignatures && collected != null && signatureThreshold != null
+        ? `${Math.min(collected, signatureThreshold)}/${signatureThreshold} signatures collected`
+        : stateLabel;
+  const signers = new Map(
+    (node.signatures?.signers ?? []).map(({ validator, location }) => [
+      signerKey(validator),
+      location,
+    ]),
+  );
+  const validators = [...new Set([...(node.validators ?? []).map(signerKey), ...signers.keys()])];
   return (
     <li
       className="ism-branch"
@@ -385,7 +419,7 @@ function IsmBranch({
       >
         <summary
           className="flex cursor-pointer list-none items-center gap-1.5 rounded px-2 py-1.5 text-xxs focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 [&::-webkit-details-marker]:hidden"
-          title={`${label} · ${statusLabel}`}
+          title={`${moduleLabel} · ${statusLabel}`}
         >
           <span className="ism-state-icon shrink-0" aria-hidden="true" key={status}>
             {complete ? (
@@ -406,12 +440,14 @@ function IsmBranch({
               </svg>
             )}
           </span>
-          <span className="min-w-0 flex-1 truncate text-xxs font-medium">{label}</span>
-          {!aggregation && node.threshold != null && memberCount > 0 && (
-            <span className="shrink-0 text-xxs tabular-nums text-foreground-muted">
-              {node.threshold}/{memberCount}
-            </span>
-          )}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-xxs font-medium">{moduleLabel}</span>
+            {requiredCaption && (
+              <span className="block truncate text-[0.6rem] text-foreground-muted">
+                {requiredCaption}
+              </span>
+            )}
+          </span>
           <span className="ism-status-label shrink-0 text-[0.6rem] text-foreground-muted">
             {statusLabel}
           </span>
@@ -440,24 +476,63 @@ function IsmBranch({
             </p>
           )}
           {expanded && <IsmAddress address={node.ism} destination={destination} />}
-          {node.signatures?.collected != null && (
+          {collected != null && (
             <div>
               <p className="tabular-nums">
-                {node.signatures.collected}
+                {collected}
                 {signatureThreshold != null ? `/${signatureThreshold}` : ''} signatures collected
               </p>
               {signatureThreshold != null && signatureThreshold > 0 && (
                 <div className="ism-quorum-track mt-1.5" aria-hidden="true">
                   <span
                     style={{
-                      width: `${Math.min(100, (node.signatures.collected / signatureThreshold) * 100)}%`,
+                      width: `${Math.min(100, (collected / signatureThreshold) * 100)}%`,
                     }}
                   />
                 </div>
               )}
             </div>
           )}
-          {node.threshold != null && <p>Threshold: {node.threshold}</p>}
+          {validators.length > 0 && (
+            <ul className="divide-y divide-gray-400/25 overflow-hidden rounded border border-gray-400/25">
+              {validators.map((validator) => {
+                const location = signers.get(validator);
+                const locationUrl = signatureLocationUrl(location);
+                const observed = signers.has(validator);
+                return (
+                  <li
+                    key={validator}
+                    className="flex min-w-0 items-center justify-between gap-2 px-2 py-1.5"
+                  >
+                    <span className="font-mono truncate" title={validator}>
+                      {shortAddress(validator)}
+                    </span>
+                    {locationUrl ? (
+                      <a
+                        href={locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={location ?? undefined}
+                        className="shrink-0 text-[0.6rem] text-[var(--ism-success)] hover:underline"
+                      >
+                        ✓ Signature observed ↗
+                      </a>
+                    ) : (
+                      <span
+                        className={
+                          observed
+                            ? 'shrink-0 text-[0.6rem] text-[var(--ism-success)]'
+                            : 'shrink-0 text-[0.6rem]'
+                        }
+                      >
+                        {observed ? '✓ Signature observed' : 'Not reported'}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           {node.signatures?.index != null && (
             <p>Checkpoint index: {node.signatures.index.toLocaleString()}</p>
           )}

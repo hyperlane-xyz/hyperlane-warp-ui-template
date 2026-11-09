@@ -797,7 +797,7 @@ html[data-theme-mode='dark'] .relay-panel {
   background: var(--color-primary-500, #9a0dff);
 }
 .relay-stages [data-current='true'] .relay-stage-track {
-  background: color-mix(in srgb, var(--color-primary-500, #9a0dff) 35%, transparent);
+  background: var(--color-primary-500, #9a0dff);
 }
 .relay-stages [data-current='true'] .relay-stage-track::after {
   content: '';

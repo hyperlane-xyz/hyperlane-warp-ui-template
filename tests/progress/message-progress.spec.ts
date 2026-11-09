@@ -326,7 +326,9 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
               ? []
               : byOriginTx
                 ? originIndexed
-                  ? ids.map((_, i) => entry(i))
+                  ? directBridge
+                    ? [entry(0)]
+                    : ids.map((_, i) => entry(i))
                   : []
                 : index < 0
                   ? []
@@ -556,7 +558,7 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     await page.setViewportSize(desktopViewport);
     if (directBridge) {
       const bridge = progress.getByRole('article', { name: 'Bridge funds' });
-      await expect(bridge.getByRole('status')).toHaveText('Delivered');
+      await expect(bridge.getByRole('status')).toHaveText('Confirming destination');
       await expect(bridge).toContainText(
         taggedFinality
           ? 'Destination confirmations'
@@ -567,13 +569,12 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         await expect(
           bridge.getByText('Destination confirmations · 0/5 · ~5s remaining', { exact: true }),
         ).toHaveCSS('margin-top', '16px');
-      await expect(outcome).toHaveText('Funds are available to use on Binance.');
-      await expect(outcome).toHaveClass(/sr-only/);
+      await expect(outcome).toHaveCount(0);
       await expect(
         page.getByText('Transfer complete! Funds have arrived.', { exact: true }),
       ).toHaveCount(0);
       await expect(bridge).not.toContainText('Funds are available to use');
-      await expect(page.getByTestId('transfer-headline')).toHaveText('Transfer complete');
+      await expect(page.getByTestId('transfer-headline')).toHaveText('Checking your funds');
       await expect(page.getByTestId('transfer-motion')).toHaveCount(0);
       const dialog = page.getByTestId('transfer-details');
       await expect(dialog.getByText('Sender Address', { exact: true })).toHaveCount(0);
@@ -660,14 +661,16 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
       expect(await progress.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
       if (swapStages) await expectCompactRoute(stages);
       await page.reload();
-      await expect(outcome).toContainText('Funds are available to use');
+      await expect(outcome).toHaveCount(0);
       destinationConfirmed = true;
       sendHeads();
       await expect(bridge.getByRole('status')).toHaveText('Confirmed', { timeout: 20_000 });
       await expect(bridge.locator('.relay-stages li[data-reached="true"]')).toHaveCount(5);
       await expect(bridge.locator('.relay-stages [aria-current="step"]')).toHaveCount(0);
       await expect(bridge.locator('.relay-live-dot')).toHaveCSS('animation-name', 'none');
-      await expect(outcome).toContainText('Funds are available to use');
+      await expect(outcome).toHaveText('Funds are available to use on Binance.');
+      await expect(outcome).toHaveClass(/sr-only/);
+      await expect(page.getByTestId('transfer-headline')).toHaveText('Transfer complete');
       const beforeIdle = snapshotRequests;
       await page.waitForTimeout(11_000);
       expect(snapshotRequests).toBe(beforeIdle);
@@ -763,30 +766,53 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
 
       if (kind === 'bridge') {
         // An old persisted inclusion height cannot prove a tx survived an origin reorg.
-        const originStage = bridge.getByRole('listitem', {
-          name: 'Origin confirmed',
-          exact: true,
-        });
         sendRelayState(0, { phase: 'ready_to_submit', modules: [] });
         await expect(bridge.getByRole('status')).toHaveText('Validated · Preparing submission');
-        for (const reconnect of [false, true]) {
-          originReorg = true;
-          const beforeSnapshot = snapshotRequests;
-          const beforeOriginReceipt = originReceiptRequests;
-          if (reconnect) liveSocket?.close();
-          else liveSocket?.send(JSON.stringify({ type: 'rollback', domain: 8453, toHeight: '99' }));
-          await expect.poll(() => snapshotRequests).toBeGreaterThan(beforeSnapshot);
-          await expect.poll(() => originReceiptRequests).toBeGreaterThan(beforeOriginReceipt);
-          liveSocket?.send(JSON.stringify({ type: 'block', domain: 8453, headHeight: '120' }));
-          await expect(originStage).toHaveAttribute('data-reached', 'false');
-          await expect(bridge.getByRole('status')).toHaveText('Confirming origin');
-          await expect(
-            bridge.getByRole('listitem', { name: 'Validated', exact: true }),
-          ).toHaveAttribute('data-reached', 'false');
-          originReorg = false;
-          liveSocket?.send(JSON.stringify({ type: 'message_upsert', data: entry(0) }));
-          await expect(originStage).toHaveAttribute('data-reached', 'true');
-        }
+        originReorg = true;
+        const beforeSnapshot = snapshotRequests;
+        const beforeOriginReceipt = originReceiptRequests;
+        liveSocket?.send(JSON.stringify({ type: 'rollback', domain: 8453, toHeight: '99' }));
+        await expect.poll(() => snapshotRequests).toBeGreaterThan(beforeSnapshot);
+        await expect.poll(() => originReceiptRequests).toBeGreaterThan(beforeOriginReceipt);
+        await expect(bridge).toHaveCount(0);
+        await expect(
+          progress.getByRole('article', { name: 'Origin transaction', exact: true }),
+        ).toBeVisible();
+        await expect(
+          stages.getByRole('group', { name: 'Transfer: Confirming', exact: true }),
+        ).toBeVisible();
+
+        originReorg = false;
+        const beforeRecovery = originSnapshotRequests;
+        liveSocket?.send(JSON.stringify({ type: 'ready' }));
+        await expect.poll(() => originSnapshotRequests).toBeGreaterThan(beforeRecovery);
+        await expect(bridge).toBeVisible();
+        await expect(
+          bridge.getByRole('listitem', { name: 'Origin confirmed', exact: true }),
+        ).toHaveAttribute('data-reached', 'true');
+
+        // A reconnect snapshot that temporarily lacks the row is not explicit rollback evidence.
+        originReorg = true;
+        const beforeReconnect = socketConnections;
+        const beforeEmptySnapshot = snapshotRequests;
+        liveSocket?.close();
+        await expect.poll(() => socketConnections).toBeGreaterThan(beforeReconnect);
+        await expect.poll(() => snapshotRequests).toBeGreaterThan(beforeEmptySnapshot);
+        await expect(bridge).toBeVisible();
+        await expect(
+          bridge.getByRole('listitem', { name: 'Origin confirmed', exact: true }),
+        ).toHaveAttribute('data-reached', 'false');
+        await expect(bridge.getByRole('status')).toHaveText('Confirming origin');
+        await expect
+          .poll(() =>
+            page.evaluate(
+              () =>
+                JSON.parse(localStorage.getItem('app-state') || '{}').state.transactionHistory[0]
+                  .data.msgIds?.length,
+            ),
+          )
+          .toBe(1);
+        originReorg = false;
       }
 
       for (const [status, message] of [

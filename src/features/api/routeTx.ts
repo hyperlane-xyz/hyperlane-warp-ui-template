@@ -11,6 +11,10 @@ export function getRouteTxs(route: RouteResponse): RouteTx[] {
   return route.txs?.length ? route.txs : route.tx ? [route.tx] : [];
 }
 
+export function isApprovalRouteTx(tx: RouteTx): boolean {
+  return 'category' in tx && (tx.category === 'approval' || tx.category === 'revoke');
+}
+
 export function isChainRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
   return 'to' in tx;
 }

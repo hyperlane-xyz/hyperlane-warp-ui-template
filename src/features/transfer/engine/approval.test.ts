@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import { isApprovalRouteTx } from '../../api/routeTx';
 import {
   ApprovalPhase,
   getApprovalPlanTransactionCount,
@@ -40,5 +41,27 @@ describe('isApprovalReadyForValidation', () => {
 
   test('does not gate routes without approval metadata', () => {
     expect(isApprovalReadyForValidation({ phase: ApprovalPhase.Idle }, false)).toBe(true);
+  });
+});
+
+// SDK routes embed permissions in txs instead of the standalone approval plan.
+describe('embedded SDK approvals', () => {
+  test.each([
+    ['approval', true],
+    ['revoke', true],
+    ['transfer', false],
+  ])('classifies %s transactions', (category, expected) => {
+    expect(
+      isApprovalRouteTx({
+        protocol: 'ethereum',
+        type: 'ethers-v5',
+        category,
+        transaction: {},
+      }),
+    ).toBe(expected);
+  });
+
+  test('does not classify raw route transactions as approvals', () => {
+    expect(isApprovalRouteTx({ to: '0x1234', data: '0x', value: '0' })).toBe(false);
   });
 });

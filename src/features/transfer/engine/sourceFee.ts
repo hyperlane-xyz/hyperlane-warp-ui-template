@@ -1,7 +1,7 @@
 import { type MultiProtocolProvider, TokenStandard } from '@hyperlane-xyz/sdk';
 import { formatError, type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
-import { getRouteTxs } from '../../api/routeTx';
+import { getRouteTxs, isApprovalRouteTx } from '../../api/routeTx';
 import type { RouteResponse } from '../../api/types';
 import { prepareRouteTransaction } from './routeTransactions';
 import type { FeeBreakdown } from './types';
@@ -160,9 +160,7 @@ async function estimateEvmLikeFeeForGasUnits(
 }
 
 function embeddedApprovalTransactionCount(routeTxs: ReturnType<typeof getRouteTxs>): number {
-  const explicitCount = routeTxs.filter(
-    (tx) => 'category' in tx && (tx.category === 'approval' || tx.category === 'revoke'),
-  ).length;
+  const explicitCount = routeTxs.filter(isApprovalRouteTx).length;
   return explicitCount || Math.max(0, routeTxs.length - 1);
 }
 

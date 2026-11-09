@@ -1,33 +1,24 @@
 import { config } from '../../consts/config';
+import { logger } from '../../utils/logger';
+import { messageSnapshotSchema } from './queries/fragments';
 
-export type GraphQLResult<T> = { type: 'success'; data: T } | { type: 'error'; error: Error };
-
-export async function executeGraphQLQuery<T = unknown>(
-  query: string,
-  variables: Record<string, unknown>,
-): Promise<GraphQLResult<T>> {
+export async function fetchMessages(
+  request: { query: string; variables: Record<string, unknown> },
+  signal: AbortSignal,
+) {
   try {
     const response = await fetch(config.explorerApiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, variables }),
+      signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
     });
-
-    if (!response.ok) {
-      return { type: 'error', error: new Error(`HTTP error: ${response.status}`) };
-    }
-
+    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
     const result = await response.json();
-
-    const [err] = result.errors ?? [];
-    if (err) {
-      return { type: 'error', error: new Error(err.message) };
-    }
-
-    return { type: 'success', data: result.data };
-  } catch (err) {
-    return { type: 'error', error: err instanceof Error ? err : new Error('Unknown error') };
+    if (result.errors?.length) throw new Error(result.errors[0].message);
+    return messageSnapshotSchema.parse(result.data).message_view;
+  } catch (error) {
+    if (!signal.aborted) logger.warn('Failed to fetch message status', error);
+    throw error;
   }
 }

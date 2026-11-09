@@ -1,6 +1,27 @@
 import { describe, expect, test } from 'vitest';
 
-import { formatDisplayAmount } from './amount';
+import { formatDisplayAmount, formatTokenAmount } from './amount';
+
+describe('formatTokenAmount', () => {
+  test('retains full precision alongside the compact display', () => {
+    expect(formatTokenAmount('1600000000000123', 18)).toEqual({
+      display: '0.0016',
+      full: '0.001600000000000123',
+    });
+  });
+
+  test.each([18, undefined])('preserves legacy decimal amounts with decimals %s', (decimals) => {
+    expect(formatTokenAmount('1.5', decimals)).toEqual({ display: '1.5', full: '1.5' });
+  });
+
+  test('labels atomic units when decimals are unknown', () => {
+    expect(formatTokenAmount('12345', undefined)).toEqual({
+      display: '12345 (atomic)',
+      full: '12345 (atomic)',
+    });
+    expect(formatTokenAmount('0', 18)).toEqual({ display: '0', full: '0' });
+  });
+});
 
 describe('formatDisplayAmount', () => {
   test('converts atomic units with token decimals before truncating', () => {

@@ -1,4 +1,4 @@
-import type { QuoteResponse, RouteResponse } from '../../api/types';
+import type { QuoteResponse, QuoteStep, RouteResponse } from '../../api/types';
 
 export type TransferMessageLabel = 'warp' | 'bridge' | 'commit' | 'reveal';
 
@@ -68,6 +68,10 @@ export interface TransferHistoryItem {
   originTxHash?: string;
   destinationTxHash?: string;
   destinationOutcome?: TransferDestinationOutcome;
+  /** Displayed route steps, retained across reloads without transaction calldata. */
+  routeSteps?: QuoteStep[];
+  /** Whether this transfer needs token permission before submission. */
+  approvalRequired?: boolean;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
   /** Unix seconds when origin tx was confirmed and delivery polling started. */

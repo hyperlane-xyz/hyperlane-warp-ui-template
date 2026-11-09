@@ -13,7 +13,8 @@ const transferBlacklist = process.env.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
 const chainWalletWhitelists = JSON.parse(process.env.NEXT_PUBLIC_CHAIN_WALLET_WHITELISTS || '{}');
 const rpcOverrides = process.env.NEXT_PUBLIC_RPC_OVERRIDES || '';
 const explorerApiUrl =
-  process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
+  process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer-api.hyperlane.xyz/graphql';
+const explorerWsUrl = process.env.NEXT_PUBLIC_EXPLORER_WS_URL || undefined;
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
 const routerApiUrl =
   process.env.NEXT_PUBLIC_ROUTER_API_URL || 'https://hyperswaps-api.hyperlane.xyz';
@@ -33,6 +34,7 @@ interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
+  explorerWsUrl?: string;
   explorerApiUrl: string; // URL for the Hyperlane Explorer GraphQL API
   relayApiUrl: string | undefined; // Optional URL for the Hyperlane Relayer API
   isDevMode: boolean; // Enables some debug features in the app
@@ -64,6 +66,7 @@ export const config: Config = Object.freeze({
   chainWalletWhitelists,
   enableExplorerLink: true,
   explorerApiUrl,
+  explorerWsUrl,
   relayApiUrl,
   defaultTransferOriginToken: 'bsc-0x0000000000000000000000000000000000000000',
   defaultTransferDestinationToken: 'base-0x0000000000000000000000000000000000000000',

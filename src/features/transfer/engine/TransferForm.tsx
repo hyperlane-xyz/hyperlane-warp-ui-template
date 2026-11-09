@@ -6,14 +6,14 @@ import {
   objLength,
   ProtocolType,
 } from '@hyperlane-xyz/utils';
-import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
+import { SpinnerIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
   getAccountAddressForChain,
   useAccounts,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
@@ -33,6 +33,7 @@ import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { trackTransferValidationFailed, trackUnsupportedRouteEvent } from '../../analytics/utils';
 import { useChains } from '../../api/hooks';
+import { getRouteTxs, isApprovalRouteTx } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useTokenBalance } from '../../balances/hooks';
 import { readBalance } from '../../balances/read';
@@ -62,7 +63,7 @@ import {
   getApprovalPlanTransactionCount,
   getApprovalTransactionCount,
   isApprovalReadyForValidation,
-  readApprovalPlan,
+  approvalQueryOptions,
   useApprovalStatus,
 } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -89,8 +90,9 @@ import {
 import { useFormInitialValues } from './useFormInitialValues';
 import { useQuote } from './useQuote';
 import { useTransfer } from './useTransfer';
-import { validateTransferForm } from './validate';
+import { validateQuote, validateTransferForm } from './validate';
 
+const REVIEW_VALIDITY_MS = 10_000;
 const PRICE_IMPACT_DANGER_PCT = -3;
 const PRICE_IMPACT_WARN_PCT = -1;
 const PCT_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
@@ -118,6 +120,7 @@ function TransferFormContent() {
     useFormikContext<TransferFormValues>();
   const hasSelectedDestinationTokenRef = useRef(false);
   const multiProvider = useMultiProvider();
+  const queryClient = useQueryClient();
   const tokenMap = useTokenByKeyMap();
   const { data: chainsResp } = useChains();
   const { account: starknetAccount } = useStarknetAccount();
@@ -334,6 +337,7 @@ function TransferFormContent() {
   useToastError(transfer.error, 'Transfer failed');
   const addTransferTransaction = useStore((s) => s.addTransferTransaction);
   const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
+  const setPreparingTransfer = useStore((s) => s.setPreparingTransfer);
   const setActiveTransferTransactionId = useStore((s) => s.setActiveTransferTransactionId);
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
   const setTransferLoading = useStore((s) => s.setTransferLoading);
@@ -492,6 +496,12 @@ function TransferFormContent() {
     ],
   );
 
+  const reviewedForm = useRef<{
+    validate: typeof validateCurrentForm;
+    approvalCount: number;
+    checkedAt: number;
+  } | null>(null);
+
   const onContinue = useCallback(async () => {
     if (
       isAmountDebouncing ||
@@ -503,6 +513,7 @@ function TransferFormContent() {
       return;
     }
     const snapshot = values;
+    reviewedForm.current = null;
     setIsValidating(true);
     try {
       const result = await validateCurrentForm(approvalTransactionCount, sourceFeeQuery.data);
@@ -522,6 +533,11 @@ function TransferFormContent() {
         return;
       }
       if (!sender || !srcToken || !dstToken || !bestRoute || !effectiveRecipient) return;
+      reviewedForm.current = {
+        validate: validateCurrentForm,
+        approvalCount: approvalTransactionCount,
+        checkedAt: Date.now(),
+      };
       const canReview = await shouldReviewRecipient({
         multiProvider,
         dstChainName,
@@ -623,69 +639,18 @@ function TransferFormContent() {
       return;
     }
 
-    // Re-validate before broadcasting. Review mode pauses useQuote, so a
-    // user can sit on review past expiresAt with a stale quote — without
-    // this check we'd happily submit it. Same call as Continue plus the
-    // current quote.expiresAt so the staleness check fires.
-    const snapshot = values;
-    let executionApprovalPlan: ApprovalPlan | null;
-    try {
-      executionApprovalPlan = await readApprovalPlan(approvalArgs, multiProvider);
-    } catch (err) {
-      logger.warn('Unable to verify token approval before transfer', err as Error);
-      const validationResult = {
-        form: 'Could not verify token approval. Please try again.',
-      };
-      trackTransferValidationFailed({
-        errors: validationResult,
-        values,
-        srcToken,
-        dstToken,
-        sender,
-        recipient: effectiveRecipient,
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setErrors(validationResult as any);
-      setIsReview(false);
-      return;
-    }
-    const validationResult = await validateCurrentForm(
-      getApprovalPlanTransactionCount(executionApprovalPlan),
-    );
-    // Same race as onContinue — if the form changed mid-validation,
-    // discard the result. In practice the inputs are disabled in review
-    // mode, but the wallet dropdown can still change the recipient.
-    if (latestValuesRef.current !== snapshot) return;
-    if (validationResult) {
-      trackTransferValidationFailed({
-        errors: validationResult,
-        values,
-        srcToken,
-        dstToken,
-        sender,
-        recipient: effectiveRecipient,
-      });
-      // Bail back to edit mode so the user sees the error and the form
-      // unpauses useQuote to refresh.
-      setErrors(validationResult);
-      setIsReview(false);
-      return;
-    }
-
-    // Drop review immediately so the form stays editable while the
-    // broadcast chain runs. Modal carries the live status.
-    setIsReview(false);
-    setTransferLoading(true);
-
     const initialStep = bestRoute.raw.steps[0];
     const finalStep = bestRoute.raw.steps[bestRoute.raw.steps.length - 1];
     const destinationSwapStep = bestRoute.raw.steps.find(
       (step): step is Extract<(typeof bestRoute.raw.steps)[number], { type: 'swap' }> =>
         step.type === 'swap' && step.chain === values.dstChain,
     );
+    const hasEmbeddedApproval = getRouteTxs(bestRoute.raw).some(isApprovalRouteTx);
     const timestamp = Date.now();
     const item: TransferHistoryItem = {
       status: TransferStatus.Preparing,
+      approvalRequired: approvalTransactionCount > 0 || hasEmbeddedApproval,
+      routeSteps: bestRoute.raw.steps,
       timestamp,
       srcChain: values.srcChain,
       dstChain: values.dstChain,
@@ -719,47 +684,118 @@ function TransferFormContent() {
             }
           : undefined,
     };
-    const transactionId = addTransferTransaction(item);
-    setSelectedTransactionId(transactionId);
-    setActiveTransferTransactionId(transactionId);
-
+    setSelectedTransactionId(null);
+    setPreparingTransfer(item);
     try {
-      // useTransfer.execute handles revoke / approve / transfer sequencing
-      // internally based on the params below.
-      await transfer.execute({
-        transactionId,
-        route: bestRoute,
-        srcChainId: values.srcChain,
-        dstChainId: values.dstChain,
-        srcToken: srcToken.address,
-        dstToken: dstToken.address,
-        amount: values.amount,
-        srcTokenSymbol: srcToken.symbol,
-        dstTokenSymbol: dstToken.symbol,
-        sender,
-        recipient: effectiveRecipient,
-        approvalToken: approval?.token,
-        spender: approval?.spender as Address | undefined,
-        approvalAmount,
-        isNative: !approval,
-        approvalPlan: executionApprovalPlan,
-      });
-    } catch {
-      // Read latest Zustand state after execute's async failure handling.
-      // This catch is only a final safety net and must not downgrade a
-      // transfer that already reached a final status.
-      const cur = useStore
-        .getState()
-        .transactionHistory.find((historyItem) => historyItem.id === transactionId);
-      if (
-        cur?.type === TransactionHistoryItemType.Transfer &&
-        !FinalTransferStatuses.includes(cur.data.status)
-      ) {
-        updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
+      // Reuse only a recent review of these exact inputs. Quote expiry is always checked.
+      const snapshot = values;
+      let executionApprovalPlan: ApprovalPlan | null;
+      try {
+        executionApprovalPlan = approvalArgs.isNative
+          ? null
+          : await queryClient.fetchQuery(approvalQueryOptions(approvalArgs, multiProvider));
+      } catch (err) {
+        logger.warn('Unable to verify token approval before transfer', err as Error);
+        const validationResult = {
+          form: 'Could not verify token approval. Please try again.',
+        };
+        trackTransferValidationFailed({
+          errors: validationResult,
+          values,
+          srcToken,
+          dstToken,
+          sender,
+          recipient: effectiveRecipient,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setErrors(validationResult as any);
+        setIsReview(false);
+        return;
+      }
+      const executionItem = {
+        ...item,
+        approvalRequired: !!executionApprovalPlan?.needsApprove || hasEmbeddedApproval,
+      };
+      if (useStore.getState().preparingTransfer === item) setPreparingTransfer(executionItem);
+      const approvalCount = getApprovalPlanTransactionCount(executionApprovalPlan);
+      const reviewed = reviewedForm.current;
+      const validationResult =
+        reviewed?.validate === validateCurrentForm &&
+        reviewed.approvalCount === approvalCount &&
+        Date.now() - reviewed.checkedAt < REVIEW_VALIDITY_MS
+          ? validateQuote({ bestRoute, quoteExpiresAt: quote?.expiresAt })
+          : await validateCurrentForm(approvalCount);
+      // Same race as onContinue — if the form changed mid-validation,
+      // discard the result. In practice the inputs are disabled in review
+      // mode, but the wallet dropdown can still change the recipient.
+      if (latestValuesRef.current !== snapshot) return;
+      if (validationResult) {
+        trackTransferValidationFailed({
+          errors: validationResult,
+          values,
+          srcToken,
+          dstToken,
+          sender,
+          recipient: effectiveRecipient,
+        });
+        // Bail back to edit mode so the user sees the error and the form
+        // unpauses useQuote to refresh.
+        setErrors(validationResult);
+        setIsReview(false);
+        return;
+      }
+
+      // Drop review immediately so the form stays editable while the
+      // broadcast chain runs. Modal carries the live status.
+      setIsReview(false);
+      setTransferLoading(true);
+
+      const transactionId = addTransferTransaction(executionItem);
+      if (useStore.getState().preparingTransfer === executionItem)
+        setSelectedTransactionId(transactionId);
+      setPreparingTransfer(null);
+      setActiveTransferTransactionId(transactionId);
+
+      try {
+        // useTransfer.execute handles revoke / approve / transfer sequencing
+        // internally based on the params below.
+        await transfer.execute({
+          transactionId,
+          route: bestRoute,
+          srcChainId: values.srcChain,
+          dstChainId: values.dstChain,
+          srcToken: srcToken.address,
+          dstToken: dstToken.address,
+          amount: values.amount,
+          srcTokenSymbol: srcToken.symbol,
+          dstTokenSymbol: dstToken.symbol,
+          sender,
+          recipient: effectiveRecipient,
+          approvalToken: approval?.token,
+          spender: approval?.spender as Address | undefined,
+          approvalAmount,
+          isNative: !approval,
+          approvalPlan: executionApprovalPlan,
+        });
+      } catch {
+        // Read latest Zustand state after execute's async failure handling.
+        // This catch is only a final safety net and must not downgrade a
+        // transfer that already reached a final status.
+        const cur = useStore
+          .getState()
+          .transactionHistory.find((historyItem) => historyItem.id === transactionId);
+        if (
+          cur?.type === TransactionHistoryItemType.Transfer &&
+          !FinalTransferStatuses.includes(cur.data.status)
+        ) {
+          updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
+        }
+      } finally {
+        setActiveTransferTransactionId(null);
+        setTransferLoading(false);
       }
     } finally {
-      setActiveTransferTransactionId(null);
-      setTransferLoading(false);
+      setPreparingTransfer(null);
     }
   }, [
     sender,
@@ -772,12 +808,16 @@ function TransferFormContent() {
     effectiveRecipient,
     validateCurrentForm,
     approvalArgs,
+    queryClient,
+    quote?.expiresAt,
+    approvalTransactionCount,
     multiProvider,
     approval,
     approvalAmount,
     transfer,
     addTransferTransaction,
     setSelectedTransactionId,
+    setPreparingTransfer,
     setActiveTransferTransactionId,
     updateTransferTransactionStatus,
     setTransferLoading,
@@ -983,7 +1023,7 @@ async function estimateStarknetExecutionFee({
   if (srcProtocol !== ProtocolType.Starknet || !route) return 0n;
   if (!account) return 0n;
 
-  const calls = getRouteTxs(route)
+  const calls = getRouteTxs(route.raw)
     .filter(isStarknetRouteTx)
     .map((tx) => tx.transaction);
   if (!calls.length) return 0n;
@@ -995,10 +1035,6 @@ async function estimateStarknetExecutionFee({
     logger.warn('Failed to estimate Starknet execution fee', err as Error);
     return 0n;
   }
-}
-
-function getRouteTxs(route: AugmentedRoute): RouteTx[] {
-  return route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
 }
 
 function routeTxReviewLabel(tx: RouteTx, symbol: string, index: number, count: number): string {
@@ -1356,7 +1392,7 @@ function ReviewTransactions({
   const approvalSpender = approval?.spender;
   const dstDecimals = dstToken?.decimals ?? 18;
   const dstSymbol = dstToken?.symbol ?? '';
-  const routeTxs = getRouteTxs(route);
+  const routeTxs = getRouteTxs(route.raw);
 
   let txNum = 0;
   return (
@@ -1498,6 +1534,22 @@ function ButtonSection({
   needsRecipient: boolean;
 }) {
   const multiProvider = useMultiProvider();
+  const [isStartingSend, setIsStartingSend] = useState(false);
+  const sendInProgress = useRef(false);
+  const isSendPending = sendPending || isStartingSend;
+
+  async function handleSend() {
+    if (sendInProgress.current || sendPending) return;
+    sendInProgress.current = true;
+    setIsStartingSend(true);
+    try {
+      await onSendTransactions();
+    } finally {
+      sendInProgress.current = false;
+      setIsStartingSend(false);
+    }
+  }
+
   const dstMetadata = dstChainName ? multiProvider.tryGetChainMetadata(dstChainName) : undefined;
   const dstDisplay = dstMetadata?.displayName ?? dstMetadata?.name ?? dstChainName ?? 'destination';
 
@@ -1559,7 +1611,7 @@ function ButtonSection({
   }
 
   let sendText = `Send to ${dstDisplay}`;
-  if (sendPending) sendText = 'Sending…';
+  if (isSendPending) sendText = 'Preparing transfer…';
   if (hasExcessivePriceImpact) sendText = priceImpactBlockMessage;
   if (blockingRouteMessage) sendText = 'Route unavailable';
 
@@ -1569,6 +1621,7 @@ function ButtonSection({
         type="button"
         color="primary"
         onClick={() => setIsReview(false)}
+        disabled={isSendPending}
         className="px-6 py-1.5 font-secondary"
       >
         <span>Edit</span>
@@ -1577,12 +1630,20 @@ function ButtonSection({
         data-testid="transfer-send"
         type="button"
         color="accent"
+<<<<<<< HEAD
         onClick={onSendTransactions}
         disabled={
           sendPending || !recipientConfirmed || hasExcessivePriceImpact || !!blockingRouteMessage
+=======
+        onClick={handleSend}
+        aria-busy={isSendPending}
+        disabled={
+          isSendPending || !recipientConfirmed || hasExcessivePriceImpact || !!blockingRouteMessage
+>>>>>>> origin/main
         }
         className="flex-1 px-3 py-1.5 font-secondary text-white"
       >
+        {isSendPending && <SpinnerIcon width={16} height={16} className="mr-2 shrink-0" />}
         {sendText}
       </SolidButton>
     </div>

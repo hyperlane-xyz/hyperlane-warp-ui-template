@@ -1,58 +1,44 @@
-/**
- * GraphQL fragments for message queries
- */
-export const messageStubFragment = `
-  id
+import { z } from 'zod';
+
+export const messageDetailFragment = `
   msg_id
-  nonce
   sender
   recipient
   is_delivered
   send_occurred_at
-  delivery_occurred_at
-  origin_chain_id
   origin_domain_id
-  origin_tx_hash
-  origin_tx_sender
-  origin_tx_recipient
-  destination_chain_id
   destination_domain_id
+  origin_tx_hash
   destination_tx_hash
-  destination_tx_sender
-  destination_tx_recipient
   message_body
-`;
-
-/**
- * Extended fragment for single message detail queries (includes block height for stage tracking)
- */
-export const messageDetailFragment = `
-  ${messageStubFragment}
   origin_block_height
+  destination_block_height
 `;
 
-/**
- * Raw message entry from GraphQL
- */
-export interface MessageStubEntry {
-  id: number;
-  msg_id: string; // bytea e.g. \\x123
-  nonce: number;
-  sender: string; // bytea
-  recipient: string; // bytea
-  is_delivered: boolean;
-  send_occurred_at: string; // e.g. "2022-08-28T17:30:15"
-  delivery_occurred_at: string | null;
-  origin_chain_id: number;
-  origin_domain_id: number;
-  origin_tx_hash: string; // bytea
-  origin_tx_sender: string; // bytea
-  origin_tx_recipient: string; // bytea
-  destination_chain_id: number;
-  destination_domain_id: number;
-  destination_tx_hash: string | null; // bytea
-  destination_tx_sender: string | null; // bytea
-  destination_tx_recipient: string | null; // bytea
-  message_body: string | null; // bytea - contains recipient and amount for warp transfers
-  origin_block_height?: number; // Only present in detail queries
-}
+// Postgres bigint columns are strings on the scraper proxy. Normalize once at the boundary.
+export const blockHeightSchema = z
+  .union([z.number(), z.string().regex(/^\d+$/)])
+  .transform(Number)
+  .pipe(z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER));
+export const messageEntrySchema = z.object({
+  msg_id: z.string(),
+  sender: z.string(),
+  recipient: z.string(),
+  is_delivered: z.boolean(),
+  send_occurred_at: z.string(),
+  origin_domain_id: z
+    .number()
+    .int()
+    .transform((domain) => domain >>> 0),
+  destination_domain_id: z
+    .number()
+    .int()
+    .transform((domain) => domain >>> 0),
+  origin_tx_hash: z.string(),
+  destination_tx_hash: z.string().nullable(),
+  message_body: z.string().nullable(),
+  origin_block_height: blockHeightSchema.nullish(),
+  destination_block_height: blockHeightSchema.nullish(),
+});
+export const messageSnapshotSchema = z.object({ message_view: z.array(messageEntrySchema) });
+export type MessageStubEntry = z.infer<typeof messageEntrySchema>;

@@ -1,8 +1,5 @@
-import type { ChainAddresses } from '@hyperlane-xyz/registry';
-import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk';
-import type { MutableRefObject } from 'react';
+import type { ChainName } from '@hyperlane-xyz/sdk';
 import { useEffect, useMemo, useRef } from 'react';
-import { toast } from 'react-toastify';
 
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
@@ -11,17 +8,16 @@ import {
   TransferStatus,
   type TransferHistoryItem,
 } from '../transfer/engine/types';
-import { useTransferStatus } from '../transfer/engine/useTransferStatus';
-import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
-import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
-import { type OriginTxMessagesResult, useOriginTxMessages } from './useOriginTxMessages';
+import { notifyTransferOutcome, useTransferStatus } from '../transfer/engine/useTransferStatus';
+import { ProgressState } from './progress';
+import { useMessageDeliveryStatus, type MessageDeliveryResult } from './useMessageDeliveryStatus';
+import { useWatchMessages } from './useMessageStream';
 import { useSolanaDestSwapStatus } from './useSolanaDestSwapStatus';
-import { useSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
+import { useTransactionConfirmations } from './useTransactionConfirmations';
 import { getTransferDeliveryMsgId } from './utils';
 
-type TransferDeliveryTarget = {
+type DeliveryTarget = {
   id: string;
-  type: typeof TransactionHistoryItemType.Transfer;
   msgId?: string;
   originTxHash?: string;
   originDomainId: number;
@@ -31,13 +27,10 @@ type TransferDeliveryTarget = {
   requiresDestinationOutcome: boolean;
 };
 
-type DeliveryTarget = TransferDeliveryTarget;
-
 const MAX_BACKGROUND_DELIVERY_TARGETS = 5;
 
 export function TransactionDeliveryWatcher() {
   const multiProvider = useMultiProvider();
-  const chainAddresses = useStore((s) => s.chainAddresses);
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
   const transferRouteByTransactionId = useStore((s) => s.transferRouteByTransactionId);
   const transactionHistory = useStore((s) => s.transactionHistory);
@@ -46,8 +39,7 @@ export function TransactionDeliveryWatcher() {
     const deliveryTargets = transactionHistory.flatMap((item): DeliveryTarget[] => {
       if (item.type !== TransactionHistoryItemType.Transfer) return [];
 
-      if (FinalTransferStatuses.includes(item.data.status) && !shouldWatchFinalTransfer(item.data))
-        return [];
+      if (!shouldWatchTransfer(item.data)) return [];
 
       const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
       if (!destinationChain) return [];
@@ -57,7 +49,6 @@ export function TransactionDeliveryWatcher() {
       return [
         {
           id: item.id,
-          type: item.type,
           msgId,
           originTxHash: item.data.originTxHash,
           originDomainId: item.data.srcChain,
@@ -65,6 +56,7 @@ export function TransactionDeliveryWatcher() {
           status: item.data.status,
           solanaDestSwapPda: item.data.solanaDestSwapPda,
           requiresDestinationOutcome:
+            !!item.data.solanaDestSwapPda ||
             !!item.data.destinationOutcome ||
             !!transferRouteByTransactionId.get(item.id)?.callCommitment,
         },
@@ -76,71 +68,64 @@ export function TransactionDeliveryWatcher() {
     );
   }, [multiProvider, selectedTransactionId, transferRouteByTransactionId, transactionHistory]);
 
+  // Watch every message in each active swap, including bridge, commit, and reveal.
+  const watchedTransfers = transactionHistory.flatMap((item) =>
+    item.type === TransactionHistoryItemType.Transfer &&
+    item.data.srcChain !== item.data.dstChain &&
+    (item.id === selectedTransactionId || targets.some((target) => target.id === item.id)) &&
+    (item.data.originTxHash || item.data.msgIds?.length)
+      ? [item.data]
+      : [],
+  );
+  useWatchMessages(
+    watchedTransfers.flatMap(({ srcChain, dstChain }) =>
+      [srcChain, dstChain].flatMap((chain) => {
+        const domain = multiProvider.tryGetDomainId(chain);
+        return domain == null ? [] : [domain];
+      }),
+    ),
+    watchedTransfers.flatMap((transfer) => transfer.msgIds?.map(({ msgId }) => msgId) ?? []),
+  );
+
   return (
     <>
       {targets.map((target) => (
-        <DeliveryTargetWatcher key={target.id} target={target} chainAddresses={chainAddresses} />
+        <DeliveryTargetWatcher key={target.id} target={target} />
       ))}
     </>
   );
 }
 
-function shouldWatchFinalTransfer(data: TransferHistoryItem): boolean {
-  if (data.status === TransferStatus.Failed) {
-    // Keep watching hash-bearing failures: wallet/RPC errors can happen
-    // after broadcast, and GraphQL/mailbox recovery may still prove delivery.
-    return !!data.originTxHash || !!getTransferDeliveryMsgId(data.msgIds);
-  }
-  return (
-    data.status === TransferStatus.ConfirmedDestination &&
-    !data.destinationTxHash &&
-    !data.solanaDestSwapPda
-  );
-}
-
-function DeliveryTargetWatcher({
-  target,
-  chainAddresses,
-}: {
-  target: DeliveryTarget;
-  chainAddresses: ChainMap<ChainAddresses>;
-}) {
+function DeliveryTargetWatcher({ target }: { target: DeliveryTarget }) {
   const multiProvider = useMultiProvider();
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
   const transferRouteByTransactionId = useStore((s) => s.transferRouteByTransactionId);
   const transfer = useStore((s) => {
-    if (target.type !== TransactionHistoryItemType.Transfer) return undefined;
     const item = s.transactionHistory.find((entry) => entry.id === target.id);
     return item?.type === TransactionHistoryItemType.Transfer ? item.data : undefined;
   });
-  const graphQlDelivery = useMessageDeliveryStatus(target.msgId, true, multiProvider);
-  const originTxMessages = useOriginTxMessages(
-    target.msgId ? undefined : target.originTxHash,
-    target.originDomainId,
-    transferRouteByTransactionId.get(target.id),
-    !target.msgId,
+  const delivery = useMessageDeliveryStatus(
+    target.msgId
+      ? { msgId: target.msgId }
+      : target.originTxHash
+        ? {
+            originTxHash: target.originTxHash,
+            originDomainId: target.originDomainId,
+            route: transferRouteByTransactionId.get(target.id),
+          }
+        : undefined,
+    true,
     multiProvider,
   );
-  const mailboxDelivery = useEvmMailboxDeliveryStatus({
-    msgId: target.msgId,
-    destinationChain: target.destinationChain,
-    chainAddresses,
-    multiProvider,
-    enabled: !!target.msgId && !graphQlDelivery.destinationTxHash,
-  });
-  const solanaMailboxDelivery = useSolanaMailboxDeliveryStatus({
-    msgId: target.msgId,
-    destinationChain: target.destinationChain,
-    chainAddresses,
-    multiProvider,
-    enabled: !!target.msgId && !graphQlDelivery.isDelivered && !mailboxDelivery.isDelivered,
-  });
-
   const bridgeDelivered =
-    graphQlDelivery.isDelivered ||
-    mailboxDelivery.isDelivered ||
-    solanaMailboxDelivery.isDelivered ||
-    target.status === TransferStatus.ConfirmingDestination;
+    delivery.isDelivered || target.status === TransferStatus.ConfirmingDestination;
+  const destinationConfirmation = useTransactionConfirmations(
+    target.destinationChain,
+    delivery.destinationTxHash,
+    delivery.isDelivered && !target.requiresDestinationOutcome,
+    delivery.destinationBlockHeight,
+  );
+  const destinationConfirmed = destinationConfirmation.data?.state === ProgressState.Confirmed;
   const solanaDestSwap = useSolanaDestSwapStatus({
     pdaAddress: target.solanaDestSwapPda,
     destinationChain: target.destinationChain,
@@ -148,177 +133,77 @@ function DeliveryTargetWatcher({
     enabled: !!target.solanaDestSwapPda && bridgeDelivered,
   });
 
-  // Transfer recovery status is centralized here so the modal stays display-only.
-  useTransferStatus(
-    transfer,
-    target.type === TransactionHistoryItemType.Transfer ? target.id : null,
-  );
   const hasToasted = useRef(false);
-  const hasUpdatedFromGraphQl = useRef(false);
-  const hasBackfilledGraphQlHash = useRef(false);
-  const hasUpdatedFromMailbox = useRef(false);
-  const hasBackfilledMailboxHash = useRef(false);
-  const hasUpdatedFromDestSwap = useRef(false);
 
   useEffect(() => {
-    hasToasted.current = false;
-    hasUpdatedFromGraphQl.current = false;
-    hasBackfilledGraphQlHash.current = false;
-    hasUpdatedFromMailbox.current = false;
-    hasBackfilledMailboxHash.current = false;
-    hasUpdatedFromDestSwap.current = false;
-  }, [target.id, target.msgId, target.originTxHash]);
-
-  useEffect(() => {
-    if (originTxMessages.msgIds?.length) {
-      const nextStatus = originTxMessages.isDelivered
-        ? target.requiresDestinationOutcome
-          ? TransferStatus.ConfirmingDestination
-          : TransferStatus.ConfirmedDestination
-        : TransferStatus.Bridging;
-      if (shouldUpdateFromOriginTx(transfer, nextStatus, originTxMessages)) {
-        updateTransferTransactionStatus(target.id, nextStatus, {
-          msgIds: originTxMessages.msgIds,
-          originBlockNumber: originTxMessages.originBlockHeight,
-          originTxTimestamp: originTxMessages.originTimestamp
-            ? Math.floor(originTxMessages.originTimestamp / 1000)
-            : undefined,
-          destinationTxHash: originTxMessages.destinationTxHash,
-        });
-      }
-      if (
-        originTxMessages.isDelivered &&
-        !target.requiresDestinationOutcome &&
-        target.status !== TransferStatus.ConfirmedDestination &&
-        !hasToasted.current
-      ) {
-        hasToasted.current = true;
-        toast.success('Transfer complete! Funds have arrived.');
-      }
-      return;
-    }
-
+    if (!delivery.isDelivered && !delivery.msgIds?.length) return;
+    const nextStatus = getNextDeliveryStatus(
+      delivery.isDelivered,
+      target.requiresDestinationOutcome,
+      destinationConfirmed,
+    );
+    if (!shouldUpdateFromOriginTx(transfer, nextStatus, delivery)) return;
+    updateTransferTransactionStatus(target.id, nextStatus, {
+      msgIds: delivery.msgIds,
+      originBlockNumber: delivery.originBlockHeight,
+      originTxTimestamp: delivery.originTimestamp
+        ? Math.floor(delivery.originTimestamp / 1000)
+        : undefined,
+      destinationTxHash: delivery.destinationTxHash,
+    });
     if (
-      graphQlDelivery.isDelivered &&
-      shouldUpdateFromDelivery(
-        hasUpdatedFromGraphQl,
-        hasBackfilledGraphQlHash,
-        graphQlDelivery.destinationTxHash,
-      )
+      nextStatus === TransferStatus.ConfirmedDestination &&
+      target.status !== nextStatus &&
+      !hasToasted.current
     ) {
-      hasUpdatedFromGraphQl.current = true;
-      if (graphQlDelivery.destinationTxHash) hasBackfilledGraphQlHash.current = true;
-      const nextStatus = target.requiresDestinationOutcome
-        ? TransferStatus.ConfirmingDestination
-        : TransferStatus.ConfirmedDestination;
-      updateTransferTransactionStatus(target.id, nextStatus, {
-        destinationTxHash: graphQlDelivery.destinationTxHash,
-      });
-      if (
-        !target.requiresDestinationOutcome &&
-        target.status !== TransferStatus.ConfirmedDestination &&
-        !hasToasted.current
-      ) {
-        hasToasted.current = true;
-        toast.success('Transfer complete! Funds have arrived.');
-      }
-      return;
-    }
-
-    const isDirectDelivered = mailboxDelivery.isDelivered || solanaMailboxDelivery.isDelivered;
-    const directDeliveryTxHash = mailboxDelivery.isDelivered
-      ? mailboxDelivery.destinationTxHash
-      : solanaMailboxDelivery.destinationTxHash;
-    if (
-      isDirectDelivered &&
-      shouldUpdateFromDelivery(
-        hasUpdatedFromMailbox,
-        hasBackfilledMailboxHash,
-        directDeliveryTxHash,
-      )
-    ) {
-      hasUpdatedFromMailbox.current = true;
-      if (directDeliveryTxHash) hasBackfilledMailboxHash.current = true;
-      const nextStatus = target.requiresDestinationOutcome
-        ? TransferStatus.ConfirmingDestination
-        : TransferStatus.ConfirmedDestination;
-      updateTransferTransactionStatus(target.id, nextStatus, {
-        destinationTxHash: directDeliveryTxHash,
-      });
-      if (
-        !target.requiresDestinationOutcome &&
-        target.status !== TransferStatus.ConfirmedDestination &&
-        !hasToasted.current
-      ) {
-        hasToasted.current = true;
-        toast.success('Transfer complete! Funds have arrived.');
-      }
-    }
-  }, [
-    graphQlDelivery.destinationTxHash,
-    graphQlDelivery.isDelivered,
-    mailboxDelivery.destinationTxHash,
-    mailboxDelivery.isDelivered,
-    originTxMessages,
-    originTxMessages.destinationTxHash,
-    originTxMessages.isDelivered,
-    originTxMessages.msgIds,
-    originTxMessages.originBlockHeight,
-    originTxMessages.originTimestamp,
-    solanaMailboxDelivery.destinationTxHash,
-    solanaMailboxDelivery.isDelivered,
-    target,
-    transfer,
-    updateTransferTransactionStatus,
-  ]);
-
-  useEffect(() => {
-    if (!solanaDestSwap.isDone || hasUpdatedFromDestSwap.current) return;
-    hasUpdatedFromDestSwap.current = true;
-    updateTransferTransactionStatus(target.id, TransferStatus.ConfirmedDestination);
-    if (target.status !== TransferStatus.ConfirmedDestination && !hasToasted.current) {
       hasToasted.current = true;
-      toast.success('Transfer complete! Funds have arrived.');
+      notifyTransferOutcome(target.id, nextStatus);
+    }
+  }, [delivery, destinationConfirmed, target, transfer, updateTransferTransactionStatus]);
+
+  // Process execution after delivery updates. Solana uses its swap PDA; EVM uses receipts.
+  useTransferStatus(
+    target.solanaDestSwapPda || !target.requiresDestinationOutcome ? undefined : transfer,
+    target.id,
+  );
+
+  useEffect(() => {
+    if (!solanaDestSwap.isDone || target.status === TransferStatus.ConfirmedDestination) return;
+    updateTransferTransactionStatus(target.id, TransferStatus.ConfirmedDestination);
+    if (!hasToasted.current) {
+      hasToasted.current = true;
+      notifyTransferOutcome(target.id, TransferStatus.ConfirmedDestination);
     }
   }, [solanaDestSwap.isDone, target, updateTransferTransactionStatus]);
 
   return null;
 }
 
-function shouldUpdateFromDelivery(
-  hasUpdated: MutableRefObject<boolean>,
-  hasBackfilledHash: MutableRefObject<boolean>,
-  destinationTxHash: string | undefined,
+export function getNextDeliveryStatus(
+  isDelivered: boolean,
+  requiresDestinationOutcome: boolean,
+  destinationConfirmed: boolean,
 ) {
-  if (!hasUpdated.current) return true;
-  return !!destinationTxHash && !hasBackfilledHash.current;
+  if (!isDelivered) return TransferStatus.Bridging;
+  return requiresDestinationOutcome || !destinationConfirmed
+    ? TransferStatus.ConfirmingDestination
+    : TransferStatus.ConfirmedDestination;
 }
 
 export function shouldUpdateFromOriginTx(
   transfer: TransferHistoryItem | undefined,
   nextStatus: TransferStatus,
-  originTxMessages: OriginTxMessagesResult,
+  originTxMessages: MessageDeliveryResult,
 ) {
   if (!transfer) return true;
 
-  const nextOriginTxTimestamp = originTxMessages.originTimestamp
-    ? Math.floor(originTxMessages.originTimestamp / 1000)
-    : undefined;
-
   return (
     transfer.status !== nextStatus ||
-    shouldBackfillMsgIds(transfer.msgIds, originTxMessages.msgIds) ||
+    (!!originTxMessages.msgIds?.length && !transfer.msgIds?.length) ||
     (transfer.originBlockNumber == null && originTxMessages.originBlockHeight != null) ||
-    (transfer.originTxTimestamp == null && nextOriginTxTimestamp != null) ||
+    (transfer.originTxTimestamp == null && !!originTxMessages.originTimestamp) ||
     (transfer.destinationTxHash == null && originTxMessages.destinationTxHash != null)
   );
-}
-
-function shouldBackfillMsgIds(
-  current: Array<{ msgId: string; label: string }> | undefined,
-  recovered: Array<{ msgId: string; label: string }> | undefined,
-) {
-  return !!recovered?.length && (!current || current.length === 0);
 }
 
 export function prioritizeSelectedTarget<T extends { id: string }>(
@@ -335,4 +220,16 @@ export function prioritizeSelectedTarget<T extends { id: string }>(
     ...targets.slice(selectedIndex + 1),
     targets[selectedIndex],
   ];
+}
+
+export function shouldWatchTransfer(data: TransferHistoryItem): boolean {
+  if (data.srcChain === data.dstChain) return false;
+  if (!FinalTransferStatuses.includes(data.status)) return true;
+  if (data.status === TransferStatus.Failed)
+    return !!data.originTxHash || !!getTransferDeliveryMsgId(data.msgIds);
+  return (
+    data.status === TransferStatus.ConfirmedDestination &&
+    !data.destinationTxHash &&
+    !data.solanaDestSwapPda
+  );
 }

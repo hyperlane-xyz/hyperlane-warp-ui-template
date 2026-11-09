@@ -1,104 +1,135 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 
-import { logger } from '../../utils/logger';
-import { executeGraphQLQuery } from './graphqlClient';
-import { buildMessageByIdQuery } from './queries/build';
-import { parseTimestamp, postgresByteaToTxHash } from './queries/encoding';
+import type { RouteResponse } from '../api/types';
+import { labelTransferMessages } from '../transfer/engine/messages';
+import type { LabeledMsgId } from '../transfer/engine/types';
+import { fetchMessages } from './graphqlClient';
+import { LiveConnection } from './messageStream';
+import { buildMessageByIdQuery, buildMessagesByOriginTxQuery } from './queries/build';
+import {
+  parseTimestamp,
+  postgresByteaToTxHash,
+  postgresByteaToString,
+  postgresByteaToAddress,
+} from './queries/encoding';
 import type { MessageStubEntry } from './queries/fragments';
+import { useMessageStream } from './useMessageStream';
+import { getTransferDeliveryMsgId } from './utils';
 
-const POLL_INTERVAL_MS = 10_000;
-const DELIVERED_HASH_BACKFILL_WINDOW_MS = 2 * 60 * 1_000;
-
+type MessageLookup =
+  | { msgId: string }
+  | { originTxHash: string; originDomainId: number; route?: RouteResponse };
 export interface MessageDeliveryResult {
-  /** Whether the message has been delivered on destination */
   isDelivered: boolean;
-  /** Destination transaction hash (only when delivered) */
   destinationTxHash?: string;
-  /** Origin timestamp in ms */
   originTimestamp?: number;
-  /** Origin block height from GraphQL (fallback for page refresh) */
   originBlockHeight?: number;
-  /** Loading state */
-  isLoading: boolean;
+  destinationBlockHeight?: number;
+  msgIds?: LabeledMsgId[];
+  error?: Error | null;
+  message?: {
+    originDomain: number;
+    destinationDomain: number;
+    body?: string;
+    originTxHash: string;
+    sender: string;
+    recipient: string;
+  };
 }
 
-/**
- * Queries GraphQL for a single message by msgId.
- * Polls while the modal is open and message is not yet delivered.
- */
+/** A snapshot by message ID or origin transaction, kept current by the shared stream. */
 export function useMessageDeliveryStatus(
-  msgId: string | undefined,
-  isOpen: boolean,
+  lookup: MessageLookup | undefined,
+  enabled: boolean,
   multiProvider: MultiProtocolProvider,
 ): MessageDeliveryResult {
-  const deliveredWithoutHashFirstSeenAt = useRef<number | undefined>(undefined);
-  const isMultiProviderReady = multiProvider.getKnownChainNames().length > 0;
-
-  useEffect(() => {
-    deliveredWithoutHashFirstSeenAt.current = undefined;
-  }, [msgId]);
-
-  const { data, isLoading } = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable, adding it causes unnecessary refetches
-    queryKey: ['messageDelivery', msgId, isMultiProviderReady],
-    queryFn: async () => {
-      if (!msgId) return null;
-      const queryData = buildMessageByIdQuery(msgId);
-      const result = await executeGraphQLQuery<{ message_view: MessageStubEntry[] }>(
-        queryData.query,
-        queryData.variables,
-      );
-      if (result.type === 'error') {
-        logger.error('Failed to query message delivery status', result.error);
-        return null;
-      }
-      const entry = result.data.message_view?.[0];
-      if (!entry) return null;
-      return parseDeliveryResult(entry, multiProvider);
-    },
-    enabled: !!msgId && isOpen && isMultiProviderReady,
+  const connection = useMessageStream((state) => state.connection);
+  const ready = multiProvider.getKnownChainNames().length > 0;
+  const request =
+    lookup &&
+    ('msgId' in lookup
+      ? buildMessageByIdQuery(lookup.msgId)
+      : buildMessagesByOriginTxQuery(
+          lookup.originTxHash,
+          lookup.originDomainId,
+          multiProvider.tryGetChainMetadata(lookup.originDomainId),
+        ));
+  const byOriginTx = lookup && 'originTxHash' in lookup;
+  const route = byOriginTx ? lookup.route : undefined;
+  const { data: entries, error } = useQuery({
+    queryKey: ['messageDelivery', request?.variables],
+    queryFn: ({ signal }) => (request ? fetchMessages(request, signal) : []),
+    enabled: enabled && ready && !!request,
     staleTime: 30_000,
-    refetchInterval: (query) => {
-      const result = query.state.data;
-      if (!result?.isDelivered) {
-        deliveredWithoutHashFirstSeenAt.current = undefined;
-        return POLL_INTERVAL_MS;
-      }
-      if (result.destinationTxHash) return false;
-
-      deliveredWithoutHashFirstSeenAt.current ??= Date.now();
-      const backfillElapsedMs = Date.now() - deliveredWithoutHashFirstSeenAt.current;
-      if (backfillElapsedMs >= DELIVERED_HASH_BACKFILL_WINDOW_MS) return false;
-
-      return POLL_INTERVAL_MS;
-    },
-    refetchOnWindowFocus: false,
+    refetchInterval: (query) =>
+      // Discover indexed messages before their IDs can enter the targeted stream.
+      (byOriginTx && !recoverMessageIds(query.state.data, route, multiProvider)) ||
+      connection !== LiveConnection.Connected ||
+      query.state.status === 'error'
+        ? 10_000
+        : false,
   });
-
-  return {
-    isDelivered: data?.isDelivered ?? false,
-    destinationTxHash: data?.destinationTxHash,
-    originTimestamp: data?.originTimestamp,
-    originBlockHeight: data?.originBlockHeight,
-    isLoading,
-  };
+  const data = useMemo(() => {
+    if (!entries?.length) return { isDelivered: false };
+    const originMetadata = multiProvider.tryGetChainMetadata(entries[0].origin_domain_id);
+    const msgIds = byOriginTx ? recoverMessageIds(entries, route, multiProvider) : undefined;
+    const deliveryId = getTransferDeliveryMsgId(msgIds);
+    const entry =
+      entries.find((row) => postgresByteaToString(row.msg_id) === deliveryId) ??
+      entries[entries.length - 1];
+    const destinationMetadata = multiProvider.tryGetChainMetadata(entry.destination_domain_id);
+    const isDelivered = entry.is_delivered && (!byOriginTx || !!msgIds);
+    return {
+      msgIds,
+      isDelivered,
+      destinationTxHash:
+        isDelivered && entry.destination_tx_hash
+          ? postgresByteaToTxHash(entry.destination_tx_hash, destinationMetadata)
+          : undefined,
+      originTimestamp: parseTimestamp(entry.send_occurred_at),
+      originBlockHeight: entry.origin_block_height ?? undefined,
+      destinationBlockHeight: entry.destination_block_height ?? undefined,
+      message: {
+        originDomain: entry.origin_domain_id,
+        destinationDomain: entry.destination_domain_id,
+        body: entry.message_body ? postgresByteaToString(entry.message_body) : undefined,
+        originTxHash: postgresByteaToTxHash(entry.origin_tx_hash, originMetadata),
+        sender: postgresByteaToAddress(entry.sender, originMetadata),
+        recipient: postgresByteaToAddress(entry.recipient, destinationMetadata),
+      },
+    };
+  }, [entries, byOriginTx, route, multiProvider]);
+  return { ...data, error };
 }
 
-function parseDeliveryResult(
-  entry: MessageStubEntry,
+/** Wait for a known EVM CCS route's full dispatch set before choosing its delivery message. */
+export function recoverMessageIds(
+  entries: MessageStubEntry[] | undefined,
+  route: RouteResponse | undefined,
   multiProvider: MultiProtocolProvider,
-): Omit<MessageDeliveryResult, 'isLoading'> {
-  const destMetadata = multiProvider.tryGetChainMetadata(entry.destination_domain_id);
-
-  return {
-    isDelivered: entry.is_delivered,
-    destinationTxHash:
-      entry.is_delivered && entry.destination_tx_hash
-        ? postgresByteaToTxHash(entry.destination_tx_hash, destMetadata)
-        : undefined,
-    originTimestamp: parseTimestamp(entry.send_occurred_at),
-    originBlockHeight: entry.origin_block_height,
-  };
+): LabeledMsgId[] | undefined {
+  if (!entries?.length) return undefined;
+  const originMetadata = multiProvider.tryGetChainMetadata(entries[0].origin_domain_id);
+  const messages = labelTransferMessages(
+    entries.map((row) => ({
+      msgId: postgresByteaToString(row.msg_id),
+      sender: postgresByteaToAddress(row.sender, originMetadata),
+      body: row.message_body ? postgresByteaToString(row.message_body) : undefined,
+    })),
+    route,
+  );
+  const bridge = route?.steps.find((step) => step.type === 'bridge');
+  // Solana destinations use a different dispatch shape; callCommitment alone
+  // does not imply separate commit and reveal messages there.
+  if (
+    route?.callCommitment &&
+    bridge &&
+    multiProvider.tryGetChainMetadata(bridge.destChain)?.protocol === ProtocolType.Ethereum &&
+    !['bridge', 'commit', 'reveal'].every((label) => messages.some((msg) => msg.label === label))
+  )
+    return undefined;
+  return messages;
 }

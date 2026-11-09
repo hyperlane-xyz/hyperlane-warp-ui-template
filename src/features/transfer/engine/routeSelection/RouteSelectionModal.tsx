@@ -250,7 +250,12 @@ function JsonView({ routes }: { routes: AugmentedRoute[] }) {
 
   return (
     <div className="relative">
-      <CopyButton copyValue={json} width={14} height={14} className="absolute right-2 top-2 z-10" />
+      <CopyButton
+        copyValue={json}
+        width={14}
+        height={14}
+        className="absolute right-2 top-2 z-10 text-foreground-muted [&_path]:fill-current [&_rect]:stroke-current"
+      />
       <pre className="font-mono overflow-x-auto whitespace-pre-wrap break-all rounded bg-gray-50 p-3 pt-8 text-xs dark:bg-white/5 dark:text-foreground-primary">
         {json}
       </pre>

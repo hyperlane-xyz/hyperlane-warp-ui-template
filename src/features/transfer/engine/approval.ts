@@ -1,5 +1,5 @@
 import { EvmTokenAdapter, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 
 import { useMultiProvider } from '../../chains/hooks';
@@ -31,7 +31,7 @@ export interface ApprovalPlan {
 
 export function getApprovalTransactionCount(status: ApprovalStatus): number {
   // If the quote-time allowance read fails, reserve the classic ERC20 worst case.
-  // Execution performs a fresh exact check before broadcasting either transaction.
+  // Send refreshes failed or stale allowance checks before execution.
   if (status.phase === ApprovalPhase.NeedsRevoke || status.phase === ApprovalPhase.Failed) return 2;
   if (status.phase === ApprovalPhase.NeedsApprove) return 1;
   return 0;
@@ -84,10 +84,7 @@ export async function readApprovalPlan(
   return { needsApprove, needsRevoke };
 }
 
-// Reactive read hook used by the review modal to preview "Revoke /
-// Approve / Transfer" transactions before the user clicks Send. The actual
-// broadcast logic lives in useTransfer.execute (plain async, no hook), so
-// this is purely for UI state.
+// Shared allowance read for the review and Send. Broadcasting remains in useTransfer.execute.
 //
 // Uses EvmTokenAdapter — works uniformly for EVM and Tron through
 // MultiProtocolProvider's per-protocol dispatch (Tron's TronJsonRpcProvider
@@ -99,18 +96,9 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
   const enabled = !!chainName && !!token && !!owner && !!spender && !isNative && amount != null;
 
   const { data, isPending, isError } = useQuery({
-    queryKey: [
-      'erc20-allowance',
-      chainName,
-      token?.toLowerCase(),
-      owner,
-      spender?.toLowerCase(),
-      amount?.toString() ?? null,
-    ],
-    queryFn: () => readApprovalPlan(args, multiProvider),
+    ...approvalQueryOptions(args, multiProvider),
     enabled,
     refetchInterval: ALLOWANCE_REFRESH_MS,
-    staleTime: ALLOWANCE_REFRESH_MS,
   });
 
   if (isNative) return { phase: ApprovalPhase.Native };
@@ -120,4 +108,20 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
   if (data.needsApprove && data.needsRevoke) return { phase: ApprovalPhase.NeedsRevoke };
   if (data.needsApprove) return { phase: ApprovalPhase.NeedsApprove };
   return { phase: ApprovalPhase.Ready };
+}
+
+// Share the review's fresh allowance read with Send; stale plans are fetched again.
+export function approvalQueryOptions(args: AllowanceArgs, multiProvider: MultiProtocolProvider) {
+  return queryOptions({
+    queryKey: [
+      'erc20-allowance',
+      args.chainName,
+      args.token?.toLowerCase(),
+      args.owner,
+      args.spender?.toLowerCase(),
+      args.amount?.toString() ?? null,
+    ],
+    queryFn: () => readApprovalPlan(args, multiProvider),
+    staleTime: ALLOWANCE_REFRESH_MS,
+  });
 }

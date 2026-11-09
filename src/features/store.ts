@@ -139,6 +139,9 @@ export interface AppState {
   transferRouteByTransactionId: Map<string, RouteResponse>;
   setTransferRoute: (transactionId: string, route: RouteResponse) => void;
   failUnconfirmedTransactions: () => void;
+  // Draft shown during preflight; never persisted as a submitted transfer.
+  preparingTransfer: TransferHistoryItem | null;
+  setPreparingTransfer: (transfer: TransferHistoryItem | null) => void;
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
   activeTransferTransactionId: string | null;
@@ -268,6 +271,8 @@ export const useStore = create<AppState>()(
           }),
         }));
       },
+      preparingTransfer: null,
+      setPreparingTransfer: (preparingTransfer) => set({ preparingTransfer }),
       selectedTransactionId: null,
       setSelectedTransactionId: (selectedTransactionId) => {
         set(() => ({ selectedTransactionId }));

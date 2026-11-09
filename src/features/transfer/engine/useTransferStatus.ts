@@ -61,6 +61,24 @@ export async function detectDestinationOutcome(
   return 'dest_failed';
 }
 
+// The open receipt owns outcome feedback. Background transfers still notify.
+export function notifyTransferOutcome(
+  transactionId: string,
+  status:
+    | TransferStatus.ConfirmedDestination
+    | TransferStatus.FailedRecovered
+    | TransferStatus.DestFailed,
+) {
+  if (useStore.getState().selectedTransactionId === transactionId) return;
+  if (status === TransferStatus.ConfirmedDestination) {
+    toast.success('Transfer complete! Funds have arrived.');
+  } else if (status === TransferStatus.FailedRecovered) {
+    toast.info('Transfer failed — intermediate token returned to your wallet.');
+  } else {
+    toast.error('Transfer failed — please contact support, your funds may be in your ICA.');
+  }
+}
+
 // Fires once when the REVEAL tx hash lands on a transfer. Reads the receipt
 // directly from the destination chain RPC to determine outcome without polling
 // the engine.
@@ -73,7 +91,6 @@ export function useTransferStatus(
   );
   const updateStatus = useStore((s) => s.updateTransferTransactionStatus);
   const multiProvider = useMultiProvider();
-  const lastProcessedTxRef = useRef<string | null>(null);
   const retryTxHashRef = useRef<string | null>(null);
   const retryAttemptRef = useRef(0);
   const [retryTick, setRetryTick] = useState(0);
@@ -98,9 +115,12 @@ export function useTransferStatus(
       retryTxHashRef.current = destinationTxHash;
       retryAttemptRef.current = 0;
     }
-    if (status && FinalTransferStatuses.includes(status)) return undefined;
-    if (lastProcessedTxRef.current === destinationTxHash) return undefined;
-    lastProcessedTxRef.current = destinationTxHash;
+    // Read the latest status: an earlier effect may already have completed this
+    // transfer, including React's development effect replay.
+    const currentStatus =
+      useStore.getState().transactionHistory.find((item) => item.id === transactionId)?.data
+        .status ?? status;
+    if (currentStatus && FinalTransferStatuses.includes(currentStatus)) return undefined;
 
     const destinationSwapStep = route?.steps.find(
       (step): step is Extract<NonNullable<typeof route>['steps'][number], { type: 'swap' }> =>
@@ -108,12 +128,9 @@ export function useTransferStatus(
     );
 
     // No destination execution step on this ICA route: cross-chain delivery is success.
-    if (
-      !destinationOutcome &&
-      (!route?.callCommitment || !destinationSwapStep || destinationSwapStep.type !== 'swap')
-    ) {
+    if (!destinationOutcome && (!route?.callCommitment || !destinationSwapStep)) {
       updateStatus(transactionId, TransferStatus.ConfirmedDestination);
-      toast.success('Transfer complete! Funds have arrived.');
+      notifyTransferOutcome(transactionId, TransferStatus.ConfirmedDestination);
       return undefined;
     }
 
@@ -129,7 +146,6 @@ export function useTransferStatus(
     }
 
     if (!provider) {
-      lastProcessedTxRef.current = null;
       scheduleRetry();
       return () => {
         cancelled = true;
@@ -149,20 +165,17 @@ export function useTransferStatus(
     )
       .then((outcome) => {
         if (cancelled) return;
-        if (outcome === 'success') {
-          updateStatus(transactionId, TransferStatus.ConfirmedDestination);
-          toast.success('Transfer complete! Funds have arrived.');
-        } else if (outcome === 'failed_recovered') {
-          updateStatus(transactionId, TransferStatus.FailedRecovered);
-          toast.success('Transfer failed — intermediate token returned to your wallet.');
-        } else {
-          updateStatus(transactionId, TransferStatus.DestFailed);
-          toast.error('Transfer failed — please contact support, your funds may be in your ICA.');
-        }
+        const outcomeStatus =
+          outcome === 'success'
+            ? TransferStatus.ConfirmedDestination
+            : outcome === 'failed_recovered'
+              ? TransferStatus.FailedRecovered
+              : TransferStatus.DestFailed;
+        updateStatus(transactionId, outcomeStatus);
+        notifyTransferOutcome(transactionId, outcomeStatus);
       })
       .catch(() => {
         if (cancelled) return;
-        lastProcessedTxRef.current = null;
         scheduleRetry();
       });
 

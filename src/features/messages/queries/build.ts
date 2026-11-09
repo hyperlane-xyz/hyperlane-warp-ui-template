@@ -4,8 +4,9 @@ import { stringToPostgresBytea, txHashToPostgresBytea } from './encoding';
 import { messageDetailFragment } from './fragments';
 
 const MESSAGE_BY_ID_QUERY = `
-  query MessageById($msgId: bytea!) @cached(ttl: 5) {
+  query MessageById($msgId: bytea!) {
     message_view(
+      confirmations: 0,
       where: {msg_id: {_eq: $msgId}},
       limit: 1
     ) {
@@ -15,8 +16,9 @@ const MESSAGE_BY_ID_QUERY = `
 `;
 
 const MESSAGES_BY_ORIGIN_TX_QUERY = `
-  query MessagesByOriginTx($originTxHash: bytea!, $originDomainId: Int!) @cached(ttl: 5) {
+  query MessagesByOriginTx($originTxHash: bytea!, $originDomainId: Int!) {
     message_view(
+      confirmations: 0,
       where: {
         _and: [
           {origin_tx_hash: {_eq: $originTxHash}},

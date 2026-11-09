@@ -1,10 +1,30 @@
 import { describe, expect, test } from 'vitest';
 
 import { TransferStatus, type TransferHistoryItem } from '../transfer/engine/types';
-import { prioritizeSelectedTarget, shouldUpdateFromOriginTx } from './TransactionDeliveryWatcher';
-import type { OriginTxMessagesResult } from './useOriginTxMessages';
+import {
+  getNextDeliveryStatus,
+  prioritizeSelectedTarget,
+  shouldUpdateFromOriginTx,
+  shouldWatchTransfer,
+} from './TransactionDeliveryWatcher';
+import type { MessageDeliveryResult } from './useMessageDeliveryStatus';
 
 const MSG_ID = `0x${'11'.repeat(32)}`;
+
+test('keeps direct delivery pending until destination confirmation', () => {
+  expect(getNextDeliveryStatus(true, false, false)).toBe(TransferStatus.ConfirmingDestination);
+  expect(getNextDeliveryStatus(true, false, true)).toBe(TransferStatus.ConfirmedDestination);
+  expect(getNextDeliveryStatus(true, true, true)).toBe(TransferStatus.ConfirmingDestination);
+});
+
+test('only cross-chain hash-bearing failures need message recovery', () => {
+  const transfer = transferItem({
+    status: TransferStatus.Failed,
+    originTxHash: `0x${'22'.repeat(32)}`,
+  });
+  expect(shouldWatchTransfer(transfer)).toBe(true);
+  expect(shouldWatchTransfer({ ...transfer, dstChain: transfer.srcChain })).toBe(false);
+});
 
 describe('shouldUpdateFromOriginTx', () => {
   test('does not update when recovered origin tx data is already stored', () => {
@@ -74,13 +94,12 @@ describe('prioritizeSelectedTarget', () => {
   });
 });
 
-function originTxMessages(overrides: Partial<OriginTxMessagesResult> = {}): OriginTxMessagesResult {
+function originTxMessages(overrides: Partial<MessageDeliveryResult> = {}): MessageDeliveryResult {
   return {
     msgIds: [{ msgId: MSG_ID, label: 'bridge' }],
     isDelivered: false,
     originTimestamp: 1_718_000_000_000,
     originBlockHeight: 123,
-    isLoading: false,
     ...overrides,
   };
 }

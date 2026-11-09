@@ -1630,16 +1630,10 @@ function ButtonSection({
         data-testid="transfer-send"
         type="button"
         color="accent"
-<<<<<<< HEAD
-        onClick={onSendTransactions}
-        disabled={
-          sendPending || !recipientConfirmed || hasExcessivePriceImpact || !!blockingRouteMessage
-=======
         onClick={handleSend}
         aria-busy={isSendPending}
         disabled={
           isSendPending || !recipientConfirmed || hasExcessivePriceImpact || !!blockingRouteMessage
->>>>>>> origin/main
         }
         className="flex-1 px-3 py-1.5 font-secondary text-white"
       >

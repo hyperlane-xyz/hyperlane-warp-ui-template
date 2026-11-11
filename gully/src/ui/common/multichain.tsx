@@ -186,7 +186,7 @@ export function RecipientField({ b }: { b: BridgeState }) {
 export function GasDropNote({ b }: { b: BridgeState }) {
   const g = b.gasInfo;
   if (!g || !b.option) return null;
-  const sym = b.option.receive.symbol;
+  const sym = b.quote?.receiveSymbol || b.option.receive.symbol;
   return (
     <p className="note gas-note" role="status">
       <Icon name="droplet" size={16} />

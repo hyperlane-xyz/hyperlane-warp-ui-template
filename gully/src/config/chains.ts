@@ -241,7 +241,7 @@ const TESTNET_CANONICAL = {
 
 /**
  * GullyGasDrop on GullyChain (gully-ops): a small ETH drop for gas on a wallet's first bridge of a non-ETH token.
- * Not deployed yet: set VITE_GAS_DROP_ADDRESS at build time once it is. Unset = the feature is hidden.
+ * Testnet: 0x7eb78D16F7aE797C07DC476FA3AE9d9Bb09Fc241 (set by scripts/build-staging.mjs). Unset = the feature is hidden.
  */
 export const GAS_DROP_ADDRESS: string = (env.VITE_GAS_DROP_ADDRESS || '').trim();
 

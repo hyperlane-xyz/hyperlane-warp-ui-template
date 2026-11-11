@@ -333,7 +333,9 @@ export function useBridge(url: UrlOptions) {
   const gullyIdSmart = gullySession?.user.wallets?.some(
     (w) => w.kind === 'kernel-v3.3' && w.address.toLowerCase() === recipient.toLowerCase(),
   );
-  const dropCandidate = !!option && option.live && gasDropEnabled() && dropApplies(option) && isAddress(recipient);
+  // a mirror "Bridge back" (destination -> Gully Chain) delivers a Gully Core coin, not gas: it qualifies like USDC
+  const dropCandidate =
+    !!option && option.live && gasDropEnabled() && dropApplies(option, !!mirror) && isAddress(recipient);
   useEffect(() => {
     setDrop(undefined);
     if (!dropCandidate || gullyIdSmart) return;
@@ -351,7 +353,7 @@ export function useBridge(url: UrlOptions) {
       ? { kind: 'paymaster' }
       : drop && dropEligible(drop)
         ? { kind: 'drop', amount: drop.dropAmount }
-        : drop && !drop.dropped
+        : drop && !drop.dropped && drop.remainingToday < drop.dropAmount
           ? { kind: 'empty' }
           : undefined;
 

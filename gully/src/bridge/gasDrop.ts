@@ -11,12 +11,15 @@ export const gasDropAbi = parseAbi([
   'function dropped(address) view returns (bool)',
   'function dropAmount() view returns (uint256)',
   'function remainingToday() view returns (uint256)',
+  'function eligible(address) view returns (bool)',
 ]);
 
 export interface GasDropState {
   dropped: boolean;
   dropAmount: bigint;
   remainingToday: bigint;
+  /** the contract's own check (not dropped, no code, holds less than dropAmount, budget left); unset = not read */
+  eligible?: boolean;
 }
 
 export function gasDropEnabled(address: string = GAS_DROP_ADDRESS): address is Address {
@@ -24,21 +27,25 @@ export function gasDropEnabled(address: string = GAS_DROP_ADDRESS): address is A
 }
 
 export function dropEligible(s: GasDropState): boolean {
-  return !s.dropped && s.dropAmount > 0n && s.remainingToday >= s.dropAmount;
+  return !s.dropped && s.dropAmount > 0n && s.remainingToday >= s.dropAmount && s.eligible !== false;
 }
 
-/** Only deposits into GullyChain of something that is not gas there (USDC, USDT, BNB, SOL...). */
-export function dropApplies(o: { direction: 'deposit' | 'withdraw'; receive: { tokenType: string } }): boolean {
-  return o.direction === 'deposit' && o.receive.tokenType !== 'native';
+/**
+ * Only deposits into GullyChain of something that is not gas there (USDC, USDT, BNB, SOL...), and the "Bridge back" of
+ * a Gully Warp Mirror (the classic pair's option is native ETH, but the transfer delivers the coin, not gas).
+ */
+export function dropApplies(o: { direction: 'deposit' | 'withdraw'; receive: { tokenType: string } }, mirror = false): boolean {
+  return o.direction === 'deposit' && (mirror || o.receive.tokenType !== 'native');
 }
 
 export async function readGasDrop(recipient: Address, address: string = GAS_DROP_ADDRESS): Promise<GasDropState | undefined> {
   if (!gasDropEnabled(address)) return undefined;
   const c = pub(CHILD);
-  const [dropped, dropAmount, remainingToday] = await Promise.all([
+  const [dropped, dropAmount, remainingToday, eligible] = await Promise.all([
     c.readContract({ address, abi: gasDropAbi, functionName: 'dropped', args: [recipient] }),
     c.readContract({ address, abi: gasDropAbi, functionName: 'dropAmount' }),
     c.readContract({ address, abi: gasDropAbi, functionName: 'remainingToday' }),
+    c.readContract({ address, abi: gasDropAbi, functionName: 'eligible', args: [recipient] }),
   ]);
-  return { dropped, dropAmount, remainingToday };
+  return { dropped, dropAmount, remainingToday, eligible };
 }

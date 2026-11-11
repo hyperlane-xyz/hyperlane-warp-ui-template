@@ -68,11 +68,17 @@ describe('gas on arrival', () => {
     expect(dropEligible({ dropped: true, dropAmount: 10n, remainingToday: 100n })).toBe(false);
     expect(dropEligible({ dropped: false, dropAmount: 10n, remainingToday: 9n })).toBe(false);
     expect(dropEligible({ dropped: false, dropAmount: 0n, remainingToday: 9n })).toBe(false);
+    // the contract's eligible() (code, balance) wins when it was read
+    expect(dropEligible({ dropped: false, dropAmount: 10n, remainingToday: 10n, eligible: false })).toBe(false);
+    expect(dropEligible({ dropped: false, dropAmount: 10n, remainingToday: 10n, eligible: true })).toBe(true);
   });
   it('applies to deposits of non-gas tokens only, and is off without a contract address', () => {
     expect(dropApplies({ direction: 'deposit', receive: { tokenType: 'collateral' } })).toBe(true);
     expect(dropApplies({ direction: 'deposit', receive: { tokenType: 'native' } })).toBe(false);
     expect(dropApplies({ direction: 'withdraw', receive: { tokenType: 'synthetic' } })).toBe(false);
+    // a Gully Warp Mirror bridge-back runs on the classic (native ETH) option but delivers the coin
+    expect(dropApplies({ direction: 'deposit', receive: { tokenType: 'native' } }, true)).toBe(true);
+    expect(dropApplies({ direction: 'withdraw', receive: { tokenType: 'native' } }, true)).toBe(false);
     expect(gasDropEnabled('')).toBe(false);
     expect(gasDropEnabled('0x474D721C3B6c555E6F188dCCE7f0b165F1CD8631')).toBe(true);
   });

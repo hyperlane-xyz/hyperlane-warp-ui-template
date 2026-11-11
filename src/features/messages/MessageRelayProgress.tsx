@@ -108,7 +108,7 @@ function MessageLifecycleStages({
           aria-current={index === currentStage ? 'step' : undefined}
         >
           <span className="relay-stage-track" aria-hidden="true" />
-          <span className="mt-1.5 block min-h-6 break-words text-xxs leading-tight">
+          <span className="relay-stage-label mt-1.5 block min-h-6 break-words text-xxs leading-tight">
             {index >= 2 && index === currentStage && (
               <SpinnerIcon
                 width={10}

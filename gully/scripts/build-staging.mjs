@@ -11,7 +11,8 @@ const mainnet = (process.env.BRIDGE_NETWORK || 'testnet') === 'mainnet';
 if (!['testnet', 'mainnet'].includes(process.env.BRIDGE_NETWORK || 'testnet')) throw new Error('BRIDGE_NETWORK must be testnet or mainnet');
 const host = mainnet ? 'bridge.gullychain.xyz' : 'testnet-bridge.gullychain.xyz';
 const NET = {
-  testnet: { VITE_NETWORK: 'testnet', VITE_SITE_URL: 'https://testnet-bridge.gullychain.xyz/', VITE_ARB_RPC: 'https://sepolia-rollup.arbitrum.io/rpc' },
+  // GullyGasDrop on 485590 (gully-ops l3/generated/gasdrop.json, owner = governance Safe, Sourcify exact_match)
+  testnet: { VITE_NETWORK: 'testnet', VITE_SITE_URL: 'https://testnet-bridge.gullychain.xyz/', VITE_ARB_RPC: 'https://sepolia-rollup.arbitrum.io/rpc', VITE_GAS_DROP_ADDRESS: '0x7eb78D16F7aE797C07DC476FA3AE9d9Bb09Fc241' },
   mainnet: { VITE_NETWORK: 'mainnet', VITE_SITE_URL: 'https://bridge.gullychain.xyz/', VITE_ARB_RPC: 'https://arb1.arbitrum.io/rpc' },
 }[mainnet ? 'mainnet' : 'testnet'];
 const out = resolve(process.argv[2] || `staging/${host}`);

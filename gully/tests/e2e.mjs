@@ -95,7 +95,32 @@ for (const w of (process.env.WIDTHS || "375,768,1280,1920").split(",").map(Numbe
     await page.locator('#stats').scrollIntoViewIfNeeded();
     await page.waitForSelector('#stats .an-grid', { timeout: 40000 }).catch(() => undefined);
     await page.waitForTimeout(1500);
-    check(`${w} analytics: 6 live chart cards`, (await page.locator('#stats .chart-card').count()) === 6);
+    // Analytics.tsx: five cards always (bridged per hour, route split, delivery time, relayer health, canonical
+    // withdrawals) plus Fast lane liquidity and/or a backing card, so 6 or 7. Live, never empty frames: no loader left,
+    // at least three cards draw svg marks from chain data, and the hourly bars draw or say why they are empty.
+    const an = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#stats .an-grid .chart-card')];
+      const titles = cards.map((c) => c.getAttribute('aria-label') || '');
+      const marks = (c) => c.querySelectorAll('svg rect, svg path, svg circle, svg line, svg polyline').length;
+      return {
+        n: cards.length,
+        titles,
+        loading: document.querySelectorAll('#stats .chart-loading').length,
+        drawn: cards.filter((c) => marks(c) > 0).length,
+        hourly: (() => {
+          const c = cards.find((x) => /bridged per hour/.test(x.getAttribute('aria-label') || ''));
+          // bars when anything was bridged in the window, else the chart's own empty-state line (StackedBars)
+          return c ? marks(c) > 1 || /fills in as transfers land/.test(c.textContent || '') : false;
+        })(),
+      };
+    });
+    const fixed = [/bridged per hour/, /^Route split$/, /^Fast delivery time$/, /^Relayer health$/, /^Canonical withdrawals$/];
+    check(
+      `${w} analytics: live chart cards (5 fixed + liquidity/backing)`,
+      an.n >= 6 && an.n <= 7 && fixed.every((re) => an.titles.some((t) => re.test(t))) && an.titles.some((t) => /liquidity|backing/i.test(t)),
+      `${an.n} cards: ${an.titles.join(' | ')}`,
+    );
+    check(`${w} analytics: charts drawn from chain data, no empty frames`, an.loading === 0 && an.hourly && an.drawn >= 3, `loading ${an.loading}, hourly ok ${an.hourly}, drawn cards ${an.drawn}`);
     check(`${w} analytics: liquidity or backing`, /Fast lane liquidity|backed|outstanding/i.test(await page.locator('.analytics, main').first().innerText().catch(() => '')));
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `${OUT}/c-${w}-disconnected.png`, fullPage: true });

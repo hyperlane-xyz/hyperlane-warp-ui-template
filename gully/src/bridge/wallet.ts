@@ -163,6 +163,7 @@ export async function ensureChain(key: ChainKey) {
   const w = state.active;
   if (!w) throw new Error('Connect a wallet first');
   const c = CHAINS[key];
+  if (c.protocol !== 'ethereum') throw new Error(`${c.name} needs a Solana wallet`);
   if (state.chainId === c.id) return;
   try {
     await w.provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(c.id) }] });
@@ -175,7 +176,7 @@ export async function ensureChain(key: ChainKey) {
         {
           chainId: numberToHex(c.id),
           chainName: c.name,
-          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          nativeCurrency: { name: c.nativeSymbol === 'ETH' ? 'Ether' : c.nativeSymbol, symbol: c.nativeSymbol, decimals: c.nativeDecimals },
           rpcUrls: c.walletRpcs,
           blockExplorerUrls: [c.explorer],
         },

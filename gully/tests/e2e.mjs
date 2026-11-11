@@ -113,7 +113,7 @@ for (const w of (process.env.WIDTHS || "375,768,1280,1920").split(",").map(Numbe
     await page.waitForTimeout(2000);
     await page.screenshot({ path: `${OUT}/c-${w}-quote.png`, fullPage: true });
     if (w === 1280) {
-      for (const [lane, dir] of [['Fast', 'deposit'], ['Canonical', 'deposit'], ['Fast', 'withdraw'], ['Canonical', 'withdraw']]) {
+      for (const [lane, dir] of [['Fast', 'deposit'], ['Cheapest', 'deposit'], ['Fast', 'withdraw'], ['Cheapest', 'withdraw']]) {
         if (dir === 'withdraw' && !(await page.locator('.swap-chain').first().innerText()).includes('GullyChain')) await page.getByRole('button', { name: /switch direction/i }).click();
         await page.getByRole('radio', { name: new RegExp(lane) }).first().click();
         await page.fill('#amount', '0.0002');

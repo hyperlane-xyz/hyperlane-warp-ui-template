@@ -94,8 +94,8 @@ export async function loadStats(): Promise<BridgeStats> {
   const windowFrom = parentHead - BigInt(Math.ceil((WINDOW_HOURS * 3600) / CHAINS[PARENT].blockSeconds));
   const parentFrom = CHAINS[PARENT].fromBlock > windowFrom ? CHAINS[PARENT].fromBlock : windowFrom;
   const fastFrom = CHAINS[PARENT].fastFromBlock;
-  const heads: Record<ChainKey, bigint> = { arbitrumsepolia: parentHead, gullychaintestnet: 0n };
-  const routers: Record<ChainKey, Address[]> = {
+  const heads: Record<string, bigint> = { arbitrumsepolia: parentHead, gullychaintestnet: 0n };
+  const routers: Record<string, Address[]> = {
     arbitrumsepolia: FAST_ROUTES.map((r) => r.tokens.arbitrumsepolia.address),
     gullychaintestnet: FAST_ROUTES.map((r) => r.tokens.gullychaintestnet.address),
   };

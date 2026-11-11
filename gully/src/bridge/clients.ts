@@ -7,7 +7,7 @@ export function viemChain(key: ChainKey) {
   return defineChain({
     id: c.id,
     name: c.name,
-    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    nativeCurrency: { name: c.nativeSymbol === 'ETH' ? 'Ether' : c.nativeSymbol, symbol: c.nativeSymbol, decimals: c.nativeDecimals },
     rpcUrls: { default: { http: c.rpcs } },
     blockExplorers: { default: { name: 'Explorer', url: c.explorer } },
   });
@@ -24,6 +24,7 @@ export function rpcTransport(urls: readonly string[]): Transport {
 
 const cache = new Map<ChainKey, PublicClient>();
 export function pub(key: ChainKey): PublicClient {
+  if (CHAINS[key].protocol !== 'ethereum') throw new Error(`${CHAINS[key].name} is not an EVM chain`);
   let c = cache.get(key);
   if (!c) {
     c = createPublicClient({

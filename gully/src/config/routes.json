@@ -78,5 +78,292 @@
       "legacy": true,
       "mirror": true
     }
+  ],
+  "network": "testnet",
+  "gully": "gullychaintestnet",
+  "multichainFrom": "gully-ops l3/hyperlane/multichain/routes.yaml",
+  "chains": {
+    "gullychaintestnet": {
+      "protocol": "ethereum",
+      "domain": 485590,
+      "name": "Gully Chain Testnet",
+      "logo": "gullychain",
+      "explorer": "https://testnet-explorer.gullychain.xyz",
+      "nativeSymbol": "ETH",
+      "faucet": "https://faucet.gullychain.xyz"
+    },
+    "arbitrumsepolia": {
+      "protocol": "ethereum",
+      "domain": 421614,
+      "name": "Arbitrum Sepolia",
+      "logo": "arbitrum",
+      "explorer": "https://sepolia.arbiscan.io",
+      "nativeSymbol": "ETH",
+      "faucet": "https://www.alchemy.com/faucets/arbitrum-sepolia",
+      "canonical": true
+    },
+    "sepolia": {
+      "protocol": "ethereum",
+      "domain": 11155111,
+      "name": "Ethereum Sepolia",
+      "logo": "ethereum",
+      "explorer": "https://sepolia.etherscan.io",
+      "nativeSymbol": "ETH",
+      "faucet": "https://cloud.google.com/application/web3/faucet/ethereum/sepolia"
+    },
+    "basesepolia": {
+      "protocol": "ethereum",
+      "domain": 84532,
+      "name": "Base Sepolia",
+      "logo": "base",
+      "explorer": "https://sepolia.basescan.org",
+      "nativeSymbol": "ETH",
+      "faucet": "https://www.alchemy.com/faucets/base-sepolia"
+    },
+    "bsctestnet": {
+      "protocol": "ethereum",
+      "domain": 97,
+      "name": "BNB Chain Testnet",
+      "logo": "bnb",
+      "explorer": "https://testnet.bscscan.com",
+      "nativeSymbol": "tBNB",
+      "faucet": "https://www.bnbchain.org/en/testnet-faucet"
+    },
+    "solanadevnet": {
+      "protocol": "sealevel",
+      "domain": 1399811151,
+      "name": "Solana Devnet",
+      "logo": "solana",
+      "explorer": "https://explorer.solana.com/?cluster=devnet",
+      "nativeSymbol": "SOL",
+      "faucet": "https://faucet.solana.com"
+    }
+  },
+  "multichain": [
+    {
+      "id": "ETH/basesepolia-bsctestnet-gullychaintestnet-sepolia",
+      "key": "ETH",
+      "symbol": "ETH",
+      "name": "Ether",
+      "deployed": false,
+      "tokens": {
+        "gullychaintestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "native",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": null
+        },
+        "sepolia": {
+          "address": null,
+          "standard": null,
+          "tokenType": "native",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": null
+        },
+        "basesepolia": {
+          "address": null,
+          "standard": null,
+          "tokenType": "native",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": null
+        },
+        "bsctestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": "0x8BaBbB98678facC7342735486C851ABD7A0d17Ca"
+        }
+      }
+    },
+    {
+      "id": "USDC/arbitrumsepolia-basesepolia-bsctestnet-gullychaintestnet-sepolia",
+      "key": "USDC",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "deployed": false,
+      "tokens": {
+        "gullychaintestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "collateralAddress": "0x65Ba03c6FA90Ed549f465D4c8f2e784D6eEB7E76"
+        },
+        "sepolia": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "collateralAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+        },
+        "basesepolia": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "collateralAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+        },
+        "arbitrumsepolia": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "collateralAddress": "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"
+        },
+        "bsctestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 18,
+          "collateralAddress": "0x64544969ed7EBf5f083679233325356EbE738930"
+        }
+      }
+    },
+    {
+      "id": "USDT/basesepolia-bsctestnet-gullychaintestnet-sepolia",
+      "key": "USDT",
+      "symbol": "USDT",
+      "name": "Tether USD (Gully Bridged)",
+      "deployed": false,
+      "tokens": {
+        "gullychaintestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "synthetic",
+          "symbol": "USDT",
+          "name": "Tether USD (Gully Bridged)",
+          "decimals": 6,
+          "collateralAddress": null
+        },
+        "sepolia": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDT",
+          "name": "Tether USD (Gully Bridged)",
+          "decimals": 6,
+          "collateralAddress": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0"
+        },
+        "basesepolia": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDT",
+          "name": "Tether USD (Gully Bridged)",
+          "decimals": 6,
+          "collateralAddress": "0x323e78f944A9a1FcF3a10efcC5319DBb0bB6e673"
+        },
+        "bsctestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDT",
+          "name": "Tether USD (Gully Bridged)",
+          "decimals": 18,
+          "collateralAddress": "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
+        }
+      }
+    },
+    {
+      "id": "BNB/bsctestnet-gullychaintestnet",
+      "key": "BNB",
+      "symbol": "BNB",
+      "name": "BNB (Gully Bridged)",
+      "deployed": false,
+      "tokens": {
+        "gullychaintestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "synthetic",
+          "symbol": "BNB",
+          "name": "BNB (Gully Bridged)",
+          "decimals": 18,
+          "collateralAddress": null
+        },
+        "bsctestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "native",
+          "symbol": "tBNB",
+          "name": "BNB (Gully Bridged)",
+          "decimals": 18,
+          "collateralAddress": null
+        }
+      }
+    },
+    {
+      "id": "SOL/gullychaintestnet-solanadevnet",
+      "key": "SOL",
+      "symbol": "SOL",
+      "name": "Solana (Gully Bridged)",
+      "deployed": false,
+      "tokens": {
+        "gullychaintestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "synthetic",
+          "symbol": "SOL",
+          "name": "Solana (Gully Bridged)",
+          "decimals": 9,
+          "collateralAddress": null
+        },
+        "solanadevnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "native",
+          "symbol": "SOL",
+          "name": "Solana (Gully Bridged)",
+          "decimals": 9,
+          "collateralAddress": null
+        }
+      }
+    },
+    {
+      "id": "USDC/gullychaintestnet-solanadevnet",
+      "key": "USDC-SOL",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "deployed": false,
+      "tokens": {
+        "gullychaintestnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "collateralAddress": "0x65Ba03c6FA90Ed549f465D4c8f2e784D6eEB7E76"
+        },
+        "solanadevnet": {
+          "address": null,
+          "standard": null,
+          "tokenType": "collateral",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "collateralAddress": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+        }
+      }
+    }
   ]
 }

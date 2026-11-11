@@ -1,6 +1,6 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
-import { CHAINS, CHILD, IS_TESTNET, LINKS, PARENT, txUrl, type ChainKey } from '../../config/chains';
+import { chainById, CHAINS, CHILD, IS_TESTNET, LINKS, PARENT, txUrl, type ChainKey } from '../../config/chains';
 import { CAPS } from '../../config/network';
 import { capLines } from '../../bridge/caps';
 import { GULLY_CORE_URL } from '../../config/routes';
@@ -12,7 +12,8 @@ import type { BridgeState, StepState } from '../useBridge';
 import { useWallet } from '../useBridge';
 import { BridgeEarnDelivered } from '../earn/BridgeEarnDeliveredNotice';
 import { Icon, type IconName } from './icons';
-import { Money, UsdLine } from './money';
+import { Money, TokenAmount, UsdLine } from './money';
+import { SolanaWalletModal, SolanaWalletPill, TransferLinks } from './multichain';
 import { ethN } from '../../bridge/usd';
 
 /** Signature button: pill, left icon, sliding arrow, shine sweep, 0.98 pressed. */
@@ -66,14 +67,20 @@ export function Ext({ href, children, className, newTab, testId }: { href: strin
   );
 }
 
-/** Official chain logos from the Gully chain-logo pack (gully-ops design/chains; sources in its SOURCES.md), in
- *  public/chains/. Decorative by default (the chain's name is written next to it); pass alt when it stands alone.
- *  badge: the file with the small amber testnet corner badge, for places that show no "Testnet" text. A file that
- *  fails to load falls back to the chain's short text mark. GullyChain uses the brand kit v4 icon (brand/logo/gc-icon.svg,
+/** Official chain logos in public/chains/: Arbitrum from the Gully chain-logo pack (gully-ops design/chains; sources in
+ *  its SOURCES.md); Ethereum, Base, BNB Chain and Solana copied byte for byte from the canonical Hyperlane registry
+ *  (@hyperlane-xyz/registry 26.2.0 chains/<name>/logo.svg, file named after the chain). Decorative by default (the
+ *  chain's name is written next to it); pass alt when it stands alone. badge: the file with the small amber testnet
+ *  corner badge, for places that show no "Testnet" text (registry logos have no badged variant). A file that fails to
+ *  load falls back to the chain's short text mark. GullyChain uses the brand kit v4 icon (brand/logo/gc-icon.svg,
  *  byte-identical; its hexagon sits inside the round mask, so nothing is cropped) until the chain-logo pack moves to kit v4. */
 const CHAIN_LOGO: Record<ChainKey, { mark: string; badged: string; text: string }> = {
   gullychaintestnet: { mark: 'brand/logo/gc-icon.svg', badged: 'brand/logo/gc-icon.svg', text: 'G' },
   arbitrumsepolia: { mark: 'chains/arbitrum.svg', badged: 'chains/arbitrum-sepolia.svg', text: 'ARB' },
+  sepolia: { mark: 'chains/sepolia.svg', badged: 'chains/sepolia.svg', text: 'ETH' },
+  basesepolia: { mark: 'chains/basesepolia.svg', badged: 'chains/basesepolia.svg', text: 'BASE' },
+  bsctestnet: { mark: 'chains/bsctestnet.svg', badged: 'chains/bsctestnet.svg', text: 'BNB' },
+  solanadevnet: { mark: 'chains/solanadevnet.svg', badged: 'chains/solanadevnet.svg', text: 'SOL' },
 };
 
 export function ChainMark({ chain, size = 28, alt = '', badge = false }: { chain: ChainKey; size?: number; alt?: string; badge?: boolean }) {
@@ -158,28 +165,39 @@ export const pickWallet = () => {
 export function WalletButton({ compact }: { compact?: boolean }) {
   const w = useWallet();
   useEffect(() => startDiscovery(), []);
+  const wc = w.chainId ? chainById(w.chainId) : undefined;
   if (w.address)
     return (
-      <button className="wallet-pill" onClick={() => disconnect()} title="Disconnect">
-        <span className="wallet-dot" />
-        {short(w.address)}
-        {!compact && w.chainId && (
-          <small className="wallet-chain">
-            <ChainMark chain={w.chainId === 485590 ? 'gullychaintestnet' : 'arbitrumsepolia'} size={16} badge />
-            {CHAINS[w.chainId === 485590 ? 'gullychaintestnet' : 'arbitrumsepolia']?.short}
-          </small>
-        )}
-      </button>
+      <>
+        <button className="wallet-pill" onClick={() => disconnect()} title="Disconnect">
+          <span className="wallet-dot" />
+          {short(w.address)}
+          {!compact && w.chainId && (
+            <small className="wallet-chain">
+              {wc && <ChainMark chain={wc.key} size={16} badge />}
+              {wc?.short || `chain ${w.chainId}`}
+            </small>
+          )}
+        </button>
+        <SolanaWalletPill />
+      </>
     );
   return (
-    <Btn variant="secondary" icon="wallet" arrow={false} onClick={pickWallet} className="btn-sm" disabled={w.connecting}>
-      Connect
-    </Btn>
+    <>
+      <SolanaWalletPill />
+      <Btn variant="secondary" icon="wallet" arrow={false} onClick={pickWallet} className="btn-sm" disabled={w.connecting}>
+        Connect
+      </Btn>
+    </>
   );
 }
 
 export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
-  const sym = b.quote?.sendSymbol || (b.direction === 'withdraw' && b.kind === 'fast' ? b.route.tokens.gullychaintestnet.symbol : 'ETH');
+  const sym =
+    b.quote?.sendSymbol ||
+    (b.multichain ? b.option!.send.symbol : b.direction === 'withdraw' && b.kind === 'fast' ? b.route.tokens.gullychaintestnet.symbol : 'ETH');
+  const dec = b.sendDecimals;
+  const isEth = sym === 'ETH' && dec === 18;
   return (
     <div className={`amount ${big ? 'amount-big' : ''} ${amountSize(b.amountText)}`}>
       <label htmlFor="amount">You send</label>
@@ -200,13 +218,13 @@ export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
       </div>
       <div className="amount-meta" id="amount-bal">
         {/* ETH/USD only: a Gully Core coin has no USD price here */}
-        <UsdLine v={!b.mirror && b.amount && b.amount > 0n ? b.amount : null} />
-        {b.wallet.address && b.balanceFrom !== undefined ? (
+        {isEth && !b.mirror && <UsdLine v={b.amount && b.amount > 0n ? b.amount : null} />}
+        {b.senderAddr && b.balanceFrom !== undefined ? (
           <>
             <span>
-              Balance {ethN(Number(fmtAmount(b.balanceFrom, 18, 18).replaceAll(',', '')))} {sym}
+              Balance {ethN(Number(fmtAmount(b.balanceFrom, dec, dec).replaceAll(',', '')))} {sym}
             </span>
-            <button className="link-btn" onClick={() => b.setAmountText(fmtAmount(b.balanceFrom!, 18, 18).replaceAll(',', ''))}>
+            <button className="link-btn" onClick={() => b.setAmountText(fmtAmount(b.balanceFrom!, dec, dec).replaceAll(',', ''))}>
               Max
             </button>
           </>
@@ -272,7 +290,8 @@ export function RouteOptions({ b }: { b: BridgeState }) {
  * (the ETH routes stay the default; a deep link `?token=&to=` preselects a mirror).
  */
 export function AssetPicker({ b }: { b: BridgeState }) {
-  if (!b.mirrorRoutes.length) return null;
+  // mirrors run on the classic pair only; a multi-chain token has its own picker (TokenPicker)
+  if (!b.mirrorRoutes.length || b.remote !== PARENT || b.multichain) return null;
   return (
     <label className="asset-pick">
       <span>Asset</span>
@@ -399,15 +418,27 @@ export function QuoteDetails({ b }: { b: BridgeState }) {
       <div>
         <dt>You receive</dt>
         <dd>
-          {amt ? <Money v={q.receive} symbol={q.receiveSymbol} inline /> : '–'} <small>on {CHAINS[q.to].short}</small>
+          {amt ? <TokenAmount v={q.receive} decimals={q.receiveDecimals} symbol={q.receiveSymbol} inline /> : '–'} <small>on {CHAINS[q.to].short}</small>
         </dd>
       </div>
       {q.fees.map((f) => (
         <div key={f.label}>
           <dt>{f.label}</dt>
-          <dd>{f.amount === 0n ? 'Free' : <Money v={f.amount} symbol={f.symbol} inline />}</dd>
+          <dd>
+            {f.amount === 0n ? (
+              'Free'
+            ) : (
+              <TokenAmount v={f.amount} decimals={f.symbol === q.sendSymbol ? q.sendDecimals : CHAINS[q.from].nativeDecimals} symbol={f.symbol} inline />
+            )}
+          </dd>
         </div>
       ))}
+      {q.feesInWallet && (
+        <div>
+          <dt>Fees</dt>
+          <dd>Shown in your wallet</dd>
+        </div>
+      )}
       <div>
         <dt>Time</dt>
         <dd>{duration(q.etaSeconds)}</dd>
@@ -429,6 +460,28 @@ export function QuoteDetails({ b }: { b: BridgeState }) {
 }
 
 export function ActionButton({ b }: { b: BridgeState }) {
+  const [open, setOpen] = useState(false);
+  if (b.option && !b.option.live)
+    return (
+      <Btn icon="clock" className="btn-block" disabled arrow={false}>
+        Coming soon
+      </Btn>
+    );
+  if (b.originIsSolana && !b.sol.address)
+    return (
+      <>
+        <Btn icon="wallet" className="btn-block" onClick={() => setOpen(true)}>
+          Connect Solana wallet
+        </Btn>
+        {open && <SolanaWalletModal onClose={() => setOpen(false)} />}
+      </>
+    );
+  if (b.originIsSolana)
+    return (
+      <Btn icon="zap" className="btn-block" disabled={!!b.blocker || b.busy} busy={b.busy} onClick={b.send}>
+        {b.busy ? 'Confirm in your wallet' : b.blocker || 'Bridge fast'}
+      </Btn>
+    );
   if (!b.wallet.address)
     return (
       <>
@@ -449,7 +502,7 @@ export function ActionButton({ b }: { b: BridgeState }) {
         busy={b.busy}
         onClick={b.send}
       >
-        {b.busy ? 'Confirm in your wallet' : b.blocker || `${wrongChain ? `Switch to ${CHAINS[b.from].short} and ` : ''}${b.kind === 'fast' ? 'Bridge fast' : b.direction === 'deposit' ? 'Deposit' : 'Start withdrawal'}`}
+        {b.busy ? 'Confirm in your wallet' : b.blocker || `${wrongChain ? `Switch to ${CHAINS[b.from].short} and ` : ''}${b.kind === 'fast' ? 'Bridge fast' : b.direction === 'deposit' ? 'Deposit (cheapest)' : 'Start withdrawal'}`}
       </Btn>
       <ConsentLine />
       <CapsNote />
@@ -535,29 +588,33 @@ export function ActivityList({ items, error, limit = 8, preview }: { items?: Act
 }
 
 export function MyTransfers({ b }: { b: BridgeState }) {
-  const list = b.transfers.filter((t) => !b.wallet.address || t.sender.toLowerCase() === b.wallet.address.toLowerCase() || t.recipient.toLowerCase() === b.wallet.address.toLowerCase());
+  const [all, setAll] = useState(false);
+  const mine = [b.wallet.address, b.sol.address].filter(Boolean).map((a) => a!.toLowerCase());
+  const list = b.transfers.filter((t) => !mine.length || mine.includes(t.sender.toLowerCase()) || mine.includes(t.recipient.toLowerCase()));
   if (!list.length) return null;
   return (
     <section className="mine" aria-label="Your transfers">
       <h3 className="label">Your transfers</h3>
       <ul>
-        {list.slice(0, 5).map((t) => (
+        {list.slice(0, all ? 50 : 5).map((t) => (
           <li key={t.id} className={`mine-row mine-${t.status}`}>
             <div className="mine-top">
               <span className={`feed-kind feed-${t.kind}`}>
                 <Icon name={t.kind === 'fast' ? 'zap' : 'shield'} size={14} />
-                {t.kind === 'fast' ? 'Fast' : 'Canonical'}
+                {t.kind === 'fast' ? 'Fast' : 'Cheapest'}
+              </span>
+              <span className="feed-dir" aria-label={`${CHAINS[t.from].name} to ${CHAINS[t.to].name}`}>
+                <ChainMark chain={t.from} size={16} />
+                <Icon name="arrowRight" size={12} />
+                <ChainMark chain={t.to} size={16} />
               </span>
               <b>
-                <Money v={BigInt(t.amount)} symbol={t.sendSymbol} inline />
+                <TokenAmount v={BigInt(t.amount)} decimals={t.decimals ?? 18} symbol={t.sendSymbol} inline />
               </b>
               <span className="mine-status">{statusLabel(t)}</span>
-              <Ext href={txUrl(t.from, t.originTx)} className="feed-link" newTab>
-                <Icon name="external" size={14} />
-                <span className="sr">View origin transaction</span>
-              </Ext>
             </div>
             <Stepper defs={stepDefsOf(t)} state={recordSteps(t)} compact />
+            <TransferLinks t={t} />
             {/* Bridge & Earn: a Fast-lane delivery on Gully Chain (t.to === 'gullychaintestnet') is the "bridge arrival"
                 the rewards attester matches; the notice carries the Hyperlane message id and shows only while live */}
             {t.status === 'delivered' && t.kind === 'fast' && t.to === CHILD && <BridgeEarnDelivered messageId={t.messageId} />}
@@ -569,6 +626,11 @@ export function MyTransfers({ b }: { b: BridgeState }) {
           </li>
         ))}
       </ul>
+      {list.length > 5 && (
+        <button className="link-btn" onClick={() => setAll((x) => !x)}>
+          {all ? 'Show fewer' : `Show all ${list.length}`}
+        </button>
+      )}
     </section>
   );
 }
@@ -595,8 +657,8 @@ function statusLabel(t: TransferRecord) {
 function stepDefsOf(t: TransferRecord): StepDef[] {
   if (t.kind === 'fast')
     return [
-      { id: 'send', label: 'Send', hint: CHAINS[t.from].short, chain: t.from, user: true },
-      { id: 'relay', label: 'Relay', hint: 'Relayer delivering', chain: t.to, user: false },
+      { id: 'send', label: 'Sent', hint: CHAINS[t.from].short, chain: t.from, user: true },
+      { id: 'relay', label: 'Verified by validators', hint: 'Security check', chain: t.to, user: false },
       { id: 'deliver', label: 'Delivered', hint: CHAINS[t.to].short, chain: t.to, user: false },
     ];
   if (t.direction === 'deposit')

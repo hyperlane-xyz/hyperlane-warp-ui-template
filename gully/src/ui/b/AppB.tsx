@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { CHAINS } from '../../config/chains';
-import { duration } from '../../bridge/format';
+import { duration, fmtAmount } from '../../bridge/format';
 import type { ActivityItem } from '../../bridge/types';
 import { Icon } from '../common/icons';
 import { Money, UsdLine, UsdNote } from '../common/money';
 import { asEth, ethN } from '../../bridge/usd';
 import { ActionButton, ActivityList, AmountField, AssetPicker, ChainMark, Footer, LegacyNotice, MirrorNotice, MyTransfers, QuoteDetails, Stepper, WarpMirrorNotice } from '../common/parts';
+import { ChainPicker, GasDropNote, LaneChoice, RecipientField, TokenPicker } from '../common/multichain';
 import { Header, AddUsdcRow } from '../common/shell';
 import { useActivity, useBridge, useHeads, type BridgeState, type UrlOptions } from '../useBridge';
 
@@ -59,7 +60,7 @@ export function LaneToggle({ b }: { b: BridgeState }) {
       {(['fast', 'canonical'] as const).map((k) => (
         <button key={k} role="radio" aria-checked={b.kind === k} className={`lane-b ${b.kind === k ? 'lane-on' : ''}`} onClick={() => b.setKind(k === b.pick.kind ? undefined : k)}>
           <Icon name={k === 'fast' ? 'zap' : 'shield'} size={16} />
-          {k === 'fast' ? 'Fast' : 'Canonical'}
+          {k === 'fast' ? 'Fast' : 'Cheapest'}
           {b.pick.kind === k && <i className="lane-best" title={b.pick.reason} />}
         </button>
       ))}
@@ -82,6 +83,8 @@ export function RouteVisual({ b, items, heads }: { b: BridgeState; items?: Activ
     return () => clearTimeout(t);
   }, [items]);
   const rev = b.direction === 'withdraw';
+  const canon = b.canonicalAvailable;
+  const head = b.remote === 'arbitrumsepolia' ? heads.arbitrumsepolia.block : undefined;
   const fastPath = 'M150 170 C 330 20, 670 20, 850 170';
   const canonPath = 'M150 190 C 330 330, 670 330, 850 190';
   return (
@@ -100,7 +103,7 @@ export function RouteVisual({ b, items, heads }: { b: BridgeState; items?: Activ
           <path id="pc" d={canonPath} />
         </defs>
         <use href="#pf" className={`rv-arc rv-fast ${b.kind === 'fast' ? 'rv-on' : ''}`} />
-        <use href="#pc" className={`rv-arc rv-canon ${b.kind === 'canonical' ? 'rv-on' : ''}`} />
+        {canon && <use href="#pc" className={`rv-arc rv-canon ${b.kind === 'canonical' ? 'rv-on' : ''}`} />}
         {[0, 1, 2, 3].map((n) => (
           <circle key={`f${n}`} r={b.kind === 'fast' ? 6 : 4} className="rv-pkt rv-pkt-fast">
             <animateMotion dur="2.4s" begin={`${n * 0.6}s`} repeatCount="indefinite" keyPoints={rev ? '1;0' : '0;1'} keyTimes="0;1" calcMode="linear">
@@ -108,7 +111,7 @@ export function RouteVisual({ b, items, heads }: { b: BridgeState; items?: Activ
             </animateMotion>
           </circle>
         ))}
-        {[0, 1].map((n) => (
+        {(canon ? [0, 1] : []).map((n) => (
           <circle key={`c${n}`} r={b.kind === 'canonical' ? 6 : 4} className="rv-pkt rv-pkt-canon">
             <animateMotion dur="9s" begin={`${n * 4.5}s`} repeatCount="indefinite" keyPoints={rev ? '1;0' : '0;1'} keyTimes="0;1" calcMode="linear">
               <mpath href="#pc" />
@@ -125,16 +128,18 @@ export function RouteVisual({ b, items, heads }: { b: BridgeState; items?: Activ
         <text x="500" y="58" className="rv-lab rv-lab-fast" textAnchor="middle">
           FAST · ~1 MIN
         </text>
-        <text x="500" y="300" className="rv-lab" textAnchor="middle">
-          CANONICAL · {b.direction === 'deposit' ? '~1 MIN' : 'CHALLENGE + CLAIM'}
-        </text>
+        {canon && (
+          <text x="500" y="300" className="rv-lab" textAnchor="middle">
+            CHEAPEST · {b.direction === 'deposit' ? '~1 MIN' : 'SAFETY WINDOW + CLAIM'}
+          </text>
+        )}
         <circle cx="150" cy="180" r="90" fill="url(#glow)" className="rv-pulse" />
         <circle cx="850" cy="180" r="90" fill="url(#glow)" className="rv-pulse rv-pulse-2" />
       </svg>
       <div className="rv-node rv-node-l">
-        <ChainMark chain="arbitrumsepolia" size={64} />
-        <b>{CHAINS.arbitrumsepolia.name}</b>
-        <small className="mono">#{heads.arbitrumsepolia.block?.toString() ?? '…'}</small>
+        <ChainMark chain={b.remote} size={64} />
+        <b>{CHAINS[b.remote].name}</b>
+        <small className="mono">#{head !== undefined ? head.toString() : b.remote === 'arbitrumsepolia' ? '…' : ''}</small>
       </div>
       <div className="rv-node rv-node-r">
         <ChainMark chain="gullychaintestnet" size={72} />
@@ -169,14 +174,20 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
     <section className="swap" id="bridge" aria-label="Bridge">
       <div className="swap-head">
         <h1 className="h-card">{title}</h1>
-        <LaneToggle b={b} />
       </div>
       <AssetPicker b={b} />
       <div className="swap-box">
         <div className="swap-chain">
-          <ChainMark chain={b.from} size={22} />
-          <span>From {CHAINS[b.from].name}</span>
+          {b.from === b.remote ? (
+            <ChainPicker b={b} label="From" />
+          ) : (
+            <>
+              <ChainMark chain={b.from} size={22} />
+              <span>From {CHAINS[b.from].name}</span>
+            </>
+          )}
         </div>
+        <TokenPicker b={b} />
         <AmountField b={b} big />
       </div>
       <button className="swap-flip" aria-label="Switch direction" onClick={b.flip}>
@@ -184,24 +195,39 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
       </button>
       <div className="swap-box swap-to">
         <div className="swap-chain">
-          <ChainMark chain={b.to} size={22} />
-          <span>To {CHAINS[b.to].name}</span>
+          {b.to === b.remote ? (
+            <ChainPicker b={b} label="To" />
+          ) : (
+            <>
+              <ChainMark chain={b.to} size={22} />
+              <span>To {CHAINS[b.to].name}</span>
+            </>
+          )}
         </div>
         <div className="swap-recv">
-          <span className={`swap-recv-num ${recvSize(b.quote && b.amount ? ethN(asEth(b.quote.receive)) : '')}`}>{b.quote && b.amount ? ethN(asEth(b.quote.receive)) : '0.0'}</span>
+          <span className={`swap-recv-num ${recvSize(recvText(b))}`}>{recvText(b) || '0.0'}</span>
           <span className="token-chip">
             <ChainMark chain={b.to} size={20} />
-            {b.quote?.receiveSymbol || 'ETH'}
+            {b.quote?.receiveSymbol || b.option?.receive.symbol || 'ETH'}
           </span>
         </div>
-        <UsdLine v={b.quote && b.amount && !b.mirror ? b.quote.receive : null} className="usd-recv" />
+        {!b.mirror && b.receiveDecimals === 18 && (b.quote?.receiveSymbol || 'ETH') === 'ETH' && (
+          <UsdLine v={b.quote && b.amount ? b.quote.receive : null} className="usd-recv" />
+        )}
         <small className="muted">
-          {b.quote ? `Arrives ${duration(b.quote.etaSeconds)}${b.kind === 'canonical' && b.direction === 'withdraw' ? ', then claim' : ''}` : 'Getting a quote…'}
+          {b.option && !b.option.live
+            ? 'Coming soon: this route opens when it is deployed.'
+            : b.quote
+              ? `Arrives ${duration(b.quote.etaSeconds)}${b.kind === 'canonical' && b.direction === 'withdraw' ? ', then claim' : ''}`
+              : 'Getting a quote…'}
         </small>
       </div>
       <WarpMirrorNotice b={b} />
       <LegacyNotice b={b} />
       <MirrorNotice b={b} />
+      <RecipientField b={b} />
+      <LaneChoice b={b} />
+      <GasDropNote b={b} />
       <QuoteDetails b={b} />
       {b.stepDefs.length > 0 && <Stepper defs={b.stepDefs} state={b.steps} compact />}
       <ActionButton b={b} />
@@ -210,6 +236,14 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
     </section>
   
   );
+}
+
+/** The receive amount as text, in the received token's decimals. */
+function recvText(b: BridgeState) {
+  if (!b.quote || !b.amount) return '';
+  return b.quote.receiveDecimals === 18 && b.quote.receiveSymbol === 'ETH'
+    ? ethN(asEth(b.quote.receive))
+    : fmtAmount(b.quote.receive, b.quote.receiveDecimals, 6);
 }
 
 /** Font step for the receive amount, like the input's. */

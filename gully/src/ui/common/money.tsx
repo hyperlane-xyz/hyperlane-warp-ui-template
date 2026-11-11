@@ -1,5 +1,6 @@
 // Money on the bridge: USD first (compact, "$50K"), the ETH amount as the secondary line. Every amount the bridge
 // moves is ETH-backed (ETH, gETH, hypETH), so one ETH/USD price covers them. With no price, ETH only.
+import { fmtAmount } from '../../bridge/format';
 import { asEth, ethN, fmtUsd, toUsd, useEthUsd, usdTitle, USD_NOTE } from '../../bridge/usd';
 import { IS_TESTNET } from '../../config/network';
 
@@ -50,5 +51,17 @@ export function UsdNote() {
     <p className="usd-note" role="note" title={usdTitle(p)}>
       {p ? `${USD_NOTE}.` : `Amounts show in ETH: no ETH/USD price right now.${IS_TESTNET ? ' Testnet tokens have no real value.' : ''}`}
     </p>
+  );
+}
+
+/** Any bridged token: ETH (18 decimals) goes through Money (USD first); other tokens show their own amount only. */
+export function TokenAmount({ v, decimals = 18, symbol, inline = false }: { v: bigint; decimals?: number; symbol: string; inline?: boolean }) {
+  if (decimals === 18 && symbol === 'ETH') return <Money v={v} symbol={symbol} inline={inline} />;
+  return (
+    <span className="money">
+      <b className="num">
+        {fmtAmount(v, decimals, 6)} {symbol}
+      </b>
+    </span>
   );
 }

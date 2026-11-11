@@ -56,7 +56,7 @@ function mainnetRoutes(): { defaultRouteId: string; routes: FastRoute[] } {
   };
 }
 
-const data = IS_TESTNET ? (testnetData as { defaultRouteId: string; routes: FastRoute[] }) : mainnetRoutes();
+const data = IS_TESTNET ? (testnetData as unknown as { defaultRouteId: string; routes: FastRoute[] }) : mainnetRoutes();
 
 /** Every route of this network, ready or not (the card always has a route to render). */
 export const ROUTE_TABLE = data.routes;

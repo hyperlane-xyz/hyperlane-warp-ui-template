@@ -100,13 +100,13 @@ export function AppC({ url }: { url: UrlOptions }) {
                   </li>
                   <li>
                     <Icon name="shield" size={16} />
-                    <span>Canonical deposits</span>
+                    <span>Cheapest lane deposits</span>
                     <b className="ok">Live · ~1 min</b>
                   </li>
                   <li>
                     <Icon name="clock" size={16} />
-                    <span>Canonical withdrawals</span>
-                    <b className="muted-b">Challenge period, then claim</b>
+                    <span>Cheapest lane withdrawals</span>
+                    <b className="muted-b">Safety window, then claim</b>
                   </li>
                   {(['arbitrumsepolia', 'gullychaintestnet'] as const).map((c) => (
                     <li key={c}>

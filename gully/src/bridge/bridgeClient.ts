@@ -5,6 +5,8 @@
 // It must implement BridgeClient; `req.ref` carries the integrator address from ?ref=.
 import type { Address } from 'viem';
 
+import type { ChainKey } from '../config/chains';
+import type { McToken } from '../config/multichain';
 import { localBridgeClient, type Balances } from './localClient';
 import { loadStats, type BridgeStats } from './stats';
 import type { ActivityItem, Quote, QuoteRequest, StepUpdate, TransferRecord } from './types';
@@ -17,6 +19,8 @@ export interface BridgeClient {
   claim(rec: TransferRecord, onStep: (u: StepUpdate) => void): Promise<TransferRecord>;
   withdrawalsOf(address: Address): Promise<TransferRecord[]>;
   balances(address: Address, fastRouteId?: string): Promise<Balances>;
+  /** balance of what a lane sends (multi-chain routes; owner may be a Solana address). Optional for other clients. */
+  laneBalance?(token: McToken & { chain: ChainKey }, owner: string): Promise<bigint | undefined>;
   recentActivity(limit?: number): Promise<ActivityItem[]>;
   /** live analytics for the charts */
   stats(): Promise<BridgeStats>;

@@ -9,8 +9,12 @@ export interface QuoteRequest {
   kind: RouteKind;
   direction: Direction;
   amount: bigint;
-  sender?: Address;
-  recipient?: Address;
+  /** EVM address, or a base58 Solana address when the origin is Solana */
+  sender?: string;
+  /** EVM address, or a base58 Solana address when the destination is Solana */
+  recipient?: string;
+  /** the chain on the other side of GullyChain (default Arbitrum Sepolia, the classic lanes) */
+  remote?: ChainKey;
   /** Integrator address from ?ref=. The local client records it; the GullyBridgeRouter SDK pays it a fee. */
   ref?: Address;
   fastRouteId?: string;
@@ -44,6 +48,13 @@ export interface Quote {
   etaSeconds: number;
   steps: StepDef[];
   needsApproval: boolean;
+  /** decimals of what is sent / received (18 for ETH; USDC 6, SOL 9, BSC USDC 18) */
+  sendDecimals: number;
+  receiveDecimals: number;
+  /** native gas token that pays the fees on the origin chain (ETH, tBNB, SOL) */
+  gasSymbol: string;
+  /** fees could not be read before signing (Solana without a connected wallet): the wallet shows them */
+  feesInWallet?: boolean;
   available: boolean;
   reason?: string;
   notes: string[];
@@ -60,11 +71,13 @@ export interface TransferRecord {
   amount: string; // bigint as string (JSON-safe)
   sendSymbol: string;
   receiveSymbol: string;
-  sender: Address;
-  recipient: Address;
+  /** EVM address or base58 Solana address */
+  sender: string;
+  recipient: string;
   ref?: Address;
-  originTx: Hash;
-  destTx?: Hash;
+  /** EVM tx hash, or a base58 Solana signature */
+  originTx: string;
+  destTx?: string;
   claimTx?: Hash;
   messageId?: Hash; // fast: Hyperlane message id
   depositTxId?: Hash; // canonical deposit: the child-chain deposit tx hash
@@ -74,6 +87,17 @@ export interface TransferRecord {
   status: TransferStatus;
   error?: string;
   etaSeconds: number;
+  /** record format: 2 since the multi-chain bridge (older records are migrated by bridge/history.ts) */
+  v?: 2;
+  /** route id (classic or multi-chain) */
+  routeId?: string;
+  /** decimals of `amount` and of what arrives */
+  decimals?: number;
+  receiveDecimals?: number;
+  /** destination block when the transfer was sent: where to look for the delivery (Mailbox ProcessId) */
+  destFromBlock?: string;
+  /** GullyGasDrop: expected on this transfer, then received */
+  gasDrop?: 'expected' | 'received';
 }
 
 export interface ActivityItem {
@@ -92,6 +116,6 @@ export interface ActivityItem {
 export interface StepUpdate {
   step: StepDef['id'];
   state: 'active' | 'done' | 'error';
-  tx?: Hash;
+  tx?: string;
   message?: string;
 }

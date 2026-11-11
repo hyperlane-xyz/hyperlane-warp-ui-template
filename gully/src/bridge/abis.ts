@@ -14,6 +14,7 @@ export const erc20Abi = parseAbi([
 ]);
 export const mailboxAbi = parseAbi(['function delivered(bytes32 messageId) view returns (bool)']);
 export const dispatchIdEvent = parseAbiItem('event DispatchId(bytes32 indexed messageId)');
+export const processIdEvent = parseAbiItem('event ProcessId(bytes32 indexed messageId)');
 export const sentTransferEvent = parseAbiItem(
   'event SentTransferRemote(uint32 indexed destination, bytes32 indexed recipient, uint256 amount)',
 );

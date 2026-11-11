@@ -1,8 +1,9 @@
 // Direction C (owner's pick, 2026-10-26): A's Terminal frame (stat tiles, ticker tape, live status column)
 // around B's swap card and animated route visual.
-import { CHAINS } from '../../config/chains';
+import { CHAINS, CHILD } from '../../config/chains';
 import { asEth, ethN, fmtUsd, toUsd, useEthUsd } from '../../bridge/usd';
 import { FeedCards, RouteVisual, SwapCard } from '../b/AppB';
+import { BridgeEarn } from '../earn/BridgeEarnCard';
 import { Icon } from '../common/icons';
 import { Analytics, TransfersPerHourTile, useStats } from '../common/Analytics';
 import { ActivityList, Footer, MyTransfers, Sparkline } from '../common/parts';
@@ -81,6 +82,8 @@ export function AppC({ url }: { url: UrlOptions }) {
               <SwapCard b={b} title="Gully Bridge" />
             </div>
             <div className="side">
+              {/* Bridge & Earn: only while the form bridges INTO Gully Chain (b.to === 'gullychaintestnet') */}
+              {b.to === CHILD && <BridgeEarn />}
               <section className="card status-card" aria-label="Network status">
                 <div className="card-head">
                   <h2 className="label">

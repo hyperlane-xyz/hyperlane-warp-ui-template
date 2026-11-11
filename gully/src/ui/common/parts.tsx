@@ -1,6 +1,6 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
-import { CHAINS, IS_TESTNET, LINKS, PARENT, txUrl, type ChainKey } from '../../config/chains';
+import { CHAINS, CHILD, IS_TESTNET, LINKS, PARENT, txUrl, type ChainKey } from '../../config/chains';
 import { CAPS } from '../../config/network';
 import { capLines } from '../../bridge/caps';
 import { GULLY_CORE_URL } from '../../config/routes';
@@ -10,6 +10,7 @@ import { disconnect, openConnect, startDiscovery } from '../../bridge/wallet';
 import '../../gc-connect/gc-connect.js';
 import type { BridgeState, StepState } from '../useBridge';
 import { useWallet } from '../useBridge';
+import { BridgeEarnDelivered } from '../earn/BridgeEarnDeliveredNotice';
 import { Icon, type IconName } from './icons';
 import { Money, UsdLine } from './money';
 import { ethN } from '../../bridge/usd';
@@ -50,16 +51,16 @@ export function isGully(href: string) {
 
 // Gully hosts open in the same tab (product navigation), except with `newTab` (explorer tx links: a transfer in
 // progress must stay on screen) and inside the embed, where a same-tab link would navigate the integrator's iframe.
-export function Ext({ href, children, className, newTab }: { href: string; children: ReactNode; className?: string; newTab?: boolean }) {
+export function Ext({ href, children, className, newTab, testId }: { href: string; children: ReactNode; className?: string; newTab?: boolean; testId?: string }) {
   const embedded = typeof document !== 'undefined' && document.documentElement.classList.contains('is-embed');
   if (isGully(href) && !newTab && !embedded)
     return (
-      <a href={href} className={className}>
+      <a href={href} className={className} data-testid={testId}>
         {children}
       </a>
     );
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className} data-testid={testId}>
       {children}
     </a>
   );
@@ -557,6 +558,9 @@ export function MyTransfers({ b }: { b: BridgeState }) {
               </Ext>
             </div>
             <Stepper defs={stepDefsOf(t)} state={recordSteps(t)} compact />
+            {/* Bridge & Earn: a Fast-lane delivery on Gully Chain (t.to === 'gullychaintestnet') is the "bridge arrival"
+                the rewards attester matches; the notice carries the Hyperlane message id and shows only while live */}
+            {t.status === 'delivered' && t.kind === 'fast' && t.to === CHILD && <BridgeEarnDelivered messageId={t.messageId} />}
             {t.status === 'claimable' && (
               <Btn icon="key" onClick={() => b.claim(t)} busy={b.busy} disabled={b.busy} className="btn-sm">
                 Claim on {CHAINS[PARENT].name}

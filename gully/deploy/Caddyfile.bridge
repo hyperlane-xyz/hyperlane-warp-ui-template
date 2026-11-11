@@ -16,7 +16,8 @@ ${L3_BRIDGE_HOST}, ${L3_BRIDGE_HOST}:2053, bridge.gullychain.xyz, bridge.gullych
 		# gullyid.xyz: Sign in with Gully ID (sdk/v1.js or sdk.js + its API calls; on by default, VITE_GULLY_ID_SIGNIN=off hides it).
 		# connect-src: the GullyChain RPC fallback list (src/config/rpc.ts), gullychain.xyz/price/eth, RedStone.
 		# img-src https: : the signed-in user's avatar (a URL from their .gully name record).
-		Content-Security-Policy "default-src 'self'; script-src 'self' https://gullyid.xyz https://analytics.gullylabs.xyz; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://analytics.gullylabs.xyz https://sepolia-rollup.arbitrum.io https://rpc.gullychain.xyz https://rpc.gullyrpc.xyz https://rpc2.gullychain.xyz https://testnet-rpc.gullychain.xyz https://gullychain.xyz https://api.redstone.finance https://gullyid.xyz; frame-ancestors *; base-uri 'self'; form-action 'self'; object-src 'none'"
+		# indexer.gullychain.xyz: Bridge & Earn numbers (GET /rewards/lp/stats, /rewards/lp; src/config/indexer.ts).
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://gullyid.xyz https://analytics.gullylabs.xyz; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://analytics.gullylabs.xyz https://sepolia-rollup.arbitrum.io https://rpc.gullychain.xyz https://rpc.gullyrpc.xyz https://rpc2.gullychain.xyz https://testnet-rpc.gullychain.xyz https://gullychain.xyz https://api.redstone.finance https://gullyid.xyz https://indexer.gullychain.xyz; frame-ancestors *; base-uri 'self'; form-action 'self'; object-src 'none'"
 	}
 	@assets path /assets/*
 	header @assets Cache-Control "public, max-age=31536000, immutable"

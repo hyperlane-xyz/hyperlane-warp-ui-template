@@ -6,11 +6,11 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>Gully Bridge · design options</title>
     <link rel="icon" type="image/png" href="http://127.0.0.1:5231/favicon-32.png" />
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;800&display=swap" rel="stylesheet" />
     <style>
-      :root { --night:#05080D; --ink:#0A1018; --cyan:#00B2FA; --green:#46FB04; --white:#F2F5F7; --muted:#8A97A8; --line:rgba(138,151,168,.18); }
+      @font-face { font-family: "Inter"; font-weight: 100 900; font-display: swap; src: url("http://127.0.0.1:5231/assets/fonts/inter-var.woff2") format("woff2"); }
+      :root { --night:#0A0F0E; --ink:#1A1F1E; --cyan:#00C878; --green:#2CF29A; --white:#FFFFFF; --muted:#8FA09C; --line:rgba(102,120,117,.18); }
       * { box-sizing: border-box; }
-      html, body { margin: 0; height: 100%; background: var(--night); color: var(--white); font: 600 14px 'Exo 2', system-ui, sans-serif; }
+      html, body { margin: 0; height: 100%; background: var(--night); color: var(--white); font: 600 14px Inter, system-ui, sans-serif; }
       body { display: grid; grid-template-rows: auto 1fr; }
       header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--ink); }
       h1 { margin: 0; font-size: 16px; font-weight: 800; }
@@ -23,6 +23,8 @@
       main { display: grid; place-items: start center; overflow: auto; padding: 16px; }
       iframe { border: 1px solid var(--line); border-radius: 16px; background: var(--night); height: calc(100vh - 110px); max-width: 100%; }
     </style>
+  <!-- Gully analytics: one self-hosted Umami, no cookies, honours Do Not Track. The loader finds the site id from the host. -->
+  <script defer src="https://analytics.gullylabs.xyz/a.js"></script>
   </head>
   <body>
     <header>

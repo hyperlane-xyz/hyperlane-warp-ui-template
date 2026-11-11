@@ -1,0 +1,148 @@
+/*!
+ * Gully Chain Night (GN) 2.0 components (kit v4, owner-approved roles: body silver, headings white, mint links/active/focus,
+ * emerald primary with ink text and mint hover, mint-outline secondary, deep-green badges with mint text). gully-labs/gully-ops sites/_shared/gullychain-night/components.css (README.md).
+ * Reads only the --gn-* tokens from tokens.css. Classes are prefixed gn- so they can sit next to an older stylesheet.
+ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.gn-body { margin: 0; background: var(--gn-bg); color: var(--gn-text-2); font: var(--gn-w-regular) var(--gn-fs-body)/var(--gn-lh) var(--gn-font);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; }
+.gn-body img, .gn-body svg { display: block; max-width: 100%; }
+.gn-body a { color: var(--gn-link); text-decoration: none; transition: color var(--gn-transition); }
+.gn-body a:hover { color: var(--gn-link-hover); }
+.gn-body :focus-visible { outline: none; box-shadow: var(--gn-focus); border-radius: var(--gn-r-sm); }
+.gn-body h1, .gn-body h2, .gn-body h3 { font-weight: var(--gn-w-bold); letter-spacing: var(--gn-track-tight); line-height: var(--gn-lh-tight); margin: 0; color: var(--gn-text); }
+.gn-body p { margin: 0; }
+.gn-wrap { width: 100%; max-width: var(--gn-maxw); margin: 0 auto; padding: 0 var(--gn-gutter); }
+.gn-sr { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.gn-skip { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--gn-cyan); color: var(--gn-on-cyan) !important; padding: 10px 16px; border-radius: var(--gn-r-pill); font-weight: var(--gn-w-bold); }
+.gn-skip:focus { top: 12px; }
+.gn-mono { font-family: var(--gn-font-mono); font-weight: 400; letter-spacing: 0; }
+.gn-ic { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---- type ---- */
+.gn-label { display: inline-flex; align-items: center; gap: 8px; font-size: var(--gn-fs-xs); font-weight: var(--gn-w-bold); text-transform: uppercase; letter-spacing: var(--gn-track-label); color: var(--gn-cyan); }
+.gn-lead { font-size: var(--gn-fs-lead); color: var(--gn-text-2); max-width: 46ch; }
+.gn-grad { background: var(--gn-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.gn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gn-muted); flex: none; }
+.gn-dot.live { background: var(--gn-live); box-shadow: 0 0 0 0 rgba(44, 242, 154, .6); animation: gn-pulse 2s infinite; }
+.gn-dot.down { background: var(--gn-danger); }
+@keyframes gn-pulse { 70% { box-shadow: 0 0 0 8px rgba(44, 242, 154, 0); } 100% { box-shadow: 0 0 0 0 rgba(44, 242, 154, 0); } }
+
+/* ---- signature pill button (GN v1.1): gradient edge, glow, arrow chip that loops on hover, pressed, focus ring ----
+   <a class="gn-btn gn-btn-pri">[icon]Label<span class="gn-ar-c">[arrow svg.gn-ar]</span></a>
+   pri: cyan fill + kit-gradient edge, glows on hover. sec: blue fill. ghost: night fill with a gradient hairline edge. */
+.gn-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: var(--gn-btn-h);
+  padding: 0 var(--gn-btn-px); border-radius: var(--gn-btn-r); border: 1px solid transparent; font: var(--gn-w-bold) 15px/1 var(--gn-font);
+  letter-spacing: .01em; cursor: pointer; white-space: nowrap; text-decoration: none; isolation: isolate;
+  transition: box-shadow var(--gn-dur) var(--gn-ease), transform var(--gn-dur) var(--gn-ease), background var(--gn-dur), color var(--gn-dur); }
+.gn-btn > .gn-ic { width: 16px; height: 16px; }
+.gn-btn:has(.gn-ar-c) { padding-right: 6px; }
+.gn-ar-c { position: relative; display: inline-grid; place-items: center; width: 36px; height: 36px; margin-left: 4px; border-radius: 50%; overflow: hidden; flex: none;
+  background: var(--gn-btn-chip-bg); color: var(--gn-btn-chip-fg); transition: transform var(--gn-dur) var(--gn-ease); }
+.gn-btn-sm .gn-ar-c { width: 28px; height: 28px; }
+.gn-ar-c .gn-ic { width: 16px; height: 16px; }
+.gn-btn:hover .gn-ar-c { transform: translateX(2px); }
+.gn-btn:hover .gn-ar-c .gn-ic { animation: gn-arrow .6s var(--gn-ease); }
+@keyframes gn-arrow { 0% { transform: translateX(0); } 45% { transform: translateX(20px); } 46% { transform: translateX(-20px); } 100% { transform: translateX(0); } }
+.gn-btn:active { transform: translateY(1px) scale(.98); }
+.gn-btn:focus-visible { outline: none; box-shadow: var(--gn-focus) !important; }
+.gn-body .gn-btn-pri { color: var(--gn-btn-pri-fg); background: linear-gradient(var(--gn-btn-pri-bg), var(--gn-btn-pri-bg)) padding-box, var(--gn-btn-edge) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35); --gn-btn-chip-bg: var(--gn-night); --gn-btn-chip-fg: var(--gn-mint); }
+.gn-body .gn-btn-pri:hover { color: var(--gn-btn-pri-fg); background: linear-gradient(var(--gn-btn-pri-hover), var(--gn-btn-pri-hover)) padding-box, var(--gn-btn-edge) border-box; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), var(--gn-btn-glow); }
+.gn-body .gn-btn-pri:active { box-shadow: inset 0 2px 6px rgba(10, 15, 14, .35); }
+.gn-body .gn-btn-sec { color: var(--gn-btn-sec-fg); background: var(--gn-btn-sec-bg); border-color: var(--gn-btn-sec-bd);
+  --gn-btn-chip-bg: color-mix(in srgb, var(--gn-mint) 14%, transparent); --gn-btn-chip-fg: var(--gn-mint); }
+.gn-body .gn-btn-sec:hover { color: var(--gn-btn-sec-fg); background: var(--gn-btn-sec-hover); border-color: var(--gn-btn-sec-bd); box-shadow: var(--gn-btn-glow); }
+.gn-body .gn-btn-ghost { color: var(--gn-btn-ghost-fg); background: linear-gradient(var(--gn-night), var(--gn-night)) padding-box, linear-gradient(90deg, rgba(44, 242, 154, .45), rgba(0, 200, 120, .35)) border-box;
+  --gn-btn-chip-bg: var(--gn-surface-2); --gn-btn-chip-fg: var(--gn-text); }
+.gn-body .gn-btn-ghost:hover { color: var(--gn-btn-ghost-fg); background: linear-gradient(var(--gn-btn-ghost-hover), var(--gn-btn-ghost-hover)) padding-box, var(--gn-btn-edge) border-box; box-shadow: 0 0 24px rgba(0, 200, 120, .18); }
+.gn-btn-sm { height: var(--gn-btn-h-sm); padding: 0 16px; font-size: 14px; }
+.gn-btn-sm:has(.gn-ar-c) { padding-right: 6px; }
+/* v1.0 markup (a bare arrow after the label, no chip) keeps working: the arrow slides on hover */
+.gn-btn > .gn-ar { width: 16px; height: 16px; transition: transform var(--gn-dur) var(--gn-ease); }
+.gn-btn:hover > .gn-ar { transform: translateX(4px); }
+
+/* ---- header ---- */
+.gn-header { position: sticky; top: 0; z-index: 50; background: rgba(10,15,14, .8); -webkit-backdrop-filter: saturate(140%) blur(14px); backdrop-filter: saturate(140%) blur(14px); border-bottom: 1px solid var(--gn-line); }
+.gn-header .gn-wrap { display: flex; align-items: center; gap: 24px; min-height: var(--gn-header-h); }
+.gn-logo { display: inline-flex; align-items: center; flex: none; }
+.gn-logo img { height: 36px; width: auto; }
+.gn-nav { display: flex; align-items: center; gap: 4px; margin-left: 8px; }
+.gn-body .gn-nav a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--gn-r-pill); color: var(--gn-text-2); font-size: 15px; }
+.gn-nav a .gn-ic { color: var(--gn-muted); transition: color var(--gn-dur); }
+.gn-body .gn-nav a:hover, .gn-body .gn-nav a[aria-current="page"] { color: var(--gn-text); background: var(--gn-surface-2); }
+.gn-nav a:hover .gn-ic, .gn-nav a[aria-current="page"] .gn-ic { color: var(--gn-link); }
+.gn-hd-r { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.gn-menu { display: none; }
+@media (max-width: 1080px) {
+  .gn-nav { display: none; position: absolute; left: 0; right: 0; top: 100%; flex-direction: column; align-items: stretch; gap: 2px; margin: 0; padding: 10px var(--gn-gutter) 18px; background: var(--gn-black); border-bottom: 1px solid var(--gn-line); }
+  .gn-header.open .gn-nav { display: flex; }
+  .gn-body .gn-nav a { padding: 12px; font-size: 16px; }
+  .gn-menu { display: inline-flex; }
+}
+@media (max-width: 520px) { .gn-hd-r .gn-btn-pri { display: none; } .gn-logo img { height: 30px; } }
+
+/* ---- cards, chips, tiles ---- */
+.gn-card { background: var(--gn-surface); border: 1px solid var(--gn-line); border-radius: var(--gn-r-lg); transition: border-color var(--gn-dur), transform var(--gn-dur) var(--gn-ease), box-shadow var(--gn-dur); }
+a.gn-card, .gn-card.hov { color: inherit; }
+a.gn-card:hover, .gn-card.hov:hover { border-color: var(--gn-line-accent); box-shadow: var(--gn-glow); transform: translateY(-2px); }
+.gn-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: var(--gn-r-pill); border: 1px solid var(--gn-line-strong); background: transparent;
+  color: var(--gn-text-2); font: var(--gn-w-regular) 14px/1 var(--gn-font); cursor: pointer; transition: background var(--gn-dur), color var(--gn-dur), border-color var(--gn-dur); }
+.gn-chip:hover { color: var(--gn-text); border-color: var(--gn-muted); }
+.gn-chip[aria-pressed="true"] { background: var(--gn-white); color: var(--gn-night); border-color: var(--gn-white); }
+.gn-chip small { font-size: 12px; opacity: .7; }
+.gn-tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--gn-r-pill); font-size: 12px; font-weight: var(--gn-w-bold); background: var(--gn-badge-bg); color: var(--gn-badge-fg); border: 1px solid transparent; }
+.gn-tag.ok { background: var(--gn-badge-bg); color: var(--gn-badge-fg); }
+.gn-tag.info { background: var(--gn-badge-bg); color: var(--gn-badge-fg); }
+.gn-tag.warn { background: var(--gn-warn-bg); color: var(--gn-warn); border-color: color-mix(in srgb, var(--gn-warn) 30%, transparent); }
+.gn-tag.muted { background: var(--gn-surface-2); color: var(--gn-text-3); }
+.gn-live { display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px; border-radius: var(--gn-r-pill); background: var(--gn-badge-bg); color: var(--gn-badge-fg); font-size: 12px; font-weight: var(--gn-w-bold); }
+.gn-up { color: var(--gn-up); } .gn-down { color: var(--gn-down); }
+.gn-stat { padding: 20px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.gn-stat .gn-v { font-size: var(--gn-fs-stat); font-weight: var(--gn-w-bold); letter-spacing: -0.02em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.gn-stat .gn-u { font-size: 13px; color: var(--gn-text-3); }
+
+/* ---- charts (SVG drawn by charts.js) ---- */
+.gn-chart { width: 100%; }
+.gn-chart svg { width: 100%; height: 100%; overflow: visible; }
+.gn-chart .grid { stroke: var(--gn-grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.gn-chart .ln { fill: none; stroke: var(--gn-c1); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.gn-chart .ar { fill: var(--gn-area); stroke: none; }
+.gn-chart .br { fill: var(--gn-c1); }
+.gn-chart .br.c2 { fill: var(--gn-c2); }
+.gn-chart .br.c3 { fill: var(--gn-c3); }
+.gn-chart .br.on, .gn-chart .br.hl { fill: var(--gn-c-highlight); }
+.gn-chart .ln.c2 { stroke: var(--gn-c2); } .gn-chart .ln.c3 { stroke: var(--gn-c3); }
+.gn-chart .guide { stroke: var(--gn-muted); stroke-width: var(--gn-stroke); stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; opacity: 0; }
+.gn-chart .hdot { fill: var(--gn-night); stroke: var(--gn-c1); stroke-width: 2; vector-effect: non-scaling-stroke; opacity: 0; }
+.gn-chart .guide.on, .gn-chart .hdot.on { opacity: 1; }
+.gn-chart .br { transition: opacity var(--gn-dur); }
+.gn-chart svg:hover .br:not(.on) { opacity: .45; }
+.gn-tip { position: absolute; top: -8px; transform: translateY(-100%); padding: 8px 12px; border-radius: var(--gn-r-sm); background: var(--gn-surface-3); box-shadow: var(--gn-shadow-pop);
+  color: var(--gn-text); font: var(--gn-w-regular) 12px/1.3 var(--gn-font); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity var(--gn-dur); z-index: 5; }
+.gn-tip.on { opacity: 1; }
+/* live stream bars (GNCharts.stream): kept between updates, moved by CSS transform so new data slides in */
+.gn-chart .sb { transition: transform var(--gn-dur-slow) var(--gn-ease), opacity var(--gn-dur-slow) var(--gn-ease); }
+.gn-chart .sb.out { opacity: 0; }
+.gn-chart .empty { fill: var(--gn-text-3); font: var(--gn-w-regular) 12px var(--gn-font); }
+.gn-chart .draw { stroke-dasharray: var(--gn-len, 2000); stroke-dashoffset: var(--gn-len, 2000); animation: gn-draw 1.1s var(--gn-ease) forwards; }
+.gn-chart .grow { transform-box: fill-box; transform-origin: bottom; animation: gn-grow .7s var(--gn-ease) both; }
+.gn-chart .fade { animation: gn-fade .9s var(--gn-ease) both; }
+@keyframes gn-draw { to { stroke-dashoffset: 0; } }
+@keyframes gn-grow { from { transform: scaleY(0); } }
+@keyframes gn-fade { from { opacity: 0; } }
+
+/* ---- footer ---- */
+.gn-footer { background: var(--gn-black); border-top: 1px solid var(--gn-line); padding: 64px 0 40px; color: var(--gn-text-3); font-size: 14px; }
+.gn-footer h3 { font-size: 12px; text-transform: uppercase; letter-spacing: var(--gn-track-label); color: var(--gn-text); margin-bottom: 14px; }
+.gn-footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.gn-body .gn-footer a:not(.gn-btn) { color: var(--gn-text-3); }
+.gn-body .gn-footer a:not(.gn-btn):hover { color: var(--gn-text); }
+
+/* ---- motion off ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
+  .gn-chart .draw { stroke-dashoffset: 0; }
+  .gn-btn:hover .gn-ar-c .gn-ic { animation: none; }
+}

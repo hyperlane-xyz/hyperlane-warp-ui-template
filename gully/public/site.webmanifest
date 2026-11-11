@@ -3,6 +3,11 @@
   "short_name": "Gully Bridge",
   "icons": [
     {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
       "src": "android-chrome-192.png",
       "sizes": "192x192",
       "type": "image/png"
@@ -14,7 +19,7 @@
     }
   ],
   "start_url": "./",
-  "theme_color": "#05080D",
-  "background_color": "#05080D",
+  "theme_color": "#0A0F0E",
+  "background_color": "#0A0F0E",
   "display": "standalone"
 }

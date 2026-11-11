@@ -1,0 +1,165 @@
+/*!
+ * Gully Chain Night (GN) 2.0: design tokens for every Gully Chain surface (gullychain.xyz, docs, dev, explorer, bridge,
+ * faucet, admin, blog, sentry, gc-switcher). gully-labs/gully-ops sites/_shared/gullychain-night/tokens.css, mirror:
+ * tokens.json, rules: README.md.
+ * 2.0.0 (owner-approved mapping, 2026-10-30): base layer = GullyChain brand kit v4 "Corporate Executive 1C"
+ * (Desktop\GULLY LABS GRAPHICS\Gully Chain\brand-kit-v4\tokens\design-tokens.css), its --gc-* tokens verbatim; every --gn-*
+ * name is an alias onto them, so all surfaces switch from this one file. Token names are STABLE (v1 names keep their role).
+ * Roles: page ink, surfaces charcoal + one raised step, primary emerald fill / ink text / mint hover, secondary mint
+ * outline, links + active nav + focus mint, badges/tags/live deep-green fill with mint text, headings white, body silver,
+ * muted #667875 only for borders/dividers/disabled, --gc-muted-text #8FA09C for secondary text (7.1:1 ink, 6.1:1 charcoal).
+ * Stylesheets that load after this file must NOT redeclare --gc-ink, --gc-white, --gc-muted or --gc-font (an older
+ * Terminal alias of one of those onto --gn-* would be a cycle); gullychain-night/v4map.mjs rewrites those.
+ */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("/assets/fonts/inter-var.woff2") format("woff2"); }
+
+:root {
+  /* ---- base layer: the kit's design-tokens.css, verbatim ---- */
+  --gc-emerald: #00C878;
+  --gc-deep-green: #005B39;
+  --gc-mint: #2CF29A;
+  --gc-ink: #0A0F0E;
+  --gc-charcoal: #1A1F1E;
+  --gc-silver: #D0D5DA;
+  --gc-white: #FFFFFF;
+  --gc-muted: #667875;
+  --gc-success: #10B981;
+  --gc-warning: #F59E0B;
+  --gc-error: #EF4444;
+  --gc-font: Inter, system-ui, sans-serif;
+  --gc-radius: 12px;
+  --gc-transition: 180ms ease;
+  /* ---- kit extensions (owner-approved 2026-10-30) ---- */
+  --gc-muted-text: #8FA09C;     /* secondary text: 7.1:1 on ink, 6.1:1 on charcoal, 5.4:1 on raised */
+  --gc-raised: #232A28;         /* the one derived step above charcoal (hover, inputs, code) */
+  --gc-pressed: #2B3331;        /* pressed / selected */
+  --gc-error-text: #F87171;     /* red text on charcoal (6.0:1); #EF4444 stays the delta/fill colour */
+
+  /* ---- GN names: aliases onto the kit layer ---- */
+  --gn-emerald: var(--gc-emerald);
+  --gn-deep-green: var(--gc-deep-green);
+  --gn-mint: var(--gc-mint);
+  --gn-charcoal: var(--gc-charcoal);
+  --gn-silver: var(--gc-silver);
+  --gn-muted-kit: var(--gc-muted);
+  --gn-success: var(--gc-success);
+  --gn-warning: var(--gc-warning);
+  --gn-error: var(--gc-error);
+  --gn-primary: var(--gc-emerald);
+  --gn-on-primary: var(--gc-ink);
+
+  /* v1 colour names, same roles */
+  --gn-night: var(--gc-ink);          /* page ground */
+  --gn-black: var(--gc-ink);          /* bands: the same ink (no second black) */
+  --gn-ink: var(--gc-charcoal);       /* cards, panels */
+  --gn-cyan: var(--gc-emerald);       /* role "primary accent": fills, eyebrow labels, chart series 1 */
+  --gn-blue: var(--gc-deep-green);    /* role "badge/tag fill": deep green, mint text on it (5.6:1) */
+  --gn-green: var(--gc-mint);         /* role "highlight / live" */
+  --gn-white: var(--gc-white);        /* headings */
+  --gn-muted: var(--gc-muted-text);   /* secondary text (AA) */
+  --gn-gradient: linear-gradient(90deg, var(--gc-mint), var(--gc-emerald));
+  --gn-gradient-logo: linear-gradient(135deg, #2CF29A, #007A4B); /* the exact gc-icon.svg gradient, large marks only */
+
+  /* surfaces */
+  --gn-bg: var(--gc-ink);
+  --gn-surface: var(--gc-charcoal);
+  --gn-surface-2: var(--gc-raised);
+  --gn-surface-3: var(--gc-pressed);
+  --gn-line: color-mix(in srgb, var(--gc-muted) 45%, transparent);        /* borders, dividers: kit muted only */
+  --gn-line-strong: color-mix(in srgb, var(--gc-muted) 80%, transparent);
+  --gn-line-accent: color-mix(in srgb, var(--gc-mint) 45%, transparent);
+
+  /* text: headings white, body silver */
+  --gn-text: var(--gc-white);
+  --gn-text-2: var(--gc-silver);
+  --gn-text-3: var(--gc-muted-text);
+  --gn-disabled: var(--gc-muted);     /* disabled controls only */
+  --gn-on-cyan: var(--gc-ink);        /* text on emerald (8.8:1) */
+  --gn-on-blue: var(--gc-mint);       /* text on deep green (5.6:1) */
+  --gn-link: var(--gc-mint);          /* links, active nav, focus */
+  --gn-link-hover: var(--gc-white);
+
+  /* semantic */
+  --gn-ok: var(--gc-mint);            --gn-ok-bg: var(--gc-deep-green);
+  --gn-info: var(--gc-mint);          --gn-info-bg: var(--gc-deep-green);
+  --gn-warn: var(--gc-warning);       --gn-warn-bg: color-mix(in srgb, var(--gc-warning) 14%, transparent);
+  --gn-danger: var(--gc-error-text);  --gn-danger-bg: color-mix(in srgb, var(--gc-error) 14%, transparent);
+  --gn-live: var(--gc-mint);          /* the live dot (on a deep-green pill) */
+  --gn-badge-bg: var(--gc-deep-green); --gn-badge-fg: var(--gc-mint);
+  --gn-up: var(--gc-success);         /* deltas only */
+  --gn-down: var(--gc-error);         /* deltas only */
+
+  /* charts: emerald primary, silver comparison, mint highlight, amber 3rd series */
+  --gn-c1: var(--gc-emerald);
+  --gn-c2: var(--gc-silver);
+  --gn-c3: var(--gc-warning);
+  --gn-c4: var(--gc-mint);
+  --gn-c5: var(--gc-muted-text);
+  --gn-c-highlight: var(--gc-mint);
+  --gn-grid: color-mix(in srgb, var(--gc-muted) 25%, transparent);
+  --gn-area: color-mix(in srgb, var(--gc-emerald) 16%, transparent);
+
+  /* type: Inter (kit) 400-800; hashes and code in system monospace */
+  --gn-font: var(--gc-font);
+  --gn-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --gn-w-regular: 400;
+  --gn-w-medium: 500;
+  --gn-w-semibold: 600;
+  --gn-w-strong: 700;
+  --gn-w-bold: 800;
+  --gn-fs-display: clamp(44px, 7.4vw, 112px);
+  --gn-fs-h1: clamp(38px, 5.2vw, 72px);
+  --gn-fs-h2: clamp(28px, 3.4vw, 48px);
+  --gn-fs-h3: 20px;
+  --gn-fs-lead: clamp(17px, 1.5vw, 20px);
+  --gn-fs-body: 16px;
+  --gn-fs-sm: 14px;
+  --gn-fs-xs: 12px;
+  --gn-fs-stat: clamp(30px, 3.2vw, 40px);
+  --gn-lh: 1.55;
+  --gn-lh-tight: 1.02;
+  --gn-track-tight: -0.035em;
+  --gn-track-label: .14em;
+
+  /* space (4 px base), layout */
+  --gn-s1: 4px; --gn-s2: 8px; --gn-s3: 12px; --gn-s4: 16px; --gn-s5: 24px; --gn-s6: 32px;
+  --gn-s7: 48px; --gn-s8: 64px; --gn-s9: 96px; --gn-s10: 128px;
+  --gn-gutter: 16px;
+  --gn-maxw: 1320px;
+  --gn-header-h: 64px;
+  --gn-section: clamp(64px, 9vw, 128px);
+  --gn-section-compact: clamp(48px, 5.6vw, 80px);
+
+  /* shape: 12 px base (kit) */
+  --gn-r-xs: 4px; --gn-r-sm: 8px; --gn-r: var(--gc-radius); --gn-r-lg: 16px; --gn-r-xl: 24px; --gn-r-pill: 999px;
+  --gn-stroke: 1px;
+
+  /* elevation: a line plus a soft glow */
+  --gn-shadow: 0 0 0 1px var(--gn-line), 0 16px 40px rgba(0, 0, 0, .55);
+  --gn-shadow-pop: 0 0 0 1px var(--gn-line-strong), 0 24px 64px rgba(0, 0, 0, .7);
+  --gn-glow: 0 0 0 1px var(--gn-line-accent), 0 0 32px color-mix(in srgb, var(--gc-emerald) 18%, transparent);
+  --gn-focus: 0 0 0 2px var(--gc-ink), 0 0 0 4px var(--gc-mint);
+
+  /* motion: 180 ms ease (kit); off under prefers-reduced-motion */
+  --gn-ease: ease;
+  --gn-transition: var(--gc-transition);
+  --gn-dur-fast: 120ms;
+  --gn-dur: 180ms;
+  --gn-dur-mid: 240ms;
+  --gn-dur-slow: 700ms;
+
+  /* buttons: primary emerald / ink / mint hover; secondary mint outline */
+  --gn-btn-h: 48px; --gn-btn-h-sm: 40px; --gn-btn-px: 24px; --gn-btn-r: var(--gn-r-pill);
+  --gn-btn-pri-bg: var(--gc-emerald); --gn-btn-pri-fg: var(--gc-ink); --gn-btn-pri-hover: var(--gc-mint);
+  --gn-btn-sec-bg: transparent;       --gn-btn-sec-fg: var(--gc-mint); --gn-btn-sec-hover: color-mix(in srgb, var(--gc-mint) 12%, transparent);
+  --gn-btn-sec-bd: var(--gc-mint);
+  --gn-btn-ghost-bd: var(--gn-line-strong); --gn-btn-ghost-fg: var(--gn-text); --gn-btn-ghost-hover: var(--gc-raised);
+  --gn-btn-edge: linear-gradient(var(--gc-emerald), var(--gc-emerald));
+  --gn-btn-glow: 0 0 0 1px color-mix(in srgb, var(--gc-mint) 55%, transparent), 0 8px 32px color-mix(in srgb, var(--gc-emerald) 35%, transparent);
+  --gn-btn-chip-bg: var(--gc-ink); --gn-btn-chip-fg: var(--gc-mint);
+
+  color-scheme: dark;
+}
+@media (min-width: 900px) { :root { --gn-gutter: 32px; } }
+@media (min-width: 1440px) { :root { --gn-gutter: 48px; } }
+@media (prefers-reduced-motion: reduce) { :root { --gn-dur-fast: 0ms; --gn-dur: 0ms; --gn-dur-mid: 0ms; --gn-dur-slow: 0ms; --gc-transition: 0ms; } }

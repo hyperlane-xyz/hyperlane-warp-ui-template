@@ -1,12 +1,15 @@
 // All bridge state for every design direction. The shells (A, B, C) only render it.
+import { sendBlocker } from '../bridge/blocker';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { formatEther, isAddress, type Address } from 'viem';
 
 import { CHAINS, CHILD, isEvm, PARENT, type ChainKey } from '../config/chains';
 import { REMOTE_CHAINS } from '../config/multichain';
-import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
+import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, MIRROR_ROUTES, routeFor } from '../config/routes';
+import { parseMirrorLink, pickMirrorRoute, type MirrorLink } from '../config/mirrors';
 import { getBridgeClient, onBridgeClientChange, type Balances } from '../bridge/bridgeClient';
 import { pub } from '../bridge/clients';
+import { track } from '../analytics/umami';
 import { parseAmount } from '../bridge/format';
 import { dropApplies, dropEligible, gasDropEnabled, readGasDrop, type GasDropState } from '../bridge/gasDrop';
 import { isOpen, loadTransfers, saveTransfers } from '../bridge/history';
@@ -34,6 +37,8 @@ export interface UrlOptions {
   /** ?token=USDC: preselect a token by symbol */
   token?: string;
   preview: boolean;
+  /** Gully Warp Mirror deep link `?token=<originToken>&to=<domain>` (kre8.fun Drop page "Bridge" button) */
+  mirror?: MirrorLink;
 }
 
 export function readUrl(): UrlOptions {
@@ -57,13 +62,14 @@ export function readUrl(): UrlOptions {
   const r = q.get('route');
   return {
     ref: ref as Address | undefined,
-    embed: q.has('embed') || location.pathname.endsWith('/embed') || location.pathname.endsWith('/embed/'),
+    embed: q.has('embed') || (typeof location !== 'undefined' && /\/embed\/?$/.test(location.pathname)),
     direction: d === 'withdraw' || d === 'deposit' ? d : undefined,
     route: r === 'fast' || r === 'canonical' ? r : undefined,
     amount: q.get('amount') || undefined,
     chain: REMOTE_CHAINS.find((c) => c === q.get('chain')),
     token: q.get('token')?.toUpperCase() || undefined,
     preview: q.has('preview'),
+    mirror: parseMirrorLink(q.toString()),
   };
 }
 
@@ -148,10 +154,19 @@ export function useBridge(url: UrlOptions) {
   const { session: gullySession } = useGullySession(GULLY_ID);
   const [, force] = useState(0);
   useEffect(() => onBridgeClientChange(() => force((n) => n + 1)), []);
-  const [direction, setDirection] = useState<Direction>(url.direction || 'deposit');
+  // a mirror deep link preselects its route; direction Gully Chain -> destination until we see the wallet holds the
+  // mirror, then "Bridge back" (destination -> Gully Chain) unless the link or the user chose a direction
+  const linked = pickMirrorRoute(MIRROR_ROUTES, url.mirror);
+  const [direction, setDirectionRaw] = useState<Direction>(url.direction || (linked ? 'withdraw' : 'deposit'));
+  const directionChosen = useRef(!!url.direction);
+  const setDirection = (d: Direction | ((p: Direction) => Direction)) => {
+    directionChosen.current = true;
+    setDirectionRaw(d);
+  };
   const [remote, setRemoteState] = useState<ChainKey>(url.chain || PARENT);
+  // ?token=USDC preselects a token by symbol; ?token=0x… is a mirror deep link (handled above)
   const [tokenId, setTokenId] = useState<string | undefined>(() => {
-    if (!url.token) return undefined;
+    if (!url.token || url.mirror || linked) return undefined;
     return tokenOptions(url.chain || PARENT, url.direction || 'deposit').find(
       (o) => o.send.symbol.toUpperCase() === url.token || o.receive.symbol.toUpperCase() === url.token,
     )?.id;
@@ -159,7 +174,7 @@ export function useBridge(url: UrlOptions) {
   const [amountText, setAmountText] = useState(url.amount || '');
   const [recipientText, setRecipientText] = useState('');
   const [manualKind, setManualKind] = useState<RouteKind | undefined>(url.route);
-  const [fastRouteId, setFastRouteId] = useState(DEFAULT_FAST_ROUTE_ID);
+  const [fastRouteId, setFastRouteId] = useState(linked?.id || DEFAULT_FAST_ROUTE_ID);
   const [balances, setBalances] = useState<Balances>({});
   const [laneBal, setLaneBal] = useState<bigint | undefined>();
   const [quotes, setQuotes] = useState<Partial<Record<RouteKind, Quote>>>({});
@@ -182,8 +197,10 @@ export function useBridge(url: UrlOptions) {
   const sendDecimals = multichain ? option!.send.decimals : 18;
   const receiveDecimals = multichain ? option!.receive.decimals : 18;
   const amount = parseAmount(amountText, sendDecimals);
-  // Cheapest (the canonical Arbitrum bridge) only exists for ETH with Arbitrum Sepolia
-  const canonicalAvailable = option?.source === 'classic' && option.canonical;
+  /** the selected Gully Warp Mirror (classic pair only); undefined on the ETH and multi-chain routes */
+  const mirror = multichain ? undefined : route.warp;
+  // Cheapest (the canonical Arbitrum bridge) only exists for ETH with Arbitrum Sepolia; a mirror moves over its warp route
+  const canonicalAvailable = option?.source === 'classic' && option.canonical && !mirror;
 
   // wallets: the origin chain decides which one signs; the destination decides the recipient format
   const originIsSolana = !isEvm(from);
@@ -236,6 +253,15 @@ export function useBridge(url: UrlOptions) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [multichain, routeId, sendToken?.chain, senderAddr]);
+
+  // mirror holders default to "Bridge back" (once per route, only while nobody picked a direction)
+  const autoBack = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!mirror || directionChosen.current || autoBack.current === route.id) return;
+    if (balances.mirrorToken === undefined) return;
+    autoBack.current = route.id;
+    if (balances.mirrorToken > 0n) setDirectionRaw('deposit');
+  }, [mirror, route.id, balances.mirrorToken]);
 
   // retired-route tokens the wallet still holds: the UI offers to redeem them for ETH on Arbitrum Sepolia
   const legacyHoldings = LEGACY_ROUTES.map((r) => ({
@@ -381,7 +407,9 @@ export function useBridge(url: UrlOptions) {
   const balanceFrom: bigint | undefined = multichain
     ? laneBal
     : direction === 'deposit'
-      ? balances.parentEth
+      ? mirror
+        ? balances.mirrorToken
+        : balances.parentEth
       : kind === 'fast'
         ? balances.fastToken
         : balances.childEth;
@@ -389,22 +417,28 @@ export function useBridge(url: UrlOptions) {
   let blocker: string | undefined;
   if (!option) blocker = 'No route to this chain yet';
   else if (!option.live) blocker = 'Coming soon';
-  else if (!amount || amount <= 0n) blocker = 'Enter an amount';
-  else if (needsRecipient && !recipientValid) blocker = destIsSolana ? 'Enter a Solana address' : 'Enter a GullyChain address';
-  else if (!quote) blocker = quoting ? 'Getting a quote' : 'No quote';
-  else if (senderAddr && balanceFrom !== undefined && amount > balanceFrom) blocker = `Insufficient ${quote.sendSymbol} balance`;
-  else if (!quote.available) blocker = quote.reason || 'Route unavailable';
-  else if (
-    !multichain &&
-    wallet.address &&
-    balanceFrom !== undefined &&
-    quote.value > 0n &&
-    (direction === 'deposit' || (kind === 'fast' && route.tokens[CHILD].tokenType === 'native')) &&
-    balanceFrom < quote.value
-  )
-    blocker = 'Insufficient balance';
-  else if (multichain && option.send.tokenType === 'native' && senderAddr && balanceFrom !== undefined && balanceFrom < quote.value)
-    blocker = 'Not enough for the amount plus fees';
+  else if (amount && amount > 0n && needsRecipient && !recipientValid)
+    blocker = destIsSolana ? 'Enter a Solana address' : 'Enter a GullyChain address';
+  else if (!multichain)
+    blocker = sendBlocker({
+      amount,
+      quote,
+      quoting,
+      wallet: wallet.address,
+      balanceFrom,
+      paysValueFromBalance: direction === 'deposit' || (kind === 'fast' && route.tokens[CHILD].tokenType === 'native'),
+    });
+  else {
+    blocker = sendBlocker({
+      amount,
+      quote,
+      quoting,
+      wallet: senderAddr,
+      balanceFrom,
+      paysValueFromBalance: option.send.tokenType === 'native',
+    });
+    if (blocker === 'Insufficient balance') blocker = 'Not enough for the amount plus fees';
+  }
 
   const send = useCallback(async () => {
     if (!quote || !amount) return;
@@ -417,7 +451,10 @@ export function useBridge(url: UrlOptions) {
       setTransfers((all) => [rec, ...all.filter((t) => t.id !== rec.id)]);
       setActiveId(rec.id);
       if (rec.status === 'failed') toast({ kind: 'error', title: 'Transaction failed', body: rec.error || 'Reverted' });
-      else toast({ kind: 'success', title: 'Sent', body: `${quote.req.kind === 'fast' ? 'Fast' : 'Cheapest'} transfer submitted` });
+      else {
+        track('bridge', { lane: quote.req.kind });
+        toast({ kind: 'success', title: 'Sent', body: `${quote.req.kind === 'fast' ? 'Fast' : 'Cheapest'} transfer submitted` });
+      }
       setAmountText('');
     } catch (e) {
       const msg = (e as { shortMessage?: string }).shortMessage || (e as Error).message || 'Something went wrong';
@@ -437,7 +474,7 @@ export function useBridge(url: UrlOptions) {
       try {
         const n = await getBridgeClient().claim(rec, onStep);
         setTransfers((all) => all.map((x) => (x.id === n.id ? n : x)));
-        toast({ kind: 'success', title: 'Claimed', body: 'ETH released on Arbitrum Sepolia' });
+        toast({ kind: 'success', title: 'Claimed', body: `ETH released on ${CHAINS[PARENT].name}` });
       } catch (e) {
         toast({ kind: 'error', title: 'Claim failed', body: ((e as Error).message || '').slice(0, 140) });
       } finally {
@@ -469,12 +506,13 @@ export function useBridge(url: UrlOptions) {
     direction,
     setDirection: (d: Direction) => {
       setDirection(d);
-      if (d === 'deposit') setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+      if (d === 'deposit' && !mirror) setFastRouteId(DEFAULT_FAST_ROUTE_ID);
       setSteps({});
     },
     flip: () => {
       setDirection((d) => (d === 'deposit' ? 'withdraw' : 'deposit'));
-      setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+      // a mirror route works both ways; only the retired ETH routes fall back to the default on a flip
+      if (!mirror) setFastRouteId(DEFAULT_FAST_ROUTE_ID);
       setRecipientText('');
       setSteps({});
     },
@@ -484,6 +522,8 @@ export function useBridge(url: UrlOptions) {
     option,
     setTokenId: (id: string) => {
       setTokenId(id);
+      // a multi-chain token leaves any mirror route; the classic ETH option is the default route
+      setFastRouteId(DEFAULT_FAST_ROUTE_ID);
       setAmountText('');
       setSteps({});
     },
@@ -511,6 +551,24 @@ export function useBridge(url: UrlOptions) {
     setKind: (k: RouteKind | undefined) => setManualKind(k),
     route,
     routes: FAST_ROUTES,
+    /** the selected Gully Warp Mirror (coin + destination), undefined on the ETH routes */
+    mirror,
+    mirrorRoutes: MIRROR_ROUTES,
+    /** pick a mirror route (or the default ETH route with undefined) */
+    selectMirror: (id?: string) => {
+      setFastRouteId(id || DEFAULT_FAST_ROUTE_ID);
+      // mirrors run on the classic pair: back to its chain and its ETH option
+      setRemoteState(PARENT);
+      setTokenId(undefined);
+      setManualKind(undefined);
+      if (id) {
+        // start GullyChain -> destination; the holder check above flips to "Bridge back" if the wallet holds the mirror
+        setDirectionRaw('withdraw');
+        directionChosen.current = false;
+        autoBack.current = undefined;
+      }
+      setSteps({});
+    },
     fastRouteId: routeId,
     setFastRouteId,
     legacyHoldings,

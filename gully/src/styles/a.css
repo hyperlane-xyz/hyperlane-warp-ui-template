@@ -1,20 +1,20 @@
 /* Direction A: Terminal */
 .a .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 0; }
 .a .strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.a .tile { position: relative; padding: 14px 16px; border-radius: var(--r); background: var(--gc-ink); border: 1px solid var(--gc-line); display: grid; gap: 4px; min-width: 0; overflow: hidden; }
+.a .tile { position: relative; padding: 14px 16px; border-radius: var(--r); background: var(--gn-surface); border: 1px solid var(--gc-line); display: grid; gap: 4px; min-width: 0; overflow: hidden; }
 .a .tile .spark { position: absolute; right: 12px; bottom: 12px; opacity: 0.9; }
 .a .tile-num { font-size: clamp(22px, 2.4vw, 30px); font-weight: 800; font-variant-numeric: tabular-nums; }
 .a .tile small { font-size: 12px; }
-.a .tape { margin: 12px 0 20px; border-top: 1px solid var(--gc-line); border-bottom: 1px solid var(--gc-line); overflow: hidden; white-space: nowrap; font-family: var(--mono); font-size: 12px; color: var(--gc-muted); }
+.a .tape { margin: 12px 0 20px; border-top: 1px solid var(--gc-line); border-bottom: 1px solid var(--gc-line); overflow: hidden; white-space: nowrap; font-family: var(--mono); font-size: 12px; color: var(--gn-text-3); }
 .a .tape-in { display: inline-flex; gap: 32px; padding: 10px 0; animation: tape 60s linear infinite; }
 .a .tape-in span { display: inline-flex; align-items: center; gap: 8px; }
 .a .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gc-cyan); display: inline-block; }
 .a .dot-canonical { background: var(--gc-blue); }
 @keyframes tape { to { transform: translateX(-50%); } }
 .a .grid-a { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 20px; align-items: start; }
-.a .card { background: var(--gc-ink); border: 1px solid var(--gc-line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; }
+.a .card { background: var(--gn-surface); border: 1px solid var(--gc-line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; }
 .a .bridge-card { position: relative; }
-.a .bridge-card::before { content: ''; position: absolute; inset: -1px; border-radius: var(--r); padding: 1px; background: linear-gradient(140deg, rgba(0, 178, 250, 0.6), transparent 40%, transparent 70%, rgba(70, 251, 4, 0.4)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.a .bridge-card::before { content: ''; position: absolute; inset: -1px; border-radius: var(--r); padding: 1px; background: linear-gradient(140deg, color-mix(in srgb, var(--gn-cyan) 60%, transparent), transparent 40%, transparent 70%, color-mix(in srgb, var(--gn-green) 40%, transparent)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
 .a .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .h-card { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.2px; }
 .a .side { display: grid; gap: 20px; min-width: 0; }

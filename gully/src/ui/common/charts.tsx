@@ -1,12 +1,13 @@
-// Live charts (inline SVG). Studio Light palette on white: Fast #0A86C2 (accent) / Canonical #6366F1 (indigo),
-// both >= 3:1 against #FFFFFF; series are also named in legends and tooltips, never colour alone.
+// Live charts (inline SVG). Gully Chain Night chart palette (shared tokens, src/styles/night/tokens.css): Fast = --gn-c1
+// (cyan, 8.2:1 on night) / Canonical = --gn-c3 (lifted blue, 5.6:1); series are also named in legends and tooltips,
+// never colour alone. Colours are CSS variables, so they are set through style (fill/stroke), not SVG attributes.
 // Every chart has a hover tooltip, a legend or title naming its series, and a visually hidden table.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { duration } from '../../bridge/format';
 import { Money } from './money';
 
-export const SERIES = { fast: '#0A86C2', canonical: '#6366F1' } as const;
+export const SERIES = { fast: 'var(--gn-c1)', canonical: 'var(--gn-c3)' } as const;
 
 /** adds .in once the element scrolls into view (charts animate in on scroll) */
 export function useInView<T extends Element>() {
@@ -83,8 +84,8 @@ export function StackedBars({ data }: { data: { t: number; fast: number; canonic
           return (
             <g key={d.t} onMouseEnter={() => setHover(i)}>
               <rect x={i * bw} y={0} width={bw} height={H} fill="transparent" />
-              {hc > 0 && <rect className="bar" x={i * bw + 1} y={H - hc} width={Math.max(1, bw - 2)} height={hc} rx="2" fill={SERIES.canonical} style={{ transitionDelay: `${i * 8}ms` }} />}
-              {hf > 0 && <rect className="bar" x={i * bw + 1} y={H - hc - hf - (hc > 0 ? 2 : 0)} width={Math.max(1, bw - 2)} height={hf} rx="2" fill={SERIES.fast} style={{ transitionDelay: `${i * 8}ms` }} />}
+              {hc > 0 && <rect className="bar" x={i * bw + 1} y={H - hc} width={Math.max(1, bw - 2)} height={hc} rx="2" style={{ fill: SERIES.canonical, transitionDelay: `${i * 8}ms` }} />}
+              {hf > 0 && <rect className="bar" x={i * bw + 1} y={H - hc - hf - (hc > 0 ? 2 : 0)} width={Math.max(1, bw - 2)} height={hf} rx="2" style={{ fill: SERIES.fast, transitionDelay: `${i * 8}ms` }} />}
             </g>
           );
         })}
@@ -140,12 +141,12 @@ export function DeliveryChart({ points }: { points: { kind: 'fast' | 'canonical'
           </g>
         ))}
         {(['canonical', 'fast'] as const).map((k) => (
-          <polyline key={k} points={line(k)} className="series-line" stroke={SERIES[k]} />
+          <polyline key={k} points={line(k)} className="series-line" style={{ stroke: SERIES[k] }} />
         ))}
         {points.map((p, i) => (
           <g key={i} onMouseEnter={() => setHover(i)}>
             <circle cx={x(p.t)} cy={y(p.s)} r="12" fill="transparent" />
-            <circle cx={x(p.t)} cy={y(p.s)} r="4.5" fill={SERIES[p.kind]} className="pt" />
+            <circle cx={x(p.t)} cy={y(p.s)} r="4.5" style={{ fill: SERIES[p.kind] }} className="pt" />
           </g>
         ))}
       </svg>
@@ -182,8 +183,8 @@ export function BackingGauge({ supply, locked, symbol }: { supply: number; locke
         <path d={`M20 92 A${r} ${r} 0 0 1 160 92`} className="gauge-fg" style={{ strokeDasharray: `${len * pct} ${len}` }} stroke="url(#gauge-grad)" />
         <defs>
           <linearGradient id="gauge-grad" x1="0" x2="1">
-            <stop offset="0" stopColor="#0A86C2" />
-            <stop offset="1" stopColor="#16A34A" />
+            <stop offset="0" style={{ stopColor: 'var(--gn-cyan)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--gn-green)' }} />
           </linearGradient>
         </defs>
         <text x="90" y="80" textAnchor="middle" className="gauge-num">
@@ -211,8 +212,8 @@ export function BackingLines({ series, symbol }: { series: { t: number; supply: 
   return (
     <div className="chart">
       <svg viewBox={`0 0 ${W} ${H}`} className="lines" role="img" aria-label={`${symbol} supply and ETH locked over time`}>
-        <path d={step('locked')} className="series-line" stroke={SERIES.canonical} />
-        <path d={step('supply')} className="series-line dashed" stroke={SERIES.fast} />
+        <path d={step('locked')} className="series-line" style={{ stroke: SERIES.canonical }} />
+        <path d={step('supply')} className="series-line dashed" style={{ stroke: SERIES.fast }} />
       </svg>
       <table className="sr">
         <caption>{symbol} supply and locked ETH</caption>
@@ -248,11 +249,10 @@ export function Donut({ parts }: { parts: { label: string; value: number; color:
               r={r}
               fill="none"
               strokeWidth={hover === i ? 22 : 18}
-              stroke={p.color}
               strokeDasharray={`${Math.max(0, len - 2)} ${C}`}
               strokeDashoffset={-acc}
               className="donut-seg"
-              style={p.hatch ? { strokeOpacity: 0.55 } : undefined}
+              style={{ stroke: p.color, strokeOpacity: p.hatch ? 0.55 : 1 }}
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(undefined)}
             />

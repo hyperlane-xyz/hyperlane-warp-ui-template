@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  DEFAULT_CLIENT_ID,
   DEFAULT_ISSUER,
   getGullyClient,
   gullyIdConfig,
   loadGullyIdSdk,
+  markGullyId,
   profileWallet,
   resetGullyIdLoader,
   type GullyClient,
@@ -14,7 +16,7 @@ import {
 
 type FakeScript = { src: string; async: boolean; crossOrigin: string; onload?: () => void; onerror?: () => void };
 
-function fakeEnv(sdk?: GullyIDGlobal, outcome: 'load' | 'error' | 'hang' = 'load') {
+function fakeEnv(sdk?: GullyIDGlobal, outcome: 'load' | 'error' | 'hang' | 'v1-missing' = 'load') {
   const win: { GullyID?: GullyIDGlobal } = {};
   const scripts: FakeScript[] = [];
   const doc = {
@@ -23,6 +25,11 @@ function fakeEnv(sdk?: GullyIDGlobal, outcome: 'load' | 'error' | 'hang' = 'load
       appendChild: (s: FakeScript) => {
         scripts.push(s);
         queueMicrotask(() => {
+          if (outcome === 'v1-missing') {
+            if (s.src.endsWith('/sdk/v1.js')) return s.onerror?.();
+            if (sdk) win.GullyID = sdk;
+            return s.onload?.();
+          }
           if (outcome === 'error') s.onerror?.();
           if (outcome === 'load') {
             if (sdk) win.GullyID = sdk;
@@ -49,9 +56,21 @@ function fakeClient(): GullyClient {
 afterEach(() => resetGullyIdLoader());
 
 describe('gullyIdConfig (feature flag)', () => {
-  it('is off when the client id is unset or blank', () => {
-    expect(gullyIdConfig({})).toBeNull();
-    expect(gullyIdConfig({ VITE_GULLY_ID_CLIENT_ID: '  ' })).toBeNull();
+  it('is on by default with the gully-bridge client on gullyid.xyz', () => {
+    expect(DEFAULT_CLIENT_ID).toBe('gully-bridge');
+    expect(gullyIdConfig({})).toEqual({ clientId: 'gully-bridge', issuer: 'https://gullyid.xyz' });
+    expect(gullyIdConfig({ VITE_GULLY_ID_CLIENT_ID: '  ' })).toEqual({ clientId: 'gully-bridge', issuer: DEFAULT_ISSUER });
+    expect(gullyIdConfig({ VITE_GULLY_ID_SIGNIN: 'on' })).not.toBeNull();
+  });
+  it('VITE_GULLY_ID_SIGNIN=off hides it', () => {
+    for (const v of ['off', 'OFF', 'false', '0', 'no']) expect(gullyIdConfig({ VITE_GULLY_ID_SIGNIN: v })).toBeNull();
+  });
+  it('publishes the flag on <html>', () => {
+    const doc = { documentElement: { dataset: {} as DOMStringMap } } as unknown as Pick<Document, 'documentElement'>;
+    markGullyId({ clientId: 'gully-bridge', issuer: DEFAULT_ISSUER }, doc);
+    expect(doc.documentElement.dataset).toEqual({ gullyId: 'on', gullyIdClient: 'gully-bridge' });
+    markGullyId(null, doc);
+    expect(doc.documentElement.dataset.gullyId).toBe('off');
   });
   it('uses the default issuer', () => {
     expect(gullyIdConfig({ VITE_GULLY_ID_CLIENT_ID: 'gully-bridge' })).toEqual({ clientId: 'gully-bridge', issuer: DEFAULT_ISSUER });
@@ -64,14 +83,20 @@ describe('gullyIdConfig (feature flag)', () => {
 });
 
 describe('loadGullyIdSdk (fail soft)', () => {
-  it('loads sdk.js from the issuer once', async () => {
+  it('falls back to /sdk.js while /sdk/v1.js is not live', async () => {
+    const sdk = { init: () => fakeClient() };
+    const { env, scripts } = fakeEnv(sdk, 'v1-missing');
+    expect(await loadGullyIdSdk(DEFAULT_ISSUER, env)).toBe(sdk);
+    expect(scripts.map((s) => s.src)).toEqual(['https://gullyid.xyz/sdk/v1.js', 'https://gullyid.xyz/sdk.js']);
+  });
+  it('loads the 1.x SDK from the issuer once', async () => {
     const sdk = { init: () => fakeClient() };
     const { env, scripts } = fakeEnv(sdk);
     const [a, b] = await Promise.all([loadGullyIdSdk(DEFAULT_ISSUER, env), loadGullyIdSdk(DEFAULT_ISSUER, env)]);
     expect(a).toBe(sdk);
     expect(b).toBe(sdk);
     expect(scripts).toHaveLength(1);
-    expect(scripts[0].src).toBe('https://gullyid.xyz/sdk.js');
+    expect(scripts[0].src).toBe('https://gullyid.xyz/sdk/v1.js');
   });
   it('resolves null when the script errors', async () => {
     expect(await loadGullyIdSdk(DEFAULT_ISSUER, fakeEnv(undefined, 'error').env)).toBeNull();

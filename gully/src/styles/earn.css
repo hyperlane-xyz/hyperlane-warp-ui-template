@@ -1,0 +1,35 @@
+/* Bridge & Earn: the side card and the delivered notice. Gully Chain Night tokens only (no colour literals), the card
+   itself is the shared .a .card (ink surface, line, 14 px grid gap); the steps reuse .stepper/.step. */
+.earn-card { gap: 12px; }
+.earn-lede { margin: 0; font-size: 14px; color: var(--gn-text-2); }
+.earn-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.earn-stat { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--gn-r); background: var(--gn-night); border: 1px solid var(--gn-line); min-width: 0; }
+.earn-stat small { font-size: 11px; color: var(--gn-text-3); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.earn-num { display: block; font-size: 20px; font-weight: var(--gn-w-bold); color: var(--gn-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: earn-pop var(--gn-dur-mid) var(--gn-ease); }
+@keyframes earn-pop { from { opacity: 0.3; transform: translateY(4px); } }
+.earn-rate-wrap { display: grid; gap: 6px; }
+.earn-spark .spark { width: 100%; height: 36px; }
+.earn-rate { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.earn-steps .step-txt b { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.earn-steps .step-txt small { font-size: 11px; }
+.earn-risks { border: 1px solid var(--gn-line); border-radius: var(--gn-r); padding: 0 12px; }
+.earn-risks summary { cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 13px; font-weight: var(--gn-w-semibold); color: var(--gn-warn); list-style: none; }
+.earn-risks summary::-webkit-details-marker { display: none; }
+.earn-risks summary small { color: var(--gn-text-3); font-weight: var(--gn-w-regular); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.earn-risks summary .earn-chev { margin-left: auto; flex: none; color: var(--gn-text-3); transition: transform var(--gn-dur) var(--gn-ease); }
+.earn-risks[open] summary .earn-chev { transform: rotate(180deg); }
+.earn-risks ul { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 6px; font-size: 13px; color: var(--gn-text-2); }
+.earn-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.earn-actions .btn { text-decoration: none; }
+.earn-docs { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; font-weight: var(--gn-w-semibold); }
+.earn-not-live { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: 13px; color: var(--gn-text-3); }
+.earn-not-live svg { flex: none; margin-top: 2px; }
+.earn-delivered { display: grid; gap: 8px; padding: 12px; border-radius: var(--gn-r); background: var(--gn-info-bg); border: 1px solid var(--gn-line-accent); animation: feedin 0.5s ease both; }
+.earn-delivered p { margin: 0; display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--gn-text); }
+.earn-delivered p svg { flex: none; margin-top: 2px; color: var(--gn-link); }
+.earn-delivered .btn { justify-self: start; text-decoration: none; }
+.earn-delivered small { font-size: 12px; }
+@media (max-width: 480px) {
+  .earn-num { font-size: 17px; }
+  .earn-risks summary small { display: none; }
+}

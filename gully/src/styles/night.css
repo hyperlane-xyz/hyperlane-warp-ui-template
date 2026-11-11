@@ -1,0 +1,140 @@
+/* Gully Chain Night (GN) finish, loaded last. The look is the shared black design in src/styles/night/tokens.css
+   (vendored from gully-ops sites/_shared/gullychain-night, README.md there): ground --gn-night, true-black footer band,
+   ink cards with a line and a dark glow, Inter (GN 2.0 = brand kit v4), signature pill buttons, emerald primary /
+   deep-green secondary (the v1 token names --gn-cyan / --gn-blue keep their roles).
+   No colour literals: every value is a --gn-* token. */
+html, body { background: var(--gn-bg); color: var(--gn-text-2); }   /* GN 2.0: body silver, headings white */
+h1, h2, h3, h4 { color: var(--gn-text); }
+body { font-family: var(--gn-font); font-weight: var(--gn-w-regular); }
+h1, h2, h3, b, strong, .h-card { font-weight: var(--gn-w-bold); }
+a:hover { color: var(--gn-link-hover); }
+:focus-visible { outline: 2px solid var(--gn-cyan); outline-offset: 3px; }
+.label { color: var(--gn-cyan); letter-spacing: var(--gn-track-label); }
+
+/* header: kit v4 icon at 32 px, dark product switcher, blurred night bar */
+.top { background: color-mix(in srgb, var(--gn-night) 82%, transparent); border-bottom-color: var(--gn-line); }
+.top-in { min-height: var(--gn-header-h); }
+.brand { min-height: 44px; }
+.brand img { width: 32px; height: 32px; }
+.nav-l:hover { background: var(--gn-surface-2); color: var(--gn-text); }
+.nav-on, .nav-on:hover { color: var(--gn-link); background: var(--gn-info-bg); }   /* GN 2.0: active nav mint on deep green (5.6:1) */
+/* owner rule 2026-10-30, icons on the whole stack: every nav item (header, mobile menu, footer) has a 20 px Lucide icon,
+   stroke 1.75, muted by default and mint when active; the text label stays */
+.nav-l svg, .foot-links a svg { width: 20px; height: 20px; flex: none; color: var(--gn-text-3); }
+.nav-on svg { color: var(--gn-link); }
+@media (max-width: 900px) { .nav { top: var(--gn-header-h); background: var(--gn-ink); box-shadow: var(--gn-shadow); } }
+/* phones: the 32 px kit icon, the switcher, Connect and the menu share one row, so the header Connect is icon-only (its
+   label stays as the accessible name; the bridge card has the full "Connect wallet" button) */
+@media (max-width: 560px) {
+  .top-in { gap: 8px; padding: 0 12px; }
+  .top-act { gap: 6px; }
+  .top-act .btn-sm { width: 44px; min-height: 44px; padding: 0; gap: 0; }
+  .top-act .btn-sm > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .top-act .btn-sm::after { display: none; }
+}
+
+/* signature pill buttons (owner rule 2026-10-25): emerald primary, deep-green secondary, line ghost; shine, arrow, scale .98 */
+.btn { min-height: var(--gn-btn-h); padding: 0 var(--gn-btn-px); border-radius: var(--gn-btn-r); font-weight: var(--gn-w-bold); }
+.btn-primary { background: var(--gn-btn-pri-bg); color: var(--gn-btn-pri-fg); box-shadow: var(--gn-glow); }
+.btn-primary:hover { background: var(--gn-btn-pri-hover); color: var(--gn-btn-pri-fg); }
+.btn-secondary { background: var(--gn-btn-sec-bg); color: var(--gn-btn-sec-fg); }
+.btn-secondary:hover { background: var(--gn-btn-sec-hover); color: var(--gn-btn-sec-fg); }
+.btn-ghost { border-color: var(--gn-btn-ghost-bd); color: var(--gn-btn-ghost-fg); }
+.btn-ghost:hover { background: var(--gn-btn-ghost-hover); color: var(--gn-btn-ghost-fg); }
+.btn-sm { min-height: var(--gn-btn-h-sm); }
+.wallet-pill { background: var(--gn-surface); border-color: var(--gn-line-strong); }
+
+/* cards: ink with a line and a dark glow, never a grey drop shadow */
+.a .tile, .a .card, .feed-b, .swap { background: var(--gn-surface); border-color: var(--gn-line); }
+.swap { box-shadow: var(--gn-shadow-pop); }
+.a .card.chart-card { transition: transform var(--gn-dur) var(--gn-ease), box-shadow var(--gn-dur) var(--gn-ease); }
+.a .card.chart-card:hover { transform: translateY(-3px); box-shadow: var(--gn-glow); }
+.tile-num, .swap-recv-num, .money .num, .amount input { font-weight: var(--gn-w-bold); }
+.modal { background: var(--gn-surface); border-color: var(--gn-line-strong); box-shadow: var(--gn-shadow-pop); }
+.toast { background: var(--gn-surface); }
+.tip { background: var(--gn-surface-2); }
+.spark-line { stroke: var(--gn-c1); }
+.spark-fill { fill: var(--gn-area); }
+.grid { stroke: var(--gn-grid); }
+
+/* footer: true-black band, kit v4 icon, the dark kit badge (960x256 at 180x48), Gully Labs badge */
+.foot { background: var(--gn-black); border-top-color: var(--gn-line); }
+.foot-brand { display: inline-flex; align-items: center; justify-self: start; }
+.foot-brand img { display: block; width: 32px; height: 32px; max-width: none; }
+.gc-badge { display: inline-flex; line-height: 0; }
+.gc-badge img { width: 180px; height: 48px; }
+.badge-link img { width: 140px; height: 48px; }
+.foot-links a { color: var(--gn-text-2); gap: 6px; }
+.foot-links a:hover { color: var(--gn-text); }
+.credit, .credit a { color: var(--gn-text-3); }
+
+/* embed (?embed=1, /embed): the card only, transparent ground for the host page */
+.is-embed html, .is-embed body { background: transparent; }
+.is-embed .foot { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .a .card.chart-card:hover { transform: none; }
+}
+/* the one Gully Chain header action (gully-ops sites/_shared/gc-chrome.json) */
+.start-b { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--gn-emerald); color: var(--gn-night); font: 700 13px/1 var(--gn-font); text-decoration: none; white-space: nowrap; }
+.start-b svg { width: 16px; height: 16px; }
+@media (max-width: 900px) { .start-b { display: none; } }
+
+/* the bar measures itself (ui/common/headerFit.ts): each step below takes it narrower; the menu holds what the last one removes */
+.top-in > *, .top-act > * { flex-shrink: 0; }
+.nav, .top-act { flex: none; }
+.gully-id-header { flex: none; }
+html[data-hfit~="pill"] .net-pill { display: none; }
+html[data-hfit~="chip"] .gully-id-header .gully-id-wallet { display: none; }
+html[data-hfit~="labels"] .top-in > .nav:not(.nav-open) .nav-l { font-size: 0; gap: 0; padding: 0 10px; }
+html[data-hfit~="menu"] .menu-btn { display: inline-grid; }
+html[data-hfit~="menu"] .start-b, html[data-hfit~="menu"] .gully-id-header { display: none; }
+html[data-hfit~="menu"] .nav { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; background: var(--gn-ink); border-bottom: 1px solid var(--gc-line); padding: 8px 16px 16px; }
+html[data-hfit~="menu"] .nav.nav-open { display: flex; }
+/* Add Gully Chain + USDC.e */
+.add-usdc { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; margin: 12px 0 0; font-size: 13px; }
+.add-usdc-b { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--gc-line-2); background: none; color: var(--gn-text); font: 700 13px var(--gn-font); cursor: pointer; }
+.add-usdc-b:hover { border-color: var(--gn-link); }
+.add-usdc-c { border: 0; background: none; color: var(--gn-text-3); font: 500 12px var(--gn-font); cursor: pointer; text-decoration: underline; min-height: 32px; }
+
+/* 44 px tap targets (owner 2026-11-05): header brand and Connect, footer brand and links */
+.brand, .foot-brand { min-width: 44px; min-height: 44px; }
+.top-act .btn-sm, .top-act .wallet-pill { min-height: 44px; }
+.credit a, .foot-legal a, .foot-links a { display: inline-flex; align-items: center; min-height: 44px; }
+.foot-links a { min-width: 44px; justify-content: center; }
+.top-act a, .top-act button, .top-act .btn { min-height: 44px; }
+
+/* multi-chain: chain picker, tokens, Fast / Cheapest copy, recipient, gas drop, transfer links (mobile first) */
+.chain-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 10px 4px 6px; border: 1px solid var(--gn-line-strong); border-radius: var(--gn-r-sm); background: var(--gn-surface-2); color: var(--gn-text); font: inherit; font-size: 13px; font-weight: var(--gn-w-semibold); cursor: pointer; max-width: 100%; }
+.chain-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chain-btn:hover { border-color: var(--gn-cyan); background: var(--gn-surface-3); }
+.chain-btn-chev { color: var(--gn-text-3); flex: none; }
+.chain-list .chain-on { border-color: var(--gn-cyan); }
+.soon-tag, .tok small { font-style: normal; font-size: 11px; font-weight: var(--gn-w-bold); padding: 2px 6px; border-radius: var(--gn-r-xs); background: var(--gn-warn-bg); color: var(--gn-warn); }
+.tokens { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+.tok { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 1px solid var(--gn-line-strong); border-radius: var(--gn-r-pill); background: var(--gn-surface-2); color: var(--gn-text); font: inherit; font-size: 13px; font-weight: var(--gn-w-bold); cursor: pointer; }
+.tok:hover:not(:disabled) { border-color: var(--gn-cyan); }
+.tok-on { border-color: var(--gn-cyan); box-shadow: inset 0 0 0 1px var(--gn-cyan); }
+.tok-soon { color: var(--gn-text-3); cursor: not-allowed; }
+.lane-choice { display: grid; gap: 6px; margin: 12px 0 4px; }
+.lane-choice .lane { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+.lane-choice .lane-b:disabled { opacity: 0.45; cursor: not-allowed; }
+.lane-copy { margin: 0; font-size: 13px; line-height: 1.45; color: var(--gn-text-2); }
+.lane-copy.muted { color: var(--gn-text-3); }
+.recipient { display: grid; gap: 4px; margin: 12px 0 0; }
+.recipient label { font-size: 12px; font-weight: var(--gn-w-semibold); color: var(--gn-text-3); }
+.recipient input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--gn-line-strong); border-radius: var(--gn-r-sm); font: inherit; font-family: var(--gn-font-mono); font-size: 13px; color: var(--gn-text); background: var(--gn-surface-2); }
+.recipient input:focus { outline: 2px solid var(--gn-cyan); outline-offset: 1px; }
+.recipient input[aria-invalid='true'] { border-color: var(--gn-danger); }
+.gas-note { padding: 10px 12px; border-radius: var(--gn-r-sm); background: var(--gn-info-bg); color: var(--gn-info); }
+.tx-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 6px; font-size: 12px; }
+.tx-links a { display: inline-flex; align-items: center; gap: 4px; }
+.gas-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--gn-r-pill); background: var(--gn-warn-bg); color: var(--gn-warn); font-weight: var(--gn-w-semibold); }
+.gas-chip.ok { background: var(--gn-ok-bg); color: var(--gn-ok); }
+.tx-details { flex-basis: 100%; color: var(--gn-text-3); }
+.tx-details summary { cursor: pointer; font-weight: var(--gn-w-semibold); color: var(--gn-text-2); }
+.tx-details p { margin: 4px 0 0; line-height: 1.45; }
+.tx-details code { word-break: break-all; }
+@media (max-width: 420px) {
+  .swap-chain { flex-wrap: wrap; }
+}

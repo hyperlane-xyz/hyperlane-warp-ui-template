@@ -13,6 +13,7 @@
 import { useSyncExternalStore } from 'react';
 import { formatUnits, stringToHex } from 'viem';
 
+import { IS_TESTNET } from '../config/network';
 import { gullyPriceUrl } from '../config/rpc';
 import { pub } from './clients';
 
@@ -31,7 +32,7 @@ export const PRICE_FEED = '0x4c64c79ee59a83842a22c14712D66bfef48eb301' as const;
 export const MAX_AGE_MS = 15 * 60_000;
 export const CACHE_MS = 60_000;
 
-export const USD_NOTE = 'USD at mainnet ETH price; testnet tokens have no real value';
+export const USD_NOTE = IS_TESTNET ? 'USD at mainnet ETH price; testnet tokens have no real value' : 'USD at the ETH price';
 
 const priceFeedAbi = [
   {
@@ -72,6 +73,7 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 async function fromFeed(): Promise<EthUsd | null> {
+  if (!IS_TESTNET) return null; // the feed is a testnet contract (485590); the mainnet build uses the price APIs only
   const [value, ts] = await pub('gullychaintestnet').readContract({ address: PRICE_FEED, abi: priceFeedAbi, functionName: 'latestPrice', args: [stringToHex('ETH', { size: 32 })] });
   const at = Number(ts) * 1000;
   const usd = Number(value) / 1e8;

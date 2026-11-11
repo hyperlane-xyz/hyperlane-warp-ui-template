@@ -1,11 +1,16 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
-import { chainById, CHAINS, LINKS, txUrl, type ChainKey } from '../../config/chains';
+import { chainById, CHAINS, CHILD, IS_TESTNET, LINKS, PARENT, txUrl, type ChainKey } from '../../config/chains';
+import { CAPS } from '../../config/network';
+import { capLines } from '../../bridge/caps';
+import { GULLY_CORE_URL } from '../../config/routes';
 import { ago, duration, fmtAmount, short } from '../../bridge/format';
 import type { ActivityItem, StepDef, TransferRecord } from '../../bridge/types';
-import { connect, disconnect, startDiscovery, type WalletInfo } from '../../bridge/wallet';
+import { disconnect, openConnect, startDiscovery } from '../../bridge/wallet';
+import '../../gc-connect/gc-connect.js';
 import type { BridgeState, StepState } from '../useBridge';
 import { useWallet } from '../useBridge';
+import { BridgeEarnDelivered } from '../earn/BridgeEarnDeliveredNotice';
 import { Icon, type IconName } from './icons';
 import { Money, TokenAmount, UsdLine } from './money';
 import { SolanaWalletModal, SolanaWalletPill, TransferLinks } from './multichain';
@@ -47,29 +52,30 @@ export function isGully(href: string) {
 
 // Gully hosts open in the same tab (product navigation), except with `newTab` (explorer tx links: a transfer in
 // progress must stay on screen) and inside the embed, where a same-tab link would navigate the integrator's iframe.
-export function Ext({ href, children, className, newTab }: { href: string; children: ReactNode; className?: string; newTab?: boolean }) {
+export function Ext({ href, children, className, newTab, testId }: { href: string; children: ReactNode; className?: string; newTab?: boolean; testId?: string }) {
   const embedded = typeof document !== 'undefined' && document.documentElement.classList.contains('is-embed');
   if (isGully(href) && !newTab && !embedded)
     return (
-      <a href={href} className={className}>
+      <a href={href} className={className} data-testid={testId}>
         {children}
       </a>
     );
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className} data-testid={testId}>
       {children}
     </a>
   );
 }
 
-/** Official chain logos in public/chains/: GullyChain and Arbitrum from the Gully chain-logo pack (gully-ops
- *  design/chains; sources in its SOURCES.md); Ethereum, Base, BNB Chain and Solana copied byte for byte from the
- *  canonical Hyperlane registry (@hyperlane-xyz/registry 26.2.0 chains/<name>/logo.svg, file named after the chain).
- *  Decorative by default (the chain's name is written next to it); pass alt when it stands alone.
- *  badge: the file with the small amber testnet corner badge, for places that show no "Testnet" text (registry logos
- *  have no badged variant). A file that fails to load falls back to the chain's short text mark. */
+/** Official chain logos in public/chains/: Arbitrum from the Gully chain-logo pack (gully-ops design/chains; sources in
+ *  its SOURCES.md); Ethereum, Base, BNB Chain and Solana copied byte for byte from the canonical Hyperlane registry
+ *  (@hyperlane-xyz/registry 26.2.0 chains/<name>/logo.svg, file named after the chain). Decorative by default (the
+ *  chain's name is written next to it); pass alt when it stands alone. badge: the file with the small amber testnet
+ *  corner badge, for places that show no "Testnet" text (registry logos have no badged variant). A file that fails to
+ *  load falls back to the chain's short text mark. GullyChain uses the brand kit v4 icon (brand/logo/gc-icon.svg,
+ *  byte-identical; its hexagon sits inside the round mask, so nothing is cropped) until the chain-logo pack moves to kit v4. */
 const CHAIN_LOGO: Record<ChainKey, { mark: string; badged: string; text: string }> = {
-  gullychaintestnet: { mark: 'chains/gully-chain.svg', badged: 'chains/gully-chain-testnet.svg', text: 'G' },
+  gullychaintestnet: { mark: 'brand/logo/gc-icon.svg', badged: 'brand/logo/gc-icon.svg', text: 'G' },
   arbitrumsepolia: { mark: 'chains/arbitrum.svg', badged: 'chains/arbitrum-sepolia.svg', text: 'ARB' },
   sepolia: { mark: 'chains/sepolia.svg', badged: 'chains/sepolia.svg', text: 'ETH' },
   basesepolia: { mark: 'chains/basesepolia.svg', badged: 'chains/basesepolia.svg', text: 'BASE' },
@@ -86,12 +92,12 @@ export function ChainMark({ chain, size = 28, alt = '', badge = false }: { chain
         {l.text}
       </span>
     );
-  return <img className="chain-mark" src={badge ? l.badged : l.mark} width={size} height={size} alt={alt} title={alt || undefined} onError={() => setBroken(true)} />;
+  return <img className="chain-mark" src={badge && IS_TESTNET ? l.badged : l.mark} width={size} height={size} alt={alt} title={alt || undefined} onError={() => setBroken(true)} />;
 }
 
-/** Small "Testnet" badge written after a testnet chain's name. */
+/** Small "Testnet" badge written after a testnet chain's name (nothing on the mainnet build). */
 export function TestnetTag() {
-  return <span className="testnet-tag">Testnet</span>;
+  return IS_TESTNET ? <span className="testnet-tag">Testnet</span> : null;
 }
 
 export function Sparkline({ values, w = 96, h = 28, label }: { values: number[]; w?: number; h?: number; label: string }) {
@@ -149,9 +155,15 @@ export function recordSteps(t: TransferRecord): StepState {
   };
 }
 
+/** opens the shared Gully Chain "Connect a wallet" dialog (gc-connect); errors land in the wallet store */
+export const pickWallet = () => {
+  openConnect().catch(() => {
+    /* shown from the store */
+  });
+};
+
 export function WalletButton({ compact }: { compact?: boolean }) {
   const w = useWallet();
-  const [open, setOpen] = useState(false);
   useEffect(() => startDiscovery(), []);
   const wc = w.chainId ? chainById(w.chainId) : undefined;
   if (w.address)
@@ -173,60 +185,10 @@ export function WalletButton({ compact }: { compact?: boolean }) {
   return (
     <>
       <SolanaWalletPill />
-      <Btn variant="secondary" icon="wallet" arrow={false} onClick={() => setOpen(true)} className="btn-sm">
+      <Btn variant="secondary" icon="wallet" arrow={false} onClick={pickWallet} className="btn-sm" disabled={w.connecting}>
         Connect
       </Btn>
-      {open && <WalletModal onClose={() => setOpen(false)} />}
     </>
-  );
-}
-
-export function WalletModal({ onClose }: { onClose: () => void }) {
-  const w = useWallet();
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, [onClose]);
-  const pick = async (x: WalletInfo) => {
-    try {
-      await connect(x);
-      onClose();
-    } catch {
-      /* error shown from store */
-    }
-  };
-  return (
-    <div className="modal-bg" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="wm-title" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-head">
-          <h2 id="wm-title">Connect a wallet</h2>
-          <button className="icon-btn" aria-label="Close" onClick={onClose}>
-            <Icon name="x" />
-          </button>
-        </div>
-        {w.wallets.length ? (
-          <ul className="wallet-list">
-            {w.wallets.map((x) => (
-              <li key={x.uuid}>
-                <button onClick={() => pick(x)} disabled={w.connecting}>
-                  {x.icon ? <img src={x.icon} width={28} height={28} alt="" /> : <Icon name="wallet" size={28} />}
-                  <span>{x.name}</span>
-                  <Icon name="arrowRight" className="btn-arrow" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="empty">
-            <Icon name="wallet" size={28} />
-            <p>No browser wallet found. Install a wallet extension such as MetaMask or Rabby, then reload.</p>
-          </div>
-        )}
-        {w.error && <p className="err">{w.error}</p>}
-        <p className="fine">GullyChain Testnet is added to your wallet automatically when you bridge.</p>
-      </div>
-    </div>
   );
 }
 
@@ -255,7 +217,8 @@ export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
         </span>
       </div>
       <div className="amount-meta" id="amount-bal">
-        {isEth && <UsdLine v={b.amount && b.amount > 0n ? b.amount : null} />}
+        {/* ETH/USD only: a Gully Core coin has no USD price here */}
+        {isEth && !b.mirror && <UsdLine v={b.amount && b.amount > 0n ? b.amount : null} />}
         {b.senderAddr && b.balanceFrom !== undefined ? (
           <>
             <span>
@@ -323,6 +286,70 @@ export function RouteOptions({ b }: { b: BridgeState }) {
 }
 
 /**
+ * Gully Warp Mirrors: which asset the card moves. Shown only when /mirrors.json listed at least one mirror route
+ * (the ETH routes stay the default; a deep link `?token=&to=` preselects a mirror).
+ */
+export function AssetPicker({ b }: { b: BridgeState }) {
+  // mirrors run on the classic pair only; a multi-chain token has its own picker (TokenPicker)
+  if (!b.mirrorRoutes.length || b.remote !== PARENT || b.multichain) return null;
+  return (
+    <label className="asset-pick">
+      <span>Asset</span>
+      <select value={b.mirror ? b.route.id : ''} onChange={(e) => b.selectMirror(e.target.value || undefined)} aria-label="Asset to bridge">
+        <option value="">ETH</option>
+        {b.mirrorRoutes.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.warp!.coinSymbol} ⇄ {r.tokens[r.warp!.chain].symbol} on {CHAINS[r.warp!.chain].short}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/**
+ * The label every mirror surface carries (owner wording), the provenance links and the Gully Core credit.
+ * "Bridge back" = destination -> Gully Chain, where the coin trades on its Gully Core pool.
+ */
+export function WarpMirrorNotice({ b }: { b: BridgeState }) {
+  const m = b.mirror;
+  if (!m) return null;
+  const mirrorSym = b.route.tokens[m.chain].symbol;
+  return (
+    <div className="note mirror-note" role="status">
+      <Icon name="info" size={16} />
+      <span>
+        <b>{m.label}</b>
+        <br />
+        {b.direction === 'deposit'
+          ? `Bridge back: ${mirrorSym} on ${CHAINS[m.chain].short} returns 1:1 as ${m.coinSymbol} on GullyChain. `
+          : `${m.coinSymbol} is locked on GullyChain and ${mirrorSym} is minted 1:1 on ${CHAINS[m.chain].short}. `}
+        <Ext href={m.provenanceUrl} newTab>
+          Official mirror
+        </Ext>
+        {' · '}
+        <Ext href={m.kre8Url} newTab>
+          {m.coinSymbol} coin page
+        </Ext>
+        {' · '}
+        <button className="link-btn" onClick={() => b.selectMirror(undefined)}>
+          Bridge ETH instead
+        </button>
+      </span>
+      <a className="gc-core-mark" href={GULLY_CORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Powered by Gully Core (opens in a new tab)">
+        <img
+          src="brand/badges/gully-core-mark-dark.svg"
+          srcSet="brand/badges/gully-core-mark-dark.png 1x, brand/badges/gully-core-mark-dark-2x.png 2x, brand/badges/gully-core-mark-dark-3x.png 3x"
+          width={146}
+          height={24}
+          alt="Powered by Gully Core"
+        />
+      </a>
+    </div>
+  );
+}
+
+/**
  * Retired Fast routes (gETH, hypETH): never offered for deposits. A wallet that still holds one of their tokens gets a
  * one-click redeem (GullyChain -> Arbitrum Sepolia on that route), so nothing bridged earlier is ever stranded.
  */
@@ -354,6 +381,29 @@ export function LegacyNotice({ b }: { b: BridgeState }) {
           </span>
         ))}
       </span>
+    </div>
+  );
+}
+
+/**
+ * Mirror routes (the GullyChain token is minted on Gully Chain, not native): one line + the official compact
+ * "Powered by Gully Core" mark (brand kit v4 badges/gully-core-mark-dark.*, 146x24, byte-identical, never restyled).
+ */
+export function MirrorNotice({ b }: { b: BridgeState }) {
+  if (!b.route?.mirror) return null;
+  return (
+    <div className="note mirror-note" role="status">
+      <Icon name="info" size={16} />
+      <span>This token is a Gully Core mirror on Gully Chain.</span>
+      <a className="gc-core-mark" href={GULLY_CORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Powered by Gully Core (opens in a new tab)">
+        <img
+          src="brand/badges/gully-core-mark-dark.svg"
+          srcSet="brand/badges/gully-core-mark-dark.png 1x, brand/badges/gully-core-mark-dark-2x.png 2x, brand/badges/gully-core-mark-dark-3x.png 3x"
+          width={146}
+          height={24}
+          alt="Powered by Gully Core"
+        />
+      </a>
     </div>
   );
 }
@@ -435,23 +485,44 @@ export function ActionButton({ b }: { b: BridgeState }) {
   if (!b.wallet.address)
     return (
       <>
-        <Btn icon="wallet" className="btn-block" onClick={() => setOpen(true)}>
+        <Btn icon="wallet" className="btn-block" onClick={pickWallet} disabled={b.wallet.connecting}>
           Connect wallet
         </Btn>
-        {open && <WalletModal onClose={() => setOpen(false)} />}
+        {b.wallet.error && <p className="err">{b.wallet.error}</p>}
+        <ConsentLine />
       </>
     );
   const wrongChain = b.wallet.chainId !== CHAINS[b.from].id;
   return (
-    <Btn
-      icon={b.kind === 'fast' ? 'zap' : 'shield'}
-      className="btn-block"
-      disabled={!!b.blocker || b.busy}
-      busy={b.busy}
-      onClick={b.send}
-    >
-      {b.busy ? 'Confirm in your wallet' : b.blocker || `${wrongChain ? `Switch to ${CHAINS[b.from].short} and ` : ''}${b.kind === 'fast' ? 'Bridge fast' : b.direction === 'deposit' ? 'Deposit (cheapest)' : 'Start withdrawal'}`}
-    </Btn>
+    <>
+      <Btn
+        icon={b.kind === 'fast' ? 'zap' : 'shield'}
+        className="btn-block"
+        disabled={!!b.blocker || b.busy}
+        busy={b.busy}
+        onClick={b.send}
+      >
+        {b.busy ? 'Confirm in your wallet' : b.blocker || `${wrongChain ? `Switch to ${CHAINS[b.from].short} and ` : ''}${b.kind === 'fast' ? 'Bridge fast' : b.direction === 'deposit' ? 'Deposit (cheapest)' : 'Start withdrawal'}`}
+      </Btn>
+      <ConsentLine />
+      <CapsNote />
+    </>
+  );
+}
+
+/** Phase 1 limits under the button (mainnet build only; the testnet bridge has none, so nothing renders). */
+export function CapsNote() {
+  const lines = capLines(CAPS);
+  if (!lines.length) return null;
+  return (
+    <div className="caps-note" role="note" aria-label="Phase 1 limits" data-testid="caps-note">
+      <b>Phase 1 limits</b>
+      <ul>
+        {lines.map((l) => (
+          <li key={l}>{l}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -544,9 +615,12 @@ export function MyTransfers({ b }: { b: BridgeState }) {
             </div>
             <Stepper defs={stepDefsOf(t)} state={recordSteps(t)} compact />
             <TransferLinks t={t} />
+            {/* Bridge & Earn: a Fast-lane delivery on Gully Chain (t.to === 'gullychaintestnet') is the "bridge arrival"
+                the rewards attester matches; the notice carries the Hyperlane message id and shows only while live */}
+            {t.status === 'delivered' && t.kind === 'fast' && t.to === CHILD && <BridgeEarnDelivered messageId={t.messageId} />}
             {t.status === 'claimable' && (
               <Btn icon="key" onClick={() => b.claim(t)} busy={b.busy} disabled={b.busy} className="btn-sm">
-                Claim on Arbitrum Sepolia
+                Claim on {CHAINS[PARENT].name}
               </Btn>
             )}
           </li>
@@ -600,50 +674,84 @@ function stepDefsOf(t: TransferRecord): StepDef[] {
   ];
 }
 
+/** Footer links: every one carries a Lucide icon next to its label (owner rule 2026-10-30, icons on the whole stack). */
+export const FOOT_LINKS_ALL: { label: string; icon: IconName; href: string | null; newTab?: boolean }[] = [
+  { label: 'GullyChain', icon: 'house', href: LINKS.chain },
+  { label: 'Explorer', icon: 'search', href: LINKS.explorer },
+  { label: 'Faucet', icon: 'droplet', href: LINKS.faucet },
+  { label: 'Docs', icon: 'book', href: LINKS.docs },
+  { label: 'Developers', icon: 'code', href: LINKS.dev },
+  { label: 'Ecosystem', icon: 'grid', href: LINKS.chainEcosystem },
+  { label: 'Status', icon: 'radio', href: LINKS.status },
+  { label: 'Gully ecosystem →', icon: 'globe', href: LINKS.ecosystem, newTab: true },
+  { label: 'Telegram', icon: 'send', href: LINKS.telegram },
+  { label: 'Discord', icon: 'message', href: LINKS.discord },
+  { label: 'X', icon: 'twitter', href: LINKS.x },
+];
+/** The faucet is testnet only, so the mainnet build drops it (LINKS.faucet is null there). */
+export const FOOT_LINKS = FOOT_LINKS_ALL.filter((l): l is { label: string; icon: IconName; href: string; newTab?: boolean } => !!l.href);
+
+/** Gully Chain's Terms and Privacy (gullychain.xyz), in every footer, the embed's minimal one too. Another origin: new tab. */
+export const LEGAL_LINKS: { label: string; icon: IconName; href: string }[] = [
+  { label: 'Terms', icon: 'book', href: LINKS.terms },
+  { label: 'Privacy', icon: 'shield', href: LINKS.privacy },
+];
+
+/** One line under the transfer button: bridging means agreeing to the Gully Chain Terms and Privacy Policy. */
+export function ConsentLine() {
+  return (
+    <p className="consent" data-testid="consent">
+      By bridging you agree to the Gully Chain{' '}
+      <Ext href={LINKS.terms} newTab>
+        Terms
+      </Ext>{' '}
+      and{' '}
+      <Ext href={LINKS.privacy} newTab>
+        Privacy Policy
+      </Ext>
+      .
+    </p>
+  );
+}
+
 export function Footer({ minimal }: { minimal?: boolean }) {
   return (
     <footer className="foot">
       <div className="foot-in">
-        {/* brand-kit lockup for light grounds: the dark tile (android-chrome-512.png = icon/gullychain-icon-dark-512.png)
-            + the light-bg wordmark SVG, byte-identical kit files with explicit sizes */}
-        <a className="foot-brand" href={LINKS.chain}>
-          <img src="android-chrome-512.png" width={28} height={28} alt="" />
-          <img src="brand/logo/gullychain-wordmark-for-light-bg.svg" width={117} height={20} alt="Gully Chain" />
+        {/* brand kit v4 icon (logo/gc-icon.svg, byte-identical); kit v4 has no wordmark file */}
+        <a className="foot-brand" href={LINKS.chain} aria-label="Gully Chain home">
+          <img src="brand/logo/gc-icon.svg" width={32} height={32} alt="Gully Chain" />
         </a>
         {!minimal && (
           <nav className="foot-links" aria-label="Footer">
-            <Ext href={LINKS.chain}>GullyChain</Ext>
-            <Ext href={LINKS.explorer}>Explorer</Ext>
-            <Ext href={LINKS.faucet}>Faucet</Ext>
-            <Ext href={LINKS.docs}>Docs</Ext>
-            <Ext href={LINKS.telegram}>Telegram</Ext>
-            <Ext href={LINKS.discord}>Discord</Ext>
-            <Ext href={LINKS.x}>X</Ext>
+            {FOOT_LINKS.map((l) => (
+              <Ext key={l.label} href={l.href} newTab={l.newTab}>
+                <Icon name={l.icon} />
+                {l.label}
+              </Ext>
+            ))}
           </nav>
         )}
         <div className="foot-badges">
           <a className="gc-badge" href={LINKS.chain} aria-label="Powered by GullyChain">
-            <img
-              src="brand/badges/gullychain-powered-by-light.svg"
-              srcSet="brand/badges/gullychain-powered-by-light.png 1x, brand/badges/gullychain-powered-by-light-2x.png 2x, brand/badges/gullychain-powered-by-light-3x.png 3x"
-              width={142}
-              height={42}
-              alt="Powered by GullyChain"
-            />
+            {/* brand kit v4 badges/badge-dark.png (960x256, byte-identical) shown at 180x48 */}
+            <img src="brand/badges/badge-dark.png" width={180} height={48} alt="Powered by GullyChain" />
           </a>
           <Ext href={LINKS.gullyLabs} className="badge-link" newTab>
-            <img
-              src="brand/badges/powered-by-gully-labs-light.svg"
-              srcSet="brand/badges/powered-by-gully-labs-light.png 1x, brand/badges/powered-by-gully-labs-light-2x.png 2x, brand/badges/powered-by-gully-labs-light-3x.png 3x"
-              width={190}
-              height={48}
-              alt="Powered by Gully Labs"
-            />
+            <img src="brand/badges/gully-labs-powered-by-dark.svg" width={140} height={48} alt="Powered by Gully Labs" />
           </Ext>
           <p className="credit">
             Fast lane secured by <Ext href={LINKS.hyperlane}>Hyperlane</Ext>. Canonical lane: the GullyChain Arbitrum Nitro
-            rollup bridge. Testnet: no real value.
+            rollup bridge.{IS_TESTNET ? ' Testnet: no real value.' : ''}
           </p>
+          <nav className="foot-legal" aria-label="Legal">
+            {LEGAL_LINKS.map((l) => (
+              <Ext key={l.href} href={l.href} newTab>
+                <Icon name={l.icon} size={16} />
+                {l.label}
+              </Ext>
+            ))}
+          </nav>
         </div>
       </div>
     </footer>

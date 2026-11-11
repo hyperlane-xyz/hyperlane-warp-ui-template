@@ -20,11 +20,13 @@ import {
   type TransactionReceipt,
 } from 'viem';
 
-import { CANONICAL, CHAINS, CHILD, isEvm, PARENT, type ChainKey } from '../config/chains';
+import { CANONICAL, CANONICAL_READY, CHAINS, CHILD, isEvm, PARENT, type ChainKey } from '../config/chains';
 import { mcRoute, type McToken } from '../config/multichain';
-import { fastRoute, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
+import { CAPS } from '../config/network';
+import { fastRoute, FAST_ROUTES, LEGACY_ROUTES, routeFor, routeReady } from '../config/routes';
 import { solanaRecipientBytes32 } from '../solana/base58';
 import { getSolBalance, getSplBalance } from '../solana/rpc';
+import { checkCaps, needsParentLocked } from './caps';
 import {
   arbSysAbi,
   assertionConfirmedEvent,
@@ -42,6 +44,7 @@ import {
   sentTransferEvent,
   warpRouterAbi,
 } from './abis';
+import { checkRecipient } from '../config/mirrors';
 import { pub } from './clients';
 import { convertDecimals, endsOf } from './lanes';
 import type { ActivityItem, Quote, QuoteRequest, StepDef, StepUpdate, TransferRecord } from './types';
@@ -62,6 +65,8 @@ export interface ResolvedLane {
   /** what is sent (router on the origin) and what arrives (router on the destination) */
   t: McToken;
   dest: McToken;
+  /** classic Gully Warp Mirror route (config/mirrors.ts): its label and whether the relayer is still syncing it */
+  warp?: { label: string; syncing?: boolean };
 }
 
 /** The two routers of a Fast transfer: a multi-chain route when `fastRouteId` names one, else the classic routes. */
@@ -76,7 +81,7 @@ export function resolveLane(req: Pick<QuoteRequest, 'direction' | 'remote' | 'fa
   }
   const { from, to } = ends(req.direction);
   const r = routeFor(req.direction, req.fastRouteId);
-  return { source: 'classic', from, to, t: r.tokens[from], dest: r.tokens[to] };
+  return { source: 'classic', from, to, t: r.tokens[from], dest: r.tokens[to], ...(r.warp ? { warp: r.warp } : {}) };
 }
 
 /** Hyperlane recipient: an EVM address left-padded to bytes32, or a Solana pubkey's 32 bytes. */
@@ -128,6 +133,57 @@ export function stepsFor(
   ];
 }
 
+/** A quote that only says why a lane is closed (not deployed yet, or over a Phase 1 cap). */
+function closedQuote(req: QuoteRequest, reason: string): Quote {
+  const { from, to } = ends(req.direction);
+  return {
+    req,
+    from,
+    to,
+    sendSymbol: 'ETH',
+    receiveSymbol: 'ETH',
+    sendDecimals: 18,
+    receiveDecimals: 18,
+    gasSymbol: CHAINS[from].nativeSymbol,
+    receive: req.amount,
+    value: req.amount,
+    fees: [],
+    etaSeconds: 0,
+    steps: stepsFor(req.kind, req.direction, false),
+    needsApproval: false,
+    available: false,
+    reason,
+    notes: [],
+  };
+}
+
+/** ETH the parent-chain side holds for this lane (Fast: the route's Arbitrum router; Canonical: the Nitro bridge). */
+async function parentLocked(req: QuoteRequest): Promise<bigint | undefined> {
+  try {
+    if (req.kind === 'canonical') return await pub(PARENT).getBalance({ address: CANONICAL.bridge });
+    const t = routeFor(req.direction, req.fastRouteId).tokens[PARENT];
+    if (t.tokenType === 'native') return await pub(PARENT).getBalance({ address: t.address });
+    if (t.tokenType === 'collateral' && t.collateralAddress)
+      return await pub(PARENT).readContract({ address: t.collateralAddress, abi: erc20Abi, functionName: 'balanceOf', args: [t.address] });
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** quote() with the network gates: lanes that are not deployed are closed, and the Phase 1 caps apply (mainnet). */
+async function quote(req: QuoteRequest): Promise<Quote> {
+  // multi-chain routes: "Coming soon" until deployed (laneQuote), no Phase 1 caps (those are the classic mainnet lanes)
+  if (req.kind === 'fast' && mcRoute(req.fastRouteId)) return laneQuote(req);
+  if (req.kind === 'canonical' && !CANONICAL_READY) return closedQuote(req, 'Canonical bridge opens on launch day');
+  if (req.kind === 'fast' && !routeReady(routeFor(req.direction, req.fastRouteId))) return closedQuote(req, 'Fast lane opens on launch day');
+  const locked = needsParentLocked(CAPS, req.kind, req.direction) ? await parentLocked(req) : undefined;
+  const cap = checkCaps(CAPS, { kind: req.kind, direction: req.direction, amount: req.amount, parentLocked: locked });
+  const q = await laneQuote(req);
+  return cap.ok || !q.available ? q : { ...q, available: false, reason: cap.reason };
+}
+
+
 /** What the destination router can pay out (native / collateral routers); undefined = no limit or not readable. */
 async function destLiquidity(to: ChainKey, dest: McToken): Promise<bigint | undefined> {
   if (!isEvm(to) || !dest.address) return undefined;
@@ -145,6 +201,16 @@ async function destLiquidity(to: ChainKey, dest: McToken): Promise<bigint | unde
 function laneNotes(lane: ResolvedLane): string[] {
   const { from, to, t, dest, source } = lane;
   const notes: string[] = [];
+  if (source === 'classic' && lane.warp) {
+    // Gully Warp Mirror: the coin is locked in its GullyCollateral on Gully Chain, the mirror is minted / burned 1:1
+    notes.push(lane.warp.label);
+    notes.push(
+      dest.tokenType === 'synthetic'
+        ? `You receive ${dest.symbol} on ${CHAINS[to].short}, the official mirror of ${t.symbol}. Bridge back 1:1 any time to trade on Gully Core.`
+        : `${t.symbol} is burned on ${CHAINS[from].short}; ${dest.symbol} is released 1:1 on ${CHAINS[to].short}.`,
+    );
+    return notes;
+  }
   if (source === 'classic') {
     if (dest.tokenType === 'synthetic')
       notes.push(`You receive ${dest.symbol} (${dest.name}), redeemable 1:1 for ETH through the Fast lane.`);
@@ -161,7 +227,7 @@ function laneNotes(lane: ResolvedLane): string[] {
   return notes;
 }
 
-async function quote(req: QuoteRequest): Promise<Quote> {
+async function laneQuote(req: QuoteRequest): Promise<Quote> {
   if (req.kind === 'fast') {
     const lane = resolveLane(req);
     const { from, to, t, dest } = lane;
@@ -184,10 +250,18 @@ async function quote(req: QuoteRequest): Promise<Quote> {
       return { ...base, receive: convertDecimals(req.amount, t.decimals, dest.decimals), value: 0n, fees: [], available: false, reason: 'Coming soon' };
     let available = true;
     let reason: string | undefined;
-    const liq = await destLiquidity(to, dest).catch(() => undefined);
-    if (liq !== undefined && convertDecimals(req.amount, t.decimals, dest.decimals) > liq) {
+    // fail closed: a destination router whose balance cannot be read is never quoted as available
+    const liq = await destLiquidity(to, dest).catch(() => null);
+    if (liq === null) {
+      available = false;
+      reason = `Could not check the Fast lane liquidity on ${CHAINS[to].short}. Try again.`;
+    } else if (liq !== undefined && convertDecimals(req.amount, t.decimals, dest.decimals) > liq) {
       available = false;
       reason = `Fast lane liquidity on ${CHAINS[to].short} is ${Number(formatUnits(liq, dest.decimals))} ${dest.symbol}`;
+    }
+    if (lane.warp?.syncing) {
+      available = false;
+      reason = 'The relayer is syncing this mirror route; try again in a minute';
     }
     if (!isEvm(from)) {
       // Solana origin: the delivery fee is simulated against the gas paymaster (needs the sender as fee payer)
@@ -250,7 +324,7 @@ async function quote(req: QuoteRequest): Promise<Quote> {
   const notes: string[] = [];
   const eta = req.direction === 'deposit' ? DEPOSIT_ETA : await withdrawEtaSeconds();
   if (req.direction === 'withdraw')
-    notes.push('After the challenge period, come back and claim on Arbitrum Sepolia (one more transaction).');
+    notes.push(`After the challenge period, come back and claim on ${CHAINS[PARENT].name} (one more transaction).`);
   else notes.push('You receive native ETH for gas on GullyChain.');
   return {
     req,
@@ -398,13 +472,18 @@ async function executeFromSolana(q: Quote, onStep: (u: StepUpdate) => void): Pro
   return rec;
 }
 
-async function execute(q: Quote, onStep: (u: StepUpdate) => void): Promise<TransferRecord> {
-  const req = q.req;
+async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<TransferRecord> {
+  const req = given.req;
+  // the quote on screen can be stale (the amount just changed, the router just filled up): the caps and the destination
+  // router are read again right before the wallet opens, for this exact amount. Unreadable = nothing is sent.
+  const q = await quote(req);
+  if (!q.available) throw new Error(q.reason || 'Route unavailable');
   if (req.kind === 'fast' && !isEvm(q.from)) return executeFromSolana(q, onStep);
   await ensureChain(q.from);
   const wc = walletClient(q.from);
   const sender = wc.account!.address;
-  const recipient = req.recipient || sender;
+  // EVM destinations: a checksummed, non-zero address (config/mirrors.ts); Solana: recipientBytes32 checks the pubkey
+  const recipient: string = isEvm(q.to) ? checkRecipient(req.recipient || sender) : req.recipient || '';
   const client = pub(q.from);
   let hash: Hash;
   let destHead: bigint | undefined;
@@ -596,6 +675,7 @@ async function claim(rec: TransferRecord, onStep: (u: StepUpdate) => void): Prom
 
 /** Canonical withdrawals paying out to `address`, newest first. */
 async function withdrawalsOf(address: Address): Promise<TransferRecord[]> {
+  if (!CANONICAL_READY) return [];
   const logs = await pub(CHILD).getLogs({
     address: CANONICAL.arbSys,
     event: l2ToL1TxEvent,
@@ -640,6 +720,8 @@ async function withdrawalsOf(address: Address): Promise<TransferRecord[]> {
 export interface Balances {
   parentEth?: bigint;
   childEth?: bigint;
+  /** Gully Warp Mirror routes: the wallet's mirror balance on the destination chain (what "Bridge back" sends) */
+  mirrorToken?: bigint;
   /** what the Fast route sends from GullyChain: native ETH (the default route) or the route's token (gETH / hypETH) */
   fastToken?: bigint;
   /** balances of retired routes' GullyChain tokens (gETH, hypETH) by route id, so the UI can offer a redeem */
@@ -657,12 +739,19 @@ const tokenBalance = (g: { tokenType: string; address: Address; collateralAddres
     .catch(() => undefined);
 
 async function balances(address: Address, routeId?: string): Promise<Balances> {
-  const g = fastRoute(routeId).tokens[CHILD];
-  const [parentEth, childEth, token, legacyList] = await Promise.all([
+  const route = fastRoute(routeId);
+  const g = route.tokens[CHILD];
+  const m = route.warp;
+  const [parentEth, childEth, token, legacyList, mirrorToken] = await Promise.all([
     pub(PARENT).getBalance({ address }).catch(() => undefined),
     pub(CHILD).getBalance({ address }).catch(() => undefined),
     g.tokenType === 'native' ? Promise.resolve(undefined) : tokenBalance(g, address),
     Promise.all(LEGACY_ROUTES.map((r) => tokenBalance(r.tokens[CHILD], address))),
+    m
+      ? pub(m.chain)
+          .readContract({ address: m.mirror, abi: erc20Abi, functionName: 'balanceOf', args: [address] })
+          .catch(() => undefined)
+      : Promise.resolve(undefined),
   ]);
   const legacy: Record<string, bigint> = {};
   LEGACY_ROUTES.forEach((r, i) => {
@@ -670,7 +759,7 @@ async function balances(address: Address, routeId?: string): Promise<Balances> {
   });
   // a native GullyChain router sends the wallet's own gas ETH
   const fastToken = g.tokenType === 'native' ? childEth : token;
-  return { parentEth, childEth, fastToken, legacy };
+  return { parentEth, childEth, fastToken, legacy, mirrorToken };
 }
 
 const blockTimes = new Map<string, number>();
@@ -685,7 +774,7 @@ async function recentActivity(limit = 24): Promise<ActivityItem[]> {
   const items: ActivityItem[] = [];
   const tasks: Promise<unknown>[] = [];
   const parentHead = await pub(PARENT).getBlockNumber();
-  const parentFrom = parentHead > 700_000n ? parentHead - 700_000n : 0n; // ~2 days of Arbitrum Sepolia blocks
+  const parentFrom = parentHead > 700_000n ? parentHead - 700_000n : 0n; // ~2 days of parent-chain blocks (0.25 s)
   for (const r of FAST_ROUTES) {
     for (const chain of [PARENT, CHILD] as ChainKey[]) {
       tasks.push(

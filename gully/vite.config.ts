@@ -5,7 +5,12 @@ import { defineConfig, loadEnv } from 'vite';
 // base './' keeps every asset path relative, so the same files work at / or under a path prefix.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const site = env.VITE_SITE_URL || 'https://testnet-bridge.gullychain.xyz/';
+  const mainnet = (env.VITE_NETWORK || 'testnet').trim().toLowerCase() === 'mainnet';
+  const site = env.VITE_SITE_URL || (mainnet ? 'https://bridge.gullychain.xyz/' : 'https://testnet-bridge.gullychain.xyz/');
+  // index.html copy per network (VITE_NETWORK, src/config/network.ts); the testnet values are the page's old text
+  const net = mainnet
+    ? { parent: 'Arbitrum One', chain: 'Gully Chain', chainFull: 'Gully Chain', tag: 'Gully Chain' }
+    : { parent: 'Arbitrum Sepolia', chain: 'GullyChain', chainFull: 'GullyChain Testnet', tag: 'GullyChain Testnet' };
   return {
     base: './',
     // inline (empty) PostCSS config: stops Vite from picking up the parent template's Tailwind postcss.config.js
@@ -17,10 +22,14 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml: (html) =>
           html
             .replaceAll('%SITE_URL%', site)
+            .replaceAll('%NET_PARENT%', net.parent)
+            .replaceAll('%NET_CHAIN_FULL%', net.chainFull)
+            .replaceAll('%NET_CHAIN%', net.chain)
+            .replaceAll('%NET_TAG%', net.tag)
             .replaceAll('%ROBOTS%', env.VITE_ROBOTS || 'index, follow'),
       },
       {
-        // sitemap.xml with the build date as lastmod (the bridge is one indexable page; /embed is noindex)
+        // sitemap.xml with the build date as lastmod (the bridge is one indexable page; /embed is noindex; /terms and /privacy redirect to gullychain.xyz, so they are not listed)
         name: 'gully-sitemap',
         apply: 'build',
         generateBundle() {

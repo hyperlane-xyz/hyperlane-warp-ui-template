@@ -1,0 +1,67 @@
+{
+  "$comment": "Gully Chain MAINNET (48559 on Arbitrum One 42161) for the bridge build with VITE_NETWORK=mainnet. Public values only. Every address left null is filled on launch day (gully-ops l3/mainnet RUNBOOK L-5/L-7) here in the launch PR or with the VITE_MAINNET_* build env (src/config/network.ts); until an address is set, the lane that needs it is never offered. Sources: gully-ops l3/mainnet/chain/rollup-config.json (ids, confirmPeriodBlocks 50400 = 7 days of 12 s L1 blocks), l3/mainnet/hyperlane/warp-eth-native.yaml (Arbitrum One mailbox), l3/mainnet/INFRA.md + docs/mainnet/DOMAIN-CUTOVER.md (hostnames), l3/mainnet/PLAN.md Phase 1 caps.",
+  "parent": {
+    "id": 42161,
+    "name": "Arbitrum One",
+    "short": "Arbitrum",
+    "rpcs": ["https://arb1.arbitrum.io/rpc"],
+    "walletRpcs": ["https://arb1.arbitrum.io/rpc"],
+    "explorer": "https://arbiscan.io",
+    "mailbox": "0x979Ca5202784112f4738403dBec5D0F3B9daabB9",
+    "fromBlock": null,
+    "fastFromBlock": null,
+    "blockSeconds": 0.25
+  },
+  "child": {
+    "id": 48559,
+    "name": "Gully Chain",
+    "short": "Gully Chain",
+    "explorer": "https://gullyscan.xyz",
+    "mailbox": null,
+    "fromBlock": "0",
+    "fastFromBlock": "0",
+    "blockSeconds": 0.25
+  },
+  "canonical": {
+    "inbox": null,
+    "bridge": null,
+    "outbox": null,
+    "rollup": null,
+    "confirmPeriodBlocks": "50400",
+    "l1BlockSeconds": 12
+  },
+  "caps": {
+    "$comment": "Phase 1 guarded-launch caps (PLAN.md, owner decision D-CAPS). Raising one needs the owner's sign-off. fastDailyEth: PLAN.md names an on-chain 24 h rate limit but no number, so the UI has none (null).",
+    "fastPerTransferEth": "2",
+    "fastRouteCollateralEth": "25",
+    "fastDailyEth": null,
+    "canonicalSoftCapEth": "100"
+  },
+  "defaultRouteId": "ETH/arbitrum-gullychain-native",
+  "routes": [
+    {
+      "id": "ETH/arbitrum-gullychain-native",
+      "symbol": "ETH",
+      "tokens": {
+        "gullychaintestnet": {
+          "address": null,
+          "standard": "EvmHypNative",
+          "tokenType": "native",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": null
+        },
+        "arbitrumsepolia": {
+          "address": null,
+          "standard": "EvmHypNative",
+          "tokenType": "native",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": null
+        }
+      }
+    }
+  ]
+}

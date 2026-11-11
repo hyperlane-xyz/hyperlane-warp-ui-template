@@ -200,10 +200,15 @@ export function GasDropNote({ b }: { b: BridgeState }) {
         {g.kind === 'paymaster' && 'Your Gully ID passkey account needs no gas: the Gully paymaster pays its fees, so no ETH drop is sent.'}
         {g.kind === 'empty' && (
           <>
-            Today&apos;s free gas drops are used up. You need a little ETH on GullyChain to move your {sym}:{' '}
-            <Ext href={LINKS.faucet} newTab>
-              faucet
-            </Ext>
+            Today&apos;s free gas drops are used up. You need a little ETH on GullyChain to move your {sym}
+            {LINKS.faucet ? (
+              <>
+                :{' '}
+                <Ext href={LINKS.faucet} newTab>
+                  faucet
+                </Ext>
+              </>
+            ) : null}
             .
           </>
         )}

@@ -1,0 +1,27 @@
+{
+  "repo": "gully-labs/gully-ops",
+  "ref": "f788784080a229b4eeb18db110575139d6e51691",
+  "commit": "f788784080a229b4eeb18db110575139d6e51691",
+  "files": {
+    "src/styles/night/tokens.css": {
+      "source": "sites/_shared/gullychain-night/tokens.css",
+      "sha256": "9cca4dec456bff829afb50ba698a0d8f1ee16f68493464ac3cea94eaca68dab2"
+    },
+    "src/styles/night/components.css": {
+      "source": "sites/_shared/gullychain-night/components.css",
+      "sha256": "624c073bde21426cc0465855b65ab14d0b992ca6d94ed6f5810b0fe54ce04e06"
+    },
+    "src/styles/night/charts.js": {
+      "source": "sites/_shared/gullychain-night/charts.js",
+      "sha256": "f238cb3cebecc2db33e71bb26fff35a97c0f66289dc8ebac58fd44d61363c4bc"
+    },
+    "public/assets/fonts/inter-var.woff2": {
+      "source": "sites/_shared/brand/fonts/inter-var.woff2",
+      "sha256": "f052ee44c3728dfd23aba8a4567150bc314d23903026fbb6ad089422c2df56af"
+    },
+    "public/assets/fonts/Inter-OFL.txt": {
+      "source": "sites/_shared/brand/fonts/Inter-OFL.txt",
+      "sha256": "8c8fa881d9091ee315d2c80d207bb73afd4e90a66c9782ca445c5642f25db6dc"
+    }
+  }
+}

@@ -1,5 +1,6 @@
-// Sign in with Gully: config, types and the lazy SDK loader.
-// Contract: gully-id docs/sign-in-with-gully.md (browser SDK at https://gullyid.xyz/sdk.js, window.GullyID).
+// Sign in with Gully ID: config, types and the lazy SDK loader.
+// Contract: gully-id docs/gully-id-current-spec (SDK https://gullyid.xyz/sdk/v1.js, legacy /sdk.js, window.GullyID).
+// On by default (owner rule 2026-10-30); VITE_GULLY_ID_SIGNIN=off hides the button (rollback).
 //
 // Identity only. Nothing here touches the bridge wallet: transfers are still signed by the wallet the user
 // connects with the Connect button, and a signed-in profile never auto-connects anything.
@@ -38,6 +39,7 @@ export interface GullyClient {
       label?: string;
       passkey?: boolean;
       theme?: 'dark' | 'light';
+      size?: 's' | 'm' | 'l';
     },
   ): () => void;
 }
@@ -49,11 +51,14 @@ export interface GullyIDGlobal {
 export type GullyIdConfig = { clientId: string; issuer: string };
 
 export const DEFAULT_ISSUER = 'https://gullyid.xyz';
+export const DEFAULT_CLIENT_ID = 'gully-bridge';
 
-/** Feature flag: no client id = no button, and the SDK is never loaded. */
+/** Feature flag, default on: VITE_GULLY_ID_SIGNIN=off (false/0/no) = no button and the SDK is never loaded. */
 export function gullyIdConfig(env: Record<string, unknown>): GullyIdConfig | null {
-  const clientId = typeof env.VITE_GULLY_ID_CLIENT_ID === 'string' ? env.VITE_GULLY_ID_CLIENT_ID.trim() : '';
-  if (!clientId) return null;
+  const flag = typeof env.VITE_GULLY_ID_SIGNIN === 'string' ? env.VITE_GULLY_ID_SIGNIN.trim() : '';
+  if (/^(off|false|0|no)$/i.test(flag)) return null;
+  const id = typeof env.VITE_GULLY_ID_CLIENT_ID === 'string' ? env.VITE_GULLY_ID_CLIENT_ID.trim() : '';
+  const clientId = id || DEFAULT_CLIENT_ID;
   const raw = typeof env.VITE_GULLY_ID_ISSUER === 'string' ? env.VITE_GULLY_ID_ISSUER.trim() : '';
   let issuer = DEFAULT_ISSUER;
   if (raw) {
@@ -67,6 +72,17 @@ export function gullyIdConfig(env: Record<string, unknown>): GullyIdConfig | nul
   return { clientId, issuer };
 }
 
+/** Publishes the flag on <html data-gully-id="on|off" data-gully-id-client> so the live audit can read it. */
+export function markGullyId(cfg: GullyIdConfig | null, doc: Pick<Document, 'documentElement'> | undefined = typeof document === 'undefined' ? undefined : document) {
+  if (!doc) return;
+  const d = doc.documentElement.dataset;
+  d.gullyId = cfg ? 'on' : 'off';
+  if (cfg) d.gullyIdClient = cfg.clientId;
+}
+
+/** SDK URLs, best first: the 1.x channel, then the legacy all-majors URL (while /sdk/v1.js is not live yet). */
+export const sdkUrls = (issuer: string) => [`${issuer}/sdk/v1.js`, `${issuer}/sdk.js`];
+
 type LoaderEnv = {
   win: { GullyID?: GullyIDGlobal };
   doc: Pick<Document, 'createElement' | 'head'>;
@@ -76,7 +92,7 @@ type LoaderEnv = {
 let pending: Promise<GullyIDGlobal | null> | null = null;
 
 /**
- * Loads `${issuer}/sdk.js` once and resolves with window.GullyID, or with null when the script fails, times out
+ * Loads `${issuer}/sdk/v1.js` (falling back to `${issuer}/sdk.js`) once and resolves with window.GullyID, or with null when the script fails, times out
  * or does not expose GullyID. Never rejects: a missing SDK just means no sign-in button.
  */
 export function loadGullyIdSdk(issuer: string, env?: LoaderEnv): Promise<GullyIDGlobal | null> {
@@ -96,17 +112,21 @@ export function loadGullyIdSdk(issuer: string, env?: LoaderEnv): Promise<GullyID
       resolve(g);
     };
     const timer = setTimeout(() => finish(null), timeoutMs);
-    try {
-      const s = doc.createElement('script');
-      s.src = `${issuer}/sdk.js`;
-      s.async = true;
-      s.crossOrigin = 'anonymous';
-      s.onload = () => finish(valid(win.GullyID) ? win.GullyID : null);
-      s.onerror = () => finish(null);
-      doc.head.appendChild(s);
-    } catch {
-      finish(null);
-    }
+    const tryUrl = (urls: string[]) => {
+      if (!urls.length) return finish(null);
+      try {
+        const s = doc.createElement('script');
+        s.src = urls[0];
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        s.onload = () => (valid(win.GullyID) ? finish(win.GullyID) : tryUrl(urls.slice(1)));
+        s.onerror = () => tryUrl(urls.slice(1));
+        doc.head.appendChild(s);
+      } catch {
+        finish(null);
+      }
+    };
+    tryUrl(sdkUrls(issuer));
   });
   return pending;
 }

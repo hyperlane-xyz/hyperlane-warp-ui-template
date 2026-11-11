@@ -79,6 +79,11 @@ routes.sort((a, b) => rank(b) - rank(a));
 routes.forEach((r, i) => {
   if (i > 0) r.legacy = true;
 });
+// mirror routes: the GullyChain-side token is minted on Gully Chain (synthetic/collateral, not native); the UI shows the
+// "Powered by Gully Core" badge (brand kit v4) on them
+routes.forEach((r) => {
+  if (r.tokens.gullychaintestnet.tokenType !== 'native') r.mirror = true;
+});
 
 // ---- 2. multi-chain routes ----
 const chains = {};

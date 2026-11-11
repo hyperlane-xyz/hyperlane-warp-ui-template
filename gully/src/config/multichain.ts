@@ -1,7 +1,7 @@
 // Multi-chain Hyperlane routes (gully-ops l3/hyperlane/multichain/routes.yaml), written into routes.json by
 // `npm run routes`. A token without a router address ("address": null) is planned, not deployed: "Coming soon".
 import data from './routes.json';
-import { CHAINS, CHILD, type ChainKey, type Protocol } from './chains';
+import { CHAINS, CHILD, IS_TESTNET, type ChainKey, type Protocol } from './chains';
 
 export interface McToken {
   /** router: EVM address, or the Sealevel warp program id (base58); null until deployed */
@@ -47,8 +47,10 @@ interface RoutesFile {
 const file = data as unknown as RoutesFile;
 export const NETWORK = file.network || 'testnet';
 export const GULLY: ChainKey = CHILD;
-export const MC_ROUTES: McRoute[] = file.multichain || [];
-export const MANIFEST_CHAINS: Record<string, ManifestChain> = file.chains || {};
+/** The manifest in routes.json is for one network; a build for the other network offers none of its routes. */
+const SAME_NETWORK = NETWORK === (IS_TESTNET ? 'testnet' : 'mainnet');
+export const MC_ROUTES: McRoute[] = SAME_NETWORK ? file.multichain || [] : [];
+export const MANIFEST_CHAINS: Record<string, ManifestChain> = SAME_NETWORK ? file.chains || {} : {};
 
 /** Chains on the other side of Gully Chain, in manifest order (classic Arbitrum Sepolia first). */
 export const REMOTE_CHAINS: ChainKey[] = (() => {

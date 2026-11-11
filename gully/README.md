@@ -65,9 +65,11 @@ template, and the template stays untouched for future upstream merges.
 | `src/bridge/localClient.ts` | built-in client: quotes (`quoteTransferRemote`), sends, tracking (Hyperlane `Mailbox.delivered`, the computed deposit tx id, the outbox leaf), claims (`constructOutboxProof` + `Outbox.executeTransaction`, BoLD rollup) |
 | `src/bridge/stats.ts` | live analytics from chain events only. Arbitrum Sepolia's public RPC allows only 100k blocks per `eth_getLogs` when a filter position has several values, so those queries go out in 90k-block windows. |
 | `src/ui/c/AppC.tsx` | **the shipped design** (owner pick, "C · Hybrid"). `src/ui/a` and `src/ui/b` are the two earlier directions, kept for the picker. |
+| `src/styles/night/`, `src/styles/night.css` | **Gully Chain Night 2.0** (= GullyChain brand kit v4), the shared black design of the Gully Chain builder surfaces (owner, 2026-10-29). `night/` is vendored byte for byte from gully-ops `sites/_shared/gullychain-night` by `npm run night` (`scripts/sync-gullychain-night.mjs`, locked in `night.lock.json`, checked by `tests/night.test.ts`); Inter (`inter-var.woff2` + `Inter-OFL.txt`) goes to `public/assets/fonts/`. `base.css` maps the older `--gc-*` names to `--gn-*` roles; `night.css` (loaded last) is the finish. Never put a colour literal where a `--gn-*` token exists, and never edit `night/` here. Header: kit v4 `logo/gc-icon.svg` at 32 px; footer: the icon plus kit v4 `badges/badge-dark.png` (960x256 at 180x48) and the Gully Labs dark badge; the product switcher (1.8.0) with `theme="dark"`. Kit v4 has no wordmark file, so "GullyChain" is never typed as a logo. |
 | `deploy/Caddyfile.bridge` | Caddy block for gully-l3 (static files, SPA fallback, CSP, rollback to the old container). `connect-src` allows every GullyChain RPC of the fallback list, `gullychain.xyz` (ETH/USD off a gullychain host) and `api.redstone.finance`. |
 | `src/gc-switcher/` | the GullyChain product switcher, a byte-identical copy of gully-ops `sites/_shared/gc-switcher` (spec in its README). Do not edit it here. |
-| `src/config/rpc.ts`, `src/bridge/clients.ts` | GullyChain RPC fallback: viem `fallback()` (rank off, 8 s per URL) over same-origin `/rpc` (on a gullychain.xyz host), `rpc.gullychain.xyz`, `rpc.gullyrpc.xyz/gullychain/evm/485590`, `rpc2.gullychain.xyz`, `testnet-rpc.gullychain.xyz`. `VITE_GULLY_RPC` (comma-separated) goes in front. Wallets get rpc.gullychain.xyz, rpc.gullyrpc.xyz, testnet-rpc (rpc2 once its DNS exists). |
+| `src/config/rpc.ts`, `src/bridge/clients.ts` | GullyChain RPC fallback: viem `fallback()` (rank off, 8 s per URL) over same-origin `/rpc` (on a gullychain.xyz host), `testnet-rpc.gullychain.xyz`, `rpc.gullyrpc.xyz/gullychain/evm/485590`, `rpc2.gullychain.xyz`. `VITE_GULLY_RPC` (comma-separated) goes in front. Wallets get the same list (testnet-rpc first). Never `rpc.gullychain.xyz` or `bridge.gullychain.xyz` as testnet endpoints: they become mainnet on cutover day. |
+| `src/earn/`, `src/ui/earn/`, `src/config/indexer.ts` | **Bridge & Earn** (owner decision 2026-10-30): the side card on the bridge while the destination is Gully Chain, and the "Earn with it on kre8.fun" notice under a delivered Fast transfer (deep link carries the Hyperlane message id). Numbers are read from the Gully Chain indexer (`GET /rewards/lp/stats` every 30 s, `GET /rewards/lp` for the hourly sparkline; `VITE_GULLY_INDEXER_URL`, default `https://indexer.gullychain.xyz`, host in the Caddy `connect-src`). A 404 or a network error renders "Bridge & Earn is not live on testnet yet." with the docs link, never a broken card. Copy and warnings in `src/earn/copy.ts` (shared spec). |
 | `src/bridge/usd.ts`, `src/ui/common/money.tsx` | USD first, ETH second: Gully's `/price/eth` (same-origin, else gullychain.xyz), then the RedStone API, then GullyPriceFeed on chain through the RPC fallback; no CoinGecko from the browser. Cached 60 s. With no price, amounts show in ETH only. |
 
 ## Integrators
@@ -76,24 +78,47 @@ template, and the template stays untouched for future upstream merges.
 - `?embed=1` or `/embed`: the card only, transparent background. It posts `{type:'gully-bridge', event:{type:'ready'}}` to the parent window.
 - Other query parameters: `direction=deposit|withdraw`, `route=fast|canonical`, `amount=0.01`.
 
-## Sign in with Gully (feature flag, off by default)
+## Sign in with Gully ID (on by default)
 
-`VITE_GULLY_ID_CLIENT_ID=gully-bridge` at build time adds a "Sign in with Gully" button to the header
-(`src/gully-id/`). It lazily loads `https://gullyid.xyz/sdk.js` (override with `VITE_GULLY_ID_ISSUER`) and shows
-the user's .gully name and avatar, plus their Gully ID wallet address when the profile has one. It is identity only:
-transfers are still signed by the wallet connected with Connect, and nothing is auto-connected. Unset = no button and
-the SDK is never requested; if the SDK fails to load the button simply does not appear. Needs the CSP in
-`deploy/Caddyfile.bridge` (gullyid.xyz in script-src and connect-src, https: in img-src).
+The header shows the official "Sign in with Gully ID" button, drawn by the Gully ID SDK (`src/gully-id/`; dark, size
+S; on screens up to 900 px it sits in the menu with the passkey option, never clipped). Client `gully-bridge`, issuer
+`https://gullyid.xyz`; the SDK loads lazily from `/sdk/v1.js`, falling back to `/sdk.js`. It shows the user's .gully
+name and avatar, plus their Gully ID wallet address when the profile has one. It is identity only: transfers are still
+signed by the wallet connected with Connect, and nothing is auto-connected. If the SDK fails to load the button simply
+does not appear. `<html data-gully-id="on|off">` shows the flag state. Needs the CSP in `deploy/Caddyfile.bridge`
+(gullyid.xyz in script-src and connect-src, https: in img-src).
 
 ```sh
-VITE_GULLY_ID_CLIENT_ID=gully-bridge node scripts/build-staging.mjs <out>
+node scripts/build-staging.mjs <out>                          # on (client gully-bridge)
+VITE_GULLY_ID_SIGNIN=off node scripts/build-staging.mjs <out>  # rollback: no button, the SDK is never requested
 ```
+
+`VITE_GULLY_ID_CLIENT_ID` / `VITE_GULLY_ID_ISSUER` override the defaults.
+
+## Gully Warp Mirrors (coin routes from /mirrors.json)
+
+At startup the app fetches same-origin `/mirrors.json` (published every minute by the relayer sync on gully-l3, gully-ops
+`l3/hyperlane/agents/sync-mirrors.mjs`, schema `gully-warp-mirrors/1`) and adds one Fast route per active, relayed
+Gully Core coin mirror on a chain the app knows (testnet: Arbitrum Sepolia): `MIRROR/<originToken>/<chainKey>`, GullyChain
+side = the GullyCollateral (`EvmHypCollateral`, `collateralAddress` = the coin, approve first), destination side = the
+GullyMirror (`EvmHypSynthetic`). They live in `MIRROR_ROUTES` (`src/config/routes.ts`), separate from the ETH routes, so
+the default ETH route, stats and the activity feed are unchanged; no file or a fetch error simply means no mirror routes.
+
+- The card shows an Asset picker (ETH + every mirror) and, on a mirror, "Trading on <chain> · Launched on Gully Chain ·
+  Liquidity on Gully Core" with links to the mirror on the destination explorer (provenance), the coin page (kre8.fun/drop/<coin>) and
+  Powered by Gully Core. Mirror routes are Fast only (the canonical bridge carries ETH only).
+- Deep link `?token=<originToken>&to=<domain|chainKey>` (kre8.fun Drop page): preselects that mirror, direction
+  GullyChain -> destination; when the connected wallet holds the mirror the default flips to **Bridge back**
+  (destination -> GullyChain) unless the link set `direction=`.
+- While the relayer is restarting on a new whitelist (`pendingRelayerRestart`), quotes are unavailable ("syncing").
+- Tests: `src/config/mirrors.test.ts` (route mapping, registry, deep-link parser).
 
 ## Commands
 
 ```sh
 npm install
-npm run brand            # copy the GullyChain kit v3 + Gully Labs badge into public/ (byte for byte)
+npm run brand            # copy GullyChain kit v4 (icon, dark badge), GN 2.0 favicons + OG card from gully-ops, + Gully Labs dark badge (byte for byte)
+npm run night            # re-vendor Gully Chain Night from a gully-ops checkout: npm run night -- ../../gully-ops <commit>
 npm run routes -- ../../gully-ops/l3/hyperlane/registry   # + ../multichain/routes.yaml (testnet; --network mainnet)
 npm run dev              # VITE_DIRECTION=a|b|c; GullyChain RPC is proxied to the SSH tunnel (127.0.0.1:18545)
 npm test                 # unit tests

@@ -3,32 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Gully Bridge · Move ETH between Arbitrum Sepolia and GullyChain</title>
-    <meta name="description" content="Bridge ETH between Arbitrum Sepolia and GullyChain Testnet. Fast lane in about a minute both ways, or the canonical rollup bridge. Live transfer status, no sign-up." />
+    <!-- The HTML is the landing page. The embed, a design preview and the legal redirects must not flash it. -->
+    <script src="/first-route.js"></script>
+    <title>Gully Bridge · Move ETH between %NET_PARENT% and %NET_CHAIN%</title>
+    <meta name="description" content="Bridge ETH between %NET_PARENT% and %NET_CHAIN_FULL%. Fast lane in about a minute both ways, or the canonical rollup bridge. Live transfer status, no sign-up." />
     <meta name="robots" content="%ROBOTS%" />
     <link rel="canonical" href="%SITE_URL%" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
     <link rel="manifest" href="site.webmanifest" />
-    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="theme-color" content="#0A0F0E" />
+    <meta name="color-scheme" content="dark" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="GullyChain" />
-    <meta property="og:title" content="Gully Bridge · GullyChain Testnet" />
+    <meta property="og:title" content="Gully Bridge · %NET_TAG%" />
     <meta property="og:description" content="Fast lane in about a minute both ways, or the canonical rollup bridge." />
     <meta property="og:url" content="%SITE_URL%" />
     <meta property="og:image" content="%SITE_URL%og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="GullyChain logo with the GullyChain mascot" />
+    <meta property="og:image:alt" content="Gully Bridge: move funds to GullyChain. The GullyChain icon and the GullyChain mascot" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Gully_Labs" />
-    <meta name="twitter:title" content="Gully Bridge · GullyChain Testnet" />
+    <meta name="twitter:title" content="Gully Bridge · %NET_TAG%" />
     <meta name="twitter:description" content="Fast lane in about a minute both ways, or the canonical rollup bridge." />
     <meta name="twitter:image" content="%SITE_URL%og-image.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Exo+2:wght@800&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/assets/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -37,15 +39,18 @@
         "url": "%SITE_URL%",
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
-        "description": "Bridge ETH between Arbitrum Sepolia and GullyChain Testnet: a Fast lane (minutes, both ways) and the canonical rollup bridge.",
+        "description": "Bridge ETH between %NET_PARENT% and %NET_CHAIN_FULL%: a Fast lane (minutes, both ways) and the canonical rollup bridge.",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "publisher": { "@type": "Organization", "name": "Gully Labs", "url": "https://gullylabs.xyz" }
       }
     </script>
+    <!-- Gully analytics: one self-hosted Umami, no cookies, honours Do Not Track. The loader finds the site id from the host. -->
+    <script defer src="https://analytics.gullylabs.xyz/a.js"></script>
   </head>
   <body>
+    <script src="/gully-x-banner.js" data-bg="var(--gn-ink,#1A1F1E)" data-fg="var(--gn-link,#2CF29A)" data-line="var(--gn-line,#2A3331)"></script>
     <noscript>Gully Bridge needs JavaScript to talk to your wallet and the chains.</noscript>
-    <div id="root"></div>
+    <div id="root"><!--gb-app--></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

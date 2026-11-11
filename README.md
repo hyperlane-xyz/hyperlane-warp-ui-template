@@ -1,10 +1,7 @@
 <!-- gully-header:start -->
 <p align="center">
-  <a href="https://bridge.gullychain.xyz">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/gullychain-wordmark-for-dark-bg.png">
-      <img alt="Gully Chain" src=".github/assets/gullychain-wordmark-for-light-bg.png" width="360">
-    </picture>
+  <a href="https://testnet-bridge.gullychain.xyz">
+    <img alt="Gully Chain" src=".github/assets/gc-icon.svg" width="96" height="96">
   </a>
 </p>
 
@@ -13,12 +10,12 @@
 <p align="center">Gully Bridge: the Hyperlane warp route bridge UI for Gully Chain routes.</p>
 
 <p align="center">
-  <a href="https://gullychain.xyz"><img src="https://img.shields.io/badge/gullychain.xyz-01D9FA?style=for-the-badge&labelColor=000000&logo=googlechrome&logoColor=000000" alt="Website"></a>
-  <a href="https://bridge.gullychain.xyz"><img src="https://img.shields.io/badge/bridge.gullychain.xyz-0A0F1A?style=for-the-badge&labelColor=000000&logo=googlechrome&logoColor=01D9FA" alt="App"></a>
-  <a href="https://docs.gullychain.xyz"><img src="https://img.shields.io/badge/Docs-0A0F1A?style=for-the-badge&labelColor=000000&logo=readthedocs&logoColor=01D9FA" alt="Docs"></a>
-  <a href="https://t.me/GullyChain"><img src="https://img.shields.io/badge/Telegram-0A0F1A?style=for-the-badge&labelColor=000000&logo=telegram&logoColor=26A5E4" alt="Telegram"></a>
-  <a href="https://discord.com/invite/tY2ErsNNBp"><img src="https://img.shields.io/badge/Discord-0A0F1A?style=for-the-badge&labelColor=000000&logo=discord&logoColor=5865F2" alt="Discord"></a>
-  <a href="https://x.com/Gully_Labs"><img src="https://img.shields.io/badge/@Gully__Labs-0A0F1A?style=for-the-badge&labelColor=000000&logo=x&logoColor=white" alt="X"></a>
+  <a href="https://gullychain.xyz"><img src="https://img.shields.io/badge/gullychain.xyz-00C878?style=for-the-badge&labelColor=000000&logo=googlechrome&logoColor=000000" alt="Website"></a>
+  <a href="https://testnet-bridge.gullychain.xyz"><img src="https://img.shields.io/badge/testnet--bridge.gullychain.xyz-0A0F0E?style=for-the-badge&labelColor=000000&logo=googlechrome&logoColor=00C878" alt="App"></a>
+  <a href="https://docs.gullychain.xyz"><img src="https://img.shields.io/badge/Docs-0A0F0E?style=for-the-badge&labelColor=000000&logo=readthedocs&logoColor=00C878" alt="Docs"></a>
+  <a href="https://t.me/GullyChain"><img src="https://img.shields.io/badge/Telegram-0A0F0E?style=for-the-badge&labelColor=000000&logo=telegram&logoColor=26A5E4" alt="Telegram"></a>
+  <a href="https://discord.com/invite/tY2ErsNNBp"><img src="https://img.shields.io/badge/Discord-0A0F0E?style=for-the-badge&labelColor=000000&logo=discord&logoColor=5865F2" alt="Discord"></a>
+  <a href="https://x.com/Gully_Labs"><img src="https://img.shields.io/badge/@Gully__Labs-0A0F0E?style=for-the-badge&labelColor=000000&logo=x&logoColor=white" alt="X"></a>
 </p>
 
 <p align="center"><sub>A Gully Chain fork of <a href="https://github.com/hyperlane-xyz/hyperlane-warp-ui-template">hyperlane-xyz/hyperlane-warp-ui-template</a>, maintained by <a href="https://gullylabs.xyz">Gully Labs</a>. It is used under its Apache-2.0 licence; the upstream LICENSE, copyright and attribution notices are kept unchanged. The upstream README follows below as published. Not affiliated with or endorsed by hyperlane-xyz.</sub></p>
@@ -221,8 +218,8 @@ For more information, see the [Hyperlane documentation](https://docs.hyperlane.x
 <p align="center">
   <a href="https://gullylabs.xyz">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/powered-by-gully-labs-dark-2x.png">
-      <img alt="Powered by Gully Labs" src=".github/assets/powered-by-gully-labs-light-2x.png" width="254" height="64">
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/gully-labs-powered-by-dark.svg">
+      <img alt="Powered by Gully Labs" src=".github/assets/gully-labs-powered-by-light.svg" width="256" height="88">
     </picture>
   </a>
 </p>

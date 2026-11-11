@@ -49,3 +49,15 @@ export async function readGasDrop(recipient: Address, address: string = GAS_DROP
   ]);
   return { dropped, dropAmount, remainingToday, eligible };
 }
+
+/**
+ * The coin the gas note names: what actually ARRIVES on GullyChain. A mirror "Bridge back" runs on the classic pair,
+ * whose option says ETH, but it delivers the Gully Core coin (TFROG), so the note must never say "use your ETH".
+ */
+export function arrivingSymbol(b: {
+  mirror?: { coinSymbol?: string } | undefined;
+  quote?: { receiveSymbol?: string } | undefined;
+  option?: { receive: { symbol: string } } | undefined;
+}): string {
+  return b.mirror?.coinSymbol || b.quote?.receiveSymbol || b.option?.receive.symbol || 'coins';
+}

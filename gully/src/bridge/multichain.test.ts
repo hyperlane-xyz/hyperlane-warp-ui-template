@@ -2,7 +2,7 @@ import { encodeAbiParameters, keccak256, toHex, type Hex } from 'viem';
 import { describe, expect, it } from 'vitest';
 
 import { CHAINS } from '../config/chains';
-import { dropApplies, dropEligible, gasDropEnabled } from './gasDrop';
+import { arrivingSymbol, dropApplies, dropEligible, gasDropEnabled } from './gasDrop';
 import { migrateTransfers } from './history';
 import { messageIdFromLogs, recipientBytes32 } from './localClient';
 
@@ -81,5 +81,16 @@ describe('gas on arrival', () => {
     expect(dropApplies({ direction: 'withdraw', receive: { tokenType: 'native' } }, true)).toBe(false);
     expect(gasDropEnabled('')).toBe(false);
     expect(gasDropEnabled('0x474D721C3B6c555E6F188dCCE7f0b165F1CD8631')).toBe(true);
+  });
+});
+
+describe('gas note names the arriving coin', () => {
+  it('a mirror Bridge back names the Gully Core coin, never the classic pair ETH', () => {
+    const option = { receive: { symbol: 'ETH' } };
+    expect(arrivingSymbol({ mirror: { coinSymbol: 'TFROG' }, quote: { receiveSymbol: 'ETH' }, option })).toBe('TFROG');
+  });
+  it('a multi-chain deposit names its token', () => {
+    expect(arrivingSymbol({ quote: { receiveSymbol: 'USDC' }, option: { receive: { symbol: 'USDC' } } })).toBe('USDC');
+    expect(arrivingSymbol({ option: { receive: { symbol: 'USDT' } } })).toBe('USDT');
   });
 });

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { CHAINS, hyperlaneMessageUrl, LINKS, txUrl, type ChainKey } from '../../config/chains';
 import { short } from '../../bridge/format';
+import { arrivingSymbol } from '../../bridge/gasDrop';
 import { chainStatus, pickerChains } from '../../bridge/lanes';
 import { cheapestUnavailable, laneCopy } from '../../bridge/laneCopy';
 import type { TransferRecord } from '../../bridge/types';
@@ -186,7 +187,7 @@ export function RecipientField({ b }: { b: BridgeState }) {
 export function GasDropNote({ b }: { b: BridgeState }) {
   const g = b.gasInfo;
   if (!g || !b.option) return null;
-  const sym = b.quote?.receiveSymbol || b.option.receive.symbol;
+  const sym = arrivingSymbol(b);
   return (
     <p className="note gas-note" role="status">
       <Icon name="droplet" size={16} />

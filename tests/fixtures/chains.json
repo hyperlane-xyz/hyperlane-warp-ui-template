@@ -1,0 +1,1758 @@
+{
+  "/v1/chains": {
+    "chains": [
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "Etherscan",
+            "url": "https://etherscan.io"
+          },
+          {
+            "family": "blockscout",
+            "name": "Blockscout",
+            "url": "https://blockscout.com/eth/mainnet"
+          },
+          {
+            "family": "routescan",
+            "name": "Ethereum Explorer",
+            "url": "https://1.routescan.io"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "ethereum",
+        "dex": "uniswap",
+        "displayName": "Ethereum",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 1,
+        "name": "Ethereum",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x52dd779c1b5eeb54d5f218EfA72D52117ca04115"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "Etherscan",
+            "url": "https://optimistic.etherscan.io"
+          },
+          {
+            "family": "routescan",
+            "name": "Optimism Explorer",
+            "url": "https://mainnet.thesuperscan.io"
+          },
+          {
+            "family": "blockscout",
+            "name": "OP Mainnet explorer",
+            "url": "https://optimism.blockscout.com"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "optimism",
+        "dex": "velodrome",
+        "displayName": "Optimism",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 10,
+        "name": "Optimism",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x52dd779c1b5eeb54d5f218EfA72D52117ca04115"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "BaseScan",
+            "url": "https://basescan.org"
+          },
+          {
+            "family": "routescan",
+            "name": "Base Explorer",
+            "url": "https://base.thesuperscan.io"
+          },
+          {
+            "family": "blockscout",
+            "name": "Base Mainnet explorer",
+            "url": "https://base.blockscout.com"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "base",
+        "dex": "aerodrome",
+        "displayName": "Base",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 8453,
+        "name": "Base",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x52dd779c1b5eeb54d5f218EfA72D52117ca04115"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "Arbiscan",
+            "url": "https://arbiscan.io"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "arbitrum",
+        "dex": "uniswap",
+        "displayName": "Arbitrum",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 42161,
+        "name": "Arbitrum",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x52dd779c1b5eeb54d5f218EfA72D52117ca04115"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "BscScan",
+            "url": "https://bscscan.com"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "bsc",
+        "dex": "pancakeswap",
+        "displayName": "Binance Smart Chain",
+        "displayNameShort": "Binance",
+        "gasCurrencyCoinGeckoId": "binancecoin",
+        "id": 56,
+        "name": "Binance Smart Chain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "BNB",
+          "symbol": "BNB"
+        },
+        "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x52dd779c1b5eeb54d5f218EfA72D52117ca04115"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "PolygonScan",
+            "url": "https://polygonscan.com"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "polygon",
+        "dex": "uniswap",
+        "displayName": "Polygon",
+        "gasCurrencyCoinGeckoId": "polygon-ecosystem-token",
+        "id": 137,
+        "name": "Polygon",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Polygon Ecosystem Token",
+          "symbol": "POL"
+        },
+        "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x52dd779c1b5eeb54d5f218EfA72D52117ca04115"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "Unichain Explorer",
+            "url": "https://uniscan.xyz"
+          },
+          {
+            "family": "blockscout",
+            "name": "Unichain Blockscout",
+            "url": "https://unichain.blockscout.com"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "unichain",
+        "dex": "uniswap",
+        "displayName": "Unichain",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 130,
+        "name": "Unichain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x52dd779c1b5eeb54d5f218EfA72D52117ca04115"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "tronscan",
+            "name": "Tronscan",
+            "url": "https://tronscan.org/#"
+          }
+        ],
+        "canExecute": true,
+        "canSwap": true,
+        "chainName": "tron",
+        "dex": "sunswap",
+        "displayName": "Tron",
+        "gasCurrencyCoinGeckoId": "tron",
+        "id": 728126428,
+        "name": "Tron",
+        "nativeCurrency": {
+          "decimals": 6,
+          "name": "Tron",
+          "symbol": "TRX"
+        },
+        "permit2": "0x7cd82628f138187bbca0b8a075cdcd4d99fc7a52",
+        "protocol": "tron",
+        "supportsNative": true,
+        "universalRouter": "0x2B4DE500c70CaF268417736AB65fc7865bdcEC20"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "solanamainnet",
+        "dex": null,
+        "displayName": "Solana",
+        "gasCurrencyCoinGeckoId": "solana",
+        "id": 1399811149,
+        "name": "Solana",
+        "nativeCurrency": {
+          "decimals": 9,
+          "name": "Solana",
+          "symbol": "SOL"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "sealevel",
+        "supportsNative": false,
+        "universalRouter": "2CttnaLkYbNHbaFDFnQ8PMCnzUwTGrKnskBxPM4TRWGp"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "avalanche",
+        "dex": null,
+        "displayName": "Avalanche",
+        "gasCurrencyCoinGeckoId": "avalanche-2",
+        "id": 43114,
+        "name": "Avalanche",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Avalanche",
+          "symbol": "AVAX"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "eclipsemainnet",
+        "dex": null,
+        "displayName": "Eclipse",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 1408864445,
+        "name": "Eclipse",
+        "nativeCurrency": {
+          "decimals": 9,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "sealevel",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "hyperevm",
+        "dex": null,
+        "displayName": "HyperEVM",
+        "gasCurrencyCoinGeckoId": "hyperliquid",
+        "id": 999,
+        "name": "HyperEVM",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Hyperliquid",
+          "symbol": "HYPE"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "ink",
+        "dex": null,
+        "displayName": "Ink",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 57073,
+        "name": "Ink",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "katana",
+        "dex": null,
+        "displayName": "Katana",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 747474,
+        "name": "Katana",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "linea",
+        "dex": null,
+        "displayName": "Linea",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 59144,
+        "name": "Linea",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "monad",
+        "dex": null,
+        "displayName": "Monad",
+        "gasCurrencyCoinGeckoId": "monad",
+        "id": 143,
+        "name": "Monad",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "MON",
+          "symbol": "MON"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "worldchain",
+        "dex": null,
+        "displayName": "World Chain",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 480,
+        "name": "World Chain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "plume",
+        "dex": null,
+        "displayName": "Plume",
+        "gasCurrencyCoinGeckoId": "plume",
+        "id": 98866,
+        "name": "Plume",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Plume",
+          "symbol": "PLUME"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "sei",
+        "dex": null,
+        "displayName": "Sei",
+        "gasCurrencyCoinGeckoId": "sei-network",
+        "id": 1329,
+        "name": "Sei",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Sei",
+          "symbol": "SEI"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "sonic",
+        "dex": null,
+        "displayName": "Sonic",
+        "gasCurrencyCoinGeckoId": "fantom",
+        "id": 146,
+        "name": "Sonic",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Sonic",
+          "symbol": "S"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "viction",
+        "dex": null,
+        "displayName": "Viction",
+        "gasCurrencyCoinGeckoId": "tomochain",
+        "id": 88,
+        "name": "Viction",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Viction",
+          "symbol": "VIC"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "plasma",
+        "dex": null,
+        "displayName": "Plasma",
+        "gasCurrencyCoinGeckoId": "plasma",
+        "id": 9745,
+        "name": "Plasma",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "XPL",
+          "symbol": "XPL"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "bob",
+        "dex": null,
+        "displayName": "BOB",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 60808,
+        "name": "BOB",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "etherscan",
+            "name": "CeloScan",
+            "url": "https://celoscan.io"
+          },
+          {
+            "family": "blockscout",
+            "name": "Blockscout",
+            "url": "https://explorer.celo.org"
+          }
+        ],
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "celo",
+        "dex": null,
+        "displayName": "Celo",
+        "gasCurrencyCoinGeckoId": "celo",
+        "id": 42220,
+        "name": "Celo",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Celo",
+          "symbol": "CELO"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "fraxtal",
+        "dex": null,
+        "displayName": "Fraxtal",
+        "gasCurrencyCoinGeckoId": "frax-share",
+        "id": 252,
+        "name": "Fraxtal",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "FRAX",
+          "symbol": "FRAX"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "lisk",
+        "dex": null,
+        "displayName": "Lisk",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 1135,
+        "name": "Lisk",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "metal",
+        "dex": null,
+        "displayName": "Metal L2",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 1000001750,
+        "name": "Metal L2",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "mode",
+        "dex": null,
+        "displayName": "Mode",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 34443,
+        "name": "Mode",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": true,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "soneium",
+        "dex": null,
+        "displayName": "Soneium",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 1868,
+        "name": "Soneium",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "zerogravity",
+        "dex": null,
+        "displayName": "0G",
+        "gasCurrencyCoinGeckoId": "zero-gravity",
+        "id": 16661,
+        "name": "0G",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "0G",
+          "symbol": "0G"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "stride",
+        "dex": null,
+        "displayName": "Stride",
+        "gasCurrencyCoinGeckoId": "stride",
+        "id": 745,
+        "name": "Stride",
+        "nativeCurrency": {
+          "decimals": 6,
+          "name": "Stride",
+          "symbol": "STRD"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "cosmos",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "abstract",
+        "dex": null,
+        "displayName": "Abstract",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 2741,
+        "name": "Abstract",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ethereum",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "celestia",
+        "dex": null,
+        "displayName": "Celestia",
+        "gasCurrencyCoinGeckoId": "celestia",
+        "id": 1128614981,
+        "name": "Celestia",
+        "nativeCurrency": {
+          "decimals": 6,
+          "name": "Celestia",
+          "symbol": "TIA"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "cosmosnative",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "lumiaprism",
+        "dex": null,
+        "displayName": "Lumia Prism",
+        "gasCurrencyCoinGeckoId": "lumia",
+        "id": 1000073017,
+        "name": "Lumia Prism",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Lumia",
+          "symbol": "LUMIA"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "coti",
+        "dex": null,
+        "displayName": "Coti",
+        "gasCurrencyCoinGeckoId": "coti",
+        "id": 2632500,
+        "name": "Coti",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "COTI",
+          "symbol": "COTI"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "paradex",
+        "dex": null,
+        "displayName": "Paradex",
+        "gasCurrencyCoinGeckoId": "paradex-fuel",
+        "id": 514051890,
+        "name": "Paradex",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Para Gas Token",
+          "symbol": "FUEL"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "starknet",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "inevm",
+        "dex": null,
+        "displayName": "Injective EVM",
+        "displayNameShort": "inEVM",
+        "gasCurrencyCoinGeckoId": "injective-protocol",
+        "id": 2525,
+        "name": "Injective EVM",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Injective",
+          "symbol": "INJ"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "ancient8",
+        "dex": null,
+        "displayName": "Ancient8",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 888888888,
+        "name": "Ancient8",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "appchain",
+        "dex": null,
+        "displayName": "AppChain",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 466,
+        "name": "AppChain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "endurance",
+        "dex": null,
+        "displayName": "Endurance",
+        "gasCurrencyCoinGeckoId": "endurance",
+        "id": 648,
+        "name": "Endurance",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Fusionist",
+          "symbol": "ACE"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "artela",
+        "dex": null,
+        "displayName": "Artela",
+        "gasCurrencyCoinGeckoId": "artela-network",
+        "id": 11820,
+        "name": "Artela",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Artela",
+          "symbol": "ART"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "sonicsvm",
+        "dex": null,
+        "displayName": "Sonic SVM",
+        "gasCurrencyCoinGeckoId": "solana",
+        "id": 507150715,
+        "name": "Sonic SVM",
+        "nativeCurrency": {
+          "decimals": 9,
+          "name": "Solana",
+          "symbol": "SOL"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "sealevel",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "blockExplorers": [
+          {
+            "family": "blockscout",
+            "name": "Superseed Explorer",
+            "url": "https://explorer.superseed.xyz"
+          },
+          {
+            "family": "routescan",
+            "name": "Superseed Explorer",
+            "url": "https://5330.thesuperscan.io"
+          }
+        ],
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "superseed",
+        "dex": null,
+        "displayName": "Superseed",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 5330,
+        "name": "Superseed",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "subtensor",
+        "dex": null,
+        "displayName": "Subtensor",
+        "gasCurrencyCoinGeckoId": "bittensor",
+        "id": 964,
+        "name": "Subtensor",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Bittensor",
+          "symbol": "TAO"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "matchain",
+        "dex": null,
+        "displayName": "Matchain",
+        "gasCurrencyCoinGeckoId": "binancecoin",
+        "id": 698,
+        "name": "Matchain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "BNB",
+          "symbol": "BNB"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "starknet",
+        "dex": null,
+        "displayName": "Starknet",
+        "gasCurrencyCoinGeckoId": "starknet",
+        "id": 358974494,
+        "name": "Starknet",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "StarkNet Token",
+          "symbol": "STRK"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "starknet",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "lukso",
+        "dex": null,
+        "displayName": "LUKSO",
+        "gasCurrencyCoinGeckoId": "lukso-token-2",
+        "id": 42,
+        "name": "LUKSO",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "LUKSO",
+          "symbol": "LYX"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "injective",
+        "dex": null,
+        "displayName": "Injective",
+        "gasCurrencyCoinGeckoId": "injective-protocol",
+        "id": 6909546,
+        "name": "Injective",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Injective",
+          "symbol": "INJ"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "cosmos",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "soon",
+        "dex": null,
+        "displayName": "SOON",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 50075007,
+        "name": "SOON",
+        "nativeCurrency": {
+          "decimals": 9,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "sealevel",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "boba",
+        "dex": null,
+        "displayName": "Boba Mainnet",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 288,
+        "name": "Boba Mainnet",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "bsquared",
+        "dex": null,
+        "displayName": "B\u00b2 Network",
+        "gasCurrencyCoinGeckoId": "bitcoin",
+        "id": 223,
+        "name": "B\u00b2 Network",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Bitcoin",
+          "symbol": "BTC"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "nibiru",
+        "dex": null,
+        "displayName": "Nibiru",
+        "gasCurrencyCoinGeckoId": "nibiru",
+        "id": 6900,
+        "name": "Nibiru",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "NIBI",
+          "symbol": "NIBI"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "swell",
+        "dex": null,
+        "displayName": "Swell",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 1923,
+        "name": "Swell",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "immutablezkevmmainnet",
+        "dex": null,
+        "displayName": "Immutable zkEVM",
+        "gasCurrencyCoinGeckoId": "immutable-x",
+        "id": 1000013371,
+        "name": "Immutable zkEVM",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Immutable",
+          "symbol": "IMX"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "flowmainnet",
+        "dex": null,
+        "displayName": "EVM on Flow",
+        "gasCurrencyCoinGeckoId": "flow",
+        "id": 1000000747,
+        "name": "EVM on Flow",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Flow",
+          "symbol": "FLOW"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "zircuit",
+        "dex": null,
+        "displayName": "Zircuit",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 48900,
+        "name": "Zircuit",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "berachain",
+        "dex": null,
+        "displayName": "Berachain",
+        "gasCurrencyCoinGeckoId": "berachain-bera",
+        "id": 80094,
+        "name": "Berachain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "BERA",
+          "symbol": "BERA"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "blast",
+        "dex": null,
+        "displayName": "Blast",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 81457,
+        "name": "Blast",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "megaeth",
+        "dex": null,
+        "displayName": "MegaETH",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 4326,
+        "name": "MegaETH",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "stable",
+        "dex": null,
+        "displayName": "Stable",
+        "gasCurrencyCoinGeckoId": "tether",
+        "id": 988,
+        "name": "Stable",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "gUSDT",
+          "symbol": "gUSDT"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "taiko",
+        "dex": null,
+        "displayName": "Taiko",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 167000,
+        "name": "Taiko",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Ether",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "xlayer",
+        "dex": null,
+        "displayName": "XLayer",
+        "displayNameShort": "XLayer",
+        "gasCurrencyCoinGeckoId": "okb",
+        "id": 196,
+        "name": "XLayer",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "OKB",
+          "symbol": "OKB"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "sophon",
+        "dex": null,
+        "displayName": "Sophon",
+        "gasCurrencyCoinGeckoId": "sophon",
+        "id": 50104,
+        "name": "Sophon",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "sophon",
+          "symbol": "SOPH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "apechain",
+        "dex": null,
+        "displayName": "ApeChain",
+        "gasCurrencyCoinGeckoId": "apecoin",
+        "id": 33139,
+        "name": "ApeChain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "ApeCoin",
+          "symbol": "APE"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "kyve",
+        "dex": null,
+        "displayName": "KYVE",
+        "gasCurrencyCoinGeckoId": "kyve-network",
+        "id": 1264145989,
+        "name": "KYVE",
+        "nativeCurrency": {
+          "decimals": 6,
+          "name": "KYVE",
+          "symbol": "KYVE"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "cosmosnative",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "solaxy",
+        "dex": null,
+        "displayName": "Solaxy",
+        "gasCurrencyCoinGeckoId": "solaxy",
+        "id": 1936682104,
+        "name": "Solaxy",
+        "nativeCurrency": {
+          "decimals": 6,
+          "name": "Solaxy",
+          "symbol": "SOLX"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "sealevel",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "fluence",
+        "dex": null,
+        "displayName": "Fluence",
+        "gasCurrencyCoinGeckoId": "fluence-2",
+        "id": 9999999,
+        "name": "Fluence",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "fluence",
+          "symbol": "FLT"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "mitosis",
+        "dex": null,
+        "displayName": "Mitosis",
+        "gasCurrencyCoinGeckoId": "mitosis",
+        "id": 124816,
+        "name": "Mitosis",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "MITO",
+          "symbol": "MITO"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "radix",
+        "dex": null,
+        "displayName": "Radix",
+        "gasCurrencyCoinGeckoId": "radix",
+        "id": 1633970780,
+        "name": "Radix",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Radix",
+          "symbol": "XRD"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "radix",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "pulsechain",
+        "dex": null,
+        "displayName": "PulseChain",
+        "gasCurrencyCoinGeckoId": "pulsechain",
+        "id": 369,
+        "name": "PulseChain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "PulseChain",
+          "symbol": "PLS"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "electroneum",
+        "dex": null,
+        "displayName": "Electroneum",
+        "gasCurrencyCoinGeckoId": "electroneum",
+        "id": 52014,
+        "name": "Electroneum",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "ETN",
+          "symbol": "ETN"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "galactica",
+        "dex": null,
+        "displayName": "Galactica",
+        "gasCurrencyCoinGeckoId": "galactica-com",
+        "id": 613419,
+        "name": "Galactica",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "GNET",
+          "symbol": "GNET"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "carrchain",
+        "dex": null,
+        "displayName": "CarrChain",
+        "gasCurrencyCoinGeckoId": "carnomaly",
+        "id": 7667,
+        "name": "CarrChain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "CARR",
+          "symbol": "CARR"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "mantra",
+        "dex": null,
+        "displayName": "MANTRA",
+        "gasCurrencyCoinGeckoId": "mantra",
+        "id": 5888,
+        "name": "MANTRA",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "MANTRA",
+          "symbol": "MANTRA"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "incentiv",
+        "dex": null,
+        "displayName": "Incentiv",
+        "gasCurrencyCoinGeckoId": "incentiv",
+        "id": 24101,
+        "name": "Incentiv",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "CENT",
+          "symbol": "CENT"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "litchain",
+        "dex": null,
+        "displayName": "Lit Chain",
+        "gasCurrencyCoinGeckoId": "lit-protocol",
+        "id": 175200,
+        "name": "Lit Chain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "LITKEY",
+          "symbol": "LITKEY"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "lazai",
+        "dex": null,
+        "displayName": "LazAI",
+        "gasCurrencyCoinGeckoId": "metis-token",
+        "id": 52924,
+        "name": "LazAI",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "METIS",
+          "symbol": "METIS"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "metis",
+        "dex": null,
+        "displayName": "Metis Andromeda",
+        "gasCurrencyCoinGeckoId": "metis-token",
+        "id": 1088,
+        "name": "Metis Andromeda",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Metis",
+          "symbol": "METIS"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "krown",
+        "dex": null,
+        "displayName": "Krown",
+        "gasCurrencyCoinGeckoId": "krown-network",
+        "id": 1983,
+        "name": "Krown",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "KROWN",
+          "symbol": "KROWN"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "eni",
+        "dex": null,
+        "displayName": "ENI",
+        "gasCurrencyCoinGeckoId": "eniac-network",
+        "id": 173,
+        "name": "ENI",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "EGAS",
+          "symbol": "EGAS"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "aleo",
+        "dex": null,
+        "displayName": "Aleo",
+        "gasCurrencyCoinGeckoId": "aleo",
+        "id": 1634493807,
+        "name": "Aleo",
+        "nativeCurrency": {
+          "decimals": 6,
+          "name": "Aleo",
+          "symbol": "ALEO"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "aleo",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "nesachain",
+        "dex": null,
+        "displayName": "Nesa",
+        "gasCurrencyCoinGeckoId": "nesa-ai-token",
+        "id": 41444,
+        "name": "Nesa",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "NES",
+          "symbol": "NES"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "fluent",
+        "dex": null,
+        "displayName": "Fluent",
+        "gasCurrencyCoinGeckoId": "ethereum",
+        "id": 25363,
+        "name": "Fluent",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "ETH",
+          "symbol": "ETH"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "citrea",
+        "dex": null,
+        "displayName": "Citrea",
+        "gasCurrencyCoinGeckoId": "bitcoin",
+        "id": 4114,
+        "name": "Citrea",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "CBTC",
+          "symbol": "CBTC"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "kiichain",
+        "dex": null,
+        "displayName": "Kiichain",
+        "gasCurrencyCoinGeckoId": "kiichain",
+        "id": 1783,
+        "name": "Kiichain",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "KII",
+          "symbol": "KII"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      },
+      {
+        "canExecute": false,
+        "canSwap": false,
+        "chainName": "mantle",
+        "dex": null,
+        "displayName": "Mantle",
+        "gasCurrencyCoinGeckoId": "mantle",
+        "id": 5000,
+        "name": "Mantle",
+        "nativeCurrency": {
+          "decimals": 18,
+          "name": "Mantle",
+          "symbol": "MNT"
+        },
+        "permit2": "0x0000000000000000000000000000000000000000",
+        "protocol": "ethereum",
+        "supportsNative": false,
+        "universalRouter": "0x0000000000000000000000000000000000000000"
+      }
+    ]
+  }
+}

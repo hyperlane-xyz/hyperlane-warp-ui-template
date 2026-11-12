@@ -90,3 +90,9 @@ for (const path of booleanPaths)
       target[path.at(-1)!] = invalid;
       await expect(verifyTurkchainEvidence(envelope(p), now, publicDer)).rejects.toThrow();
     });
+
+it('rejects a validly signed checkpoint whose canonical anchor lags excessively', async () => {
+  const p = payload();
+  p.chains[1].checkpointAnchorBlock = p.chains[1].head - p.chains[1].finality - 65;
+  await expect(verifyTurkchainEvidence(envelope(p), now, publicDer)).rejects.toThrow();
+});

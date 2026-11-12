@@ -16,7 +16,11 @@ const m = vi.hoisted(() => ({
 vi.mock('react', () => ({ useCallback: (fn: unknown) => fn, useState: () => [false, m.setState] }));
 vi.mock('@hyperlane-xyz/sdk', () => ({
   ProviderType: { EthersV5: 'ethers-v5' },
-  EvmTokenAdapter: class {},
+  EvmTokenAdapter: class {
+    async populateApproveTx() {
+      return { to: '0x' + '44'.repeat(20), data: '0x' };
+    }
+  },
   HyperlaneCore: {},
   MultiProtocolCore: {},
 }));
@@ -132,4 +136,25 @@ describe('canonical send-time readiness sequencing', () => {
     expect(m.prepare).not.toHaveBeenCalled();
     expect(m.send).not.toHaveBeenCalled();
   });
+});
+
+it('final readiness is rechecked after approval confirmation and prevents a subsequent transfer send', async () => {
+  const a = args();
+  a.isNative = false;
+  a.spender = ('0x' + '44'.repeat(20)) as `0x${string}`;
+  a.approvalAmount = 1n;
+  a.approvalPlan = { needsApprove: true, needsRevoke: false } as typeof a.approvalPlan;
+  m.send.mockResolvedValueOnce({
+    hash: '0xapproval',
+    confirm: async () => {
+      m.events.push('approval-confirmed');
+      return { type: 'ethers-v5', receipt: { status: 1 } };
+    },
+  });
+  m.ready.mockRejectedValueOnce(Error('readiness expired during approval'));
+  await expect(useTransfer().execute(a)).rejects.toThrow('readiness expired');
+  expect(m.send).toHaveBeenCalledTimes(1);
+  expect(m.events).toContain('approval-confirmed');
+  expect(m.post).toHaveBeenCalledOnce();
+  expect(m.prepare).toHaveBeenCalledOnce();
 });

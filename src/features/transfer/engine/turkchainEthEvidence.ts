@@ -158,7 +158,9 @@ export async function verifyTurkchainEvidence(
     );
     need(
       Number.isSafeInteger(c.checkpointAnchorBlock) &&
+        c.checkpointAnchorBlock >= 0 &&
         c.checkpointAnchorBlock <= c.head - c.finality &&
+        c.head - c.finality - c.checkpointAnchorBlock <= c.finality &&
         c.checkpointIndex === c.finalizedTreeIndex,
     );
     need(

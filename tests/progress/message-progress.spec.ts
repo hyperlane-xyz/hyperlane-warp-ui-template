@@ -972,12 +972,25 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
     originConfirmed = true;
     sendHeads();
     await expect(originStage).toHaveAttribute('data-reached', 'true');
+<<<<<<< HEAD
     await expect(verificationStage).toHaveAttribute('aria-current', 'step');
     await expect(verificationStage).toHaveText('Validating');
     await expect(reveal.getByRole('status')).toHaveText('Validating');
     if (kind === 'both') {
       await expect(reveal.getByRole('status')).toHaveText('Validating');
       const verificationSpinner = verificationStage.locator('.message-status-spinner');
+=======
+    const currentStage =
+      kind === 'both'
+        ? reveal.getByRole('listitem', { name: 'Delivered', exact: true })
+        : verificationStage;
+    await expect(currentStage).toHaveAttribute('aria-current', 'step');
+    await expect(currentStage).toHaveText(kind === 'both' ? 'Delivering' : 'Validating');
+    await expect(reveal.getByRole('status')).toHaveText('Validating');
+    if (kind === 'both') {
+      await expect(reveal.getByRole('status')).toHaveText('Validating');
+      const verificationSpinner = currentStage.locator('.message-status-spinner');
+>>>>>>> origin/main
       await expect(verificationSpinner).toBeVisible();
       await expect(verificationSpinner).not.toHaveCSS('animation-name', 'none');
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -987,7 +1000,11 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         JSON.stringify({ type: 'diagnostics_unavailable', message_ids: [ids[2]] }),
       );
       await expect(reveal.locator('.relay-live-status')).toHaveText('Updates unavailable');
+<<<<<<< HEAD
       await expect(verificationStage).toHaveAttribute('aria-current', 'step');
+=======
+      await expect(currentStage).toHaveAttribute('aria-current', 'step');
+>>>>>>> origin/main
       await expect(reveal.getByRole('status')).toHaveText('Validating');
       await expect(verificationSpinner).toBeVisible();
     }
@@ -1106,7 +1123,15 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         sendRelayState(
           index,
           relayState ?? {
+<<<<<<< HEAD
             phase: metadata_error ? 'awaiting_signatures' : 'ready_to_submit',
+=======
+            phase: metadata_error
+              ? 'awaiting_signatures'
+              : verification === 'failed'
+                ? 'preparing'
+                : 'ready_to_submit',
+>>>>>>> origin/main
             tree_root: 'root',
             modules: [
               {
@@ -1190,7 +1215,15 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         await expect(verification).toHaveAttribute('data-reached', 'false');
         await expect(verification).not.toHaveAttribute('aria-current', 'step');
         await expect(verification.locator('.message-status-spinner')).toHaveCount(0);
+<<<<<<< HEAD
         await expect(row.locator('.message-status-spinner')).toHaveCount(0);
+=======
+        const pendingIndicator = row
+          .locator(':scope > .message-disclosure > summary > span[aria-hidden="true"]')
+          .first();
+        await expect(pendingIndicator.locator('.message-status-spinner')).toBeVisible();
+        await expect(pendingIndicator).not.toHaveText('…');
+>>>>>>> origin/main
         const awaitingCommit: RelayState = {
           ...candidate,
           phase: 'retrying',
@@ -1206,6 +1239,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         await expect(verification).toHaveText('Validating');
         await expect(verification).not.toHaveAttribute('aria-current', 'step');
         await expect(verification.locator('.message-status-spinner')).toHaveCount(0);
+<<<<<<< HEAD
+=======
+        await expect(pendingIndicator.locator('.message-status-spinner')).toBeVisible();
+>>>>>>> origin/main
         for (const nextAttempt of [1_794_049_769_832, 1_794_049_771_010]) {
           sendProof(null, null, {
             ...awaitingCommit,
@@ -1237,6 +1274,30 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         await expect(delivering).toHaveAttribute('data-reached', 'false');
         await expect(delivering).toHaveText('Delivering');
         await expect(row.getByRole('status')).toHaveText('Validated · Preparing submission');
+<<<<<<< HEAD
+=======
+        // Retries describe the current attempt; they must not erase validation
+        // already reached by this message while commit/bridge delivery catches up.
+        for (const [retryState, status] of [
+          [awaitingCommit, 'Waiting for commit confirmation'],
+          [candidate, 'Validating'],
+          [
+            { ...ready, phase: 'retrying', retry: { reason: 'ErrorSubmitting' } },
+            'Waiting for validation',
+          ],
+        ] as const) {
+          sendProof(null, null, retryState);
+          await expect(row.getByRole('status')).toHaveText(status);
+          await expect(verification).toHaveAttribute('data-reached', 'true');
+          await expect(verification).toHaveText('Validated');
+          await expect(delivering).toHaveAttribute('aria-current', 'step');
+          await expect(delivering).toHaveAttribute('data-reached', 'false');
+        }
+        sendRelayStates(2, []);
+        await expect(row.getByRole('status')).toHaveText('Validating');
+        await expect(verification).toHaveAttribute('data-reached', 'true');
+        sendProof(null, null, ready);
+>>>>>>> origin/main
         // Missing or older diagnostics must not undo the selected reporter's progress.
         for (const activities of [
           [],
@@ -1291,6 +1352,10 @@ for (const kind of ['bridge', 'origin', 'destination', 'both', 'legacy', 'recove
         sendProof(null, null, { ...ready, failure: { reason: 'Submission failed' } });
         await expect(row.locator('.relay-stages [aria-current="step"]')).toHaveCount(0);
         await expect(row.getByRole('status')).toHaveText('Waiting for relay update');
+<<<<<<< HEAD
+=======
+        await expect(pendingIndicator.locator('.message-status-spinner')).toBeVisible();
+>>>>>>> origin/main
         await row.locator(':scope > .message-disclosure > summary').click();
         await expect(row.locator('summary [title^="Estimated time"]')).toHaveCount(0);
         await row.locator(':scope > .message-disclosure > summary').click();

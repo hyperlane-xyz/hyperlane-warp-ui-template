@@ -21,3 +21,7 @@ Historical successful messages, never replayed by this work:
 - Turkchain → Ethereum: `0xed594db7af439aa2d31965b5e116bf11933a14ac227d8d2246b7a645e6dc7990`; destination `0xba6ab9245a1a2d55fb0783c66e9c9330b842836010a228c9c4ac6937958109f3`.
 
 Tests use mocked RPC calls and RAM-only observation signing keys; no new mainnet transfer, mint, claim or message is generated. The Registry execution block must remain until maintainers approve and deploy the compatible execution path and all project operational checks pass. A Registry PR or this UI PR alone does not establish Nexus production availability. The private/public route-engine service may need separate maintainer changes; this repository does not grant access to it. Please confirm the engine's direct `transferRemote` population and route-ID propagation during review.
+
+## Review hardening
+
+Canonical identification includes the connection ID, bridge-step ID and populated canonical-router target. The quoted bridge step must match source/destination chains, optional canonical route ID and transaction amount. Required signed operational flags use literal-`true` schema validation, rejecting strings, numbers and missing fields. The early preflight remains; after network prompts, approvals, CCS and transaction population, fresh evidence is fetched again immediately before canonical wallet submission. Negative hook tests establish that expired final readiness prevents the send handler from being called.

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 // This is the public observation verification key, never an EVM signing key.
 export const TURKCHAIN_OBSERVATION_PUBLIC_DER =
   'MCowBQYDK2VwAyEAe5/Y8a+NSwbPcBv8KCO5XYoYsxMApVbCS7cGGiEtQgQ=';
@@ -46,6 +48,35 @@ const decimal = (x: unknown): x is string =>
 const fresh = (t: string, now: number, ttl: number) =>
   Number.isFinite(Date.parse(t)) && Date.parse(t) <= now && now - Date.parse(t) <= ttl;
 
+const booleanHealthSchema = z
+  .object({
+    rpcHealthy: z.literal(true),
+    metricsFresh: z.literal(true),
+    checkpointVerified: z.literal(true),
+  })
+  .passthrough();
+const operationalFlagsSchema = z
+  .object({
+    running: z.literal(true),
+    deliveryEnabled: z.literal(true),
+    noUserAllowlist: z.literal(true),
+    ethereumToTurkchain: z.literal(true),
+    turkchainToEthereum: z.literal(true),
+    supervisorHealthy: z.literal(true),
+    credentialReady: z.literal(true),
+    kmsBindingsVerified: z.literal(true),
+    budget: z
+      .object({
+        enforcementVerified: z.literal(true),
+        allRouterMessagesAccounted: z.literal(true),
+        inflightReconciled: z.literal(true),
+        destinationGasBudgetVerified: z.literal(true),
+      })
+      .passthrough(),
+    chains: z.object({ '1': booleanHealthSchema, '1919': booleanHealthSchema }).passthrough(),
+  })
+  .passthrough();
+
 export async function verifyTurkchainEvidence(
   envelope: { payload: string; signature: string },
   now = Date.now(),
@@ -65,6 +96,7 @@ export async function verifyTurkchainEvidence(
   ]);
   need(await crypto.subtle.verify({ name: 'Ed25519' }, key, signature, payload));
   const p = JSON.parse(new TextDecoder().decode(payload));
+  operationalFlagsSchema.parse(p);
   need(p.schemaVersion === 2 && p.environment === 'production' && p.host === '130.162.36.234');
   need(
     fresh(p.observedAt, now, 90000) &&
@@ -77,14 +109,14 @@ export async function verifyTurkchainEvidence(
       p.transferModel === 'direct-release',
   );
   need(
-    p.running &&
-      p.deliveryEnabled &&
-      p.noUserAllowlist &&
-      p.ethereumToTurkchain &&
-      p.turkchainToEthereum &&
-      p.supervisorHealthy &&
-      p.credentialReady &&
-      p.kmsBindingsVerified,
+    p.running === true &&
+      p.deliveryEnabled === true &&
+      p.noUserAllowlist === true &&
+      p.ethereumToTurkchain === true &&
+      p.turkchainToEthereum === true &&
+      p.supervisorHealthy === true &&
+      p.credentialReady === true &&
+      p.kmsBindingsVerified === true,
   );
   need(
     p.container?.id === CONTAINER &&
@@ -93,11 +125,11 @@ export async function verifyTurkchainEvidence(
       p.configSha256 === CONFIG_SHA,
   );
   need(
-    p.budget?.enforcementVerified &&
+    p.budget?.enforcementVerified === true &&
       p.budget?.executor === 'R1-only' &&
-      p.budget?.allRouterMessagesAccounted &&
-      p.budget?.inflightReconciled &&
-      p.budget?.destinationGasBudgetVerified,
+      p.budget?.allRouterMessagesAccounted === true &&
+      p.budget?.inflightReconciled === true &&
+      p.budget?.destinationGasBudgetVerified === true,
   );
   for (const id of [1, 1919]) {
     const c = p.chains?.[id],
@@ -113,9 +145,9 @@ export async function verifyTurkchainEvidence(
     );
     need(
       fresh(c.checkedAt, now, 30000) &&
-        c.rpcHealthy &&
-        c.metricsFresh &&
-        c.checkpointVerified &&
+        c.rpcHealthy === true &&
+        c.metricsFresh === true &&
+        c.checkpointVerified === true &&
         c.finality === expected.finality,
     );
     need(

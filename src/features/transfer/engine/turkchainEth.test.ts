@@ -1,7 +1,8 @@
 import { decodeFunctionData, encodeFunctionData, encodeFunctionResult, parseAbi } from 'viem';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { validateTurkchainEthTransfer } from './turkchainEth';
+import { requireTurkchainOperationalReadiness } from './turkchainEthEvidence';
 
 vi.mock('./turkchainEthEvidence', () => ({
   requireTurkchainOperationalReadiness: vi.fn(async () => {}),
@@ -80,7 +81,15 @@ function fixture(source = 1919, overrides: Record<string, unknown> = {}) {
     value: source === 1 ? String(amount) : '0',
   };
   const route = {
-    steps: [{ type: 'bridge', warpRouteId: 'ETH/ethereum-turkchain', amountIn: String(amount) }],
+    steps: [
+      {
+        chain: source,
+        destChain: destination,
+        type: 'bridge',
+        warpRouteId: 'ETH/ethereum-turkchain',
+        amountIn: String(amount),
+      },
+    ],
     tx,
     sourceTransactionFee: { amount: '1' },
   };
@@ -91,7 +100,7 @@ function fixture(source = 1919, overrides: Record<string, unknown> = {}) {
       destination,
       sender,
       recipient,
-      multiProvider: { getEthersV5Provider: (id: number) => providers[id] },
+      multiProvider: { getEthersV5Provider: vi.fn((id: number) => providers[id]) },
     } as unknown as Parameters<typeof validateTurkchainEthTransfer>[0],
     simulations,
     providers,
@@ -99,6 +108,9 @@ function fixture(source = 1919, overrides: Record<string, unknown> = {}) {
   };
 }
 describe('isolated Ethereum–Turkchain ETH send-time validation', () => {
+  beforeEach(() =>
+    vi.mocked(requireTurkchainOperationalReadiness).mockReset().mockResolvedValue(undefined),
+  );
   for (const id of [1, 1919])
     it('simulates exact ' + id + ' source transaction despite quoted fee', async () => {
       const f = fixture(id);
@@ -162,4 +174,67 @@ describe('isolated Ethereum–Turkchain ETH send-time validation', () => {
     await validateTurkchainEthTransfer(f.args);
     expect(f.simulations).not.toHaveBeenCalled();
   });
+});
+
+it('connection-only canonical metadata cannot bypass a wrong source router', async () => {
+  const f = fixture();
+  f.args.route.connection = { symbol: 'ETH', warpRouteId: 'ETH/ethereum-turkchain' };
+  for (const s of f.args.route.steps) if (s.type === 'bridge') delete s.warpRouteId;
+  f.tx.to = ('0x' + '33'.repeat(20)) as `0x${string}`;
+  await expect(validateTurkchainEthTransfer(f.args)).rejects.toThrow('source router');
+});
+for (const [field, value] of [
+  ['chain', 1],
+  ['destChain', 1919],
+  ['warpRouteId', 'USDT/ethereum-turkchain'],
+] as const)
+  it('rejects mismatched step ' + field, async () => {
+    const f = fixture();
+    const step = f.args.route.steps[0];
+    if (step.type === 'bridge') Object.assign(step, { [field]: value });
+    await expect(validateTurkchainEthTransfer(f.args)).rejects.toThrow('bridge step');
+  });
+it('readiness failure occurs before provider reads, simulation or any transfer send', async () => {
+  const f = fixture();
+  vi.mocked(requireTurkchainOperationalReadiness).mockRejectedValueOnce(
+    Error('invalid or expired readiness'),
+  );
+  const send = vi.fn();
+  await expect(
+    (async () => {
+      await validateTurkchainEthTransfer(f.args);
+      await send();
+    })(),
+  ).rejects.toThrow('readiness');
+  expect(f.args.multiProvider.getEthersV5Provider).not.toHaveBeenCalled();
+  for (const p of Object.values(f.providers)) {
+    expect(p.getNetwork).not.toHaveBeenCalled();
+    expect(p.call).not.toHaveBeenCalled();
+  }
+  expect(f.simulations).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+});
+
+it('rejects wrong encoded destination domain before evidence or RPC', async () => {
+  const f = fixture();
+  f.tx.data = encodeFunctionData({
+    abi: ABI,
+    functionName: 'transferRemote',
+    args: [1919, ('0x' + recipient.slice(2).padStart(64, '0')) as `0x${string}`, amount],
+  });
+  await expect(validateTurkchainEthTransfer(f.args)).rejects.toThrow('destination domain');
+  expect(f.args.multiProvider.getEthersV5Provider).not.toHaveBeenCalled();
+});
+it('accepts canonical connection metadata with an omitted step route ID', async () => {
+  const f = fixture();
+  f.args.route.connection = { symbol: 'ETH', warpRouteId: 'ETH/ethereum-turkchain' };
+  for (const step of f.args.route.steps) if (step.type === 'bridge') delete step.warpRouteId;
+  await validateTurkchainEthTransfer(f.args);
+  expect(f.simulations).toHaveBeenCalledOnce();
+});
+it('rejects unsupported source chain before any provider access', async () => {
+  const f = fixture();
+  f.args.source = 2;
+  await expect(validateTurkchainEthTransfer(f.args)).rejects.toThrow('unsupported direction');
+  expect(f.args.multiProvider.getEthersV5Provider).not.toHaveBeenCalled();
 });

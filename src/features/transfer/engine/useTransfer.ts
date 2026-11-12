@@ -26,7 +26,8 @@ import type { ApprovalPlan } from './approval';
 import { postCommitment } from './ccs';
 import { labelTransferMessages, type ParsedTransferMessage } from './messages';
 import { prepareRouteTransaction } from './routeTransactions';
-import { validateTurkchainEthTransfer } from './turkchainEth';
+import { isTurkchainEthRoute, validateTurkchainEthTransfer } from './turkchainEth';
+import { requireTurkchainOperationalReadiness } from './turkchainEthEvidence';
 import { TransferStatus } from './types';
 import type { AugmentedRoute } from './types';
 
@@ -187,15 +188,16 @@ export function useTransfer() {
             transactionId,
             isApproval ? TransferStatus.SigningApprove : TransferStatus.SigningTransfer,
           );
-          const sent = await fns.sendTransaction({
-            tx: (await prepareRouteTransaction(routeTx, {
-              protocol: protocol as ProtocolType,
-              sender: args.sender,
-              chainName: srcChainName,
-              multiProvider,
-            })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
+          const preparedTx = (await prepareRouteTransaction(routeTx, {
+            protocol: protocol as ProtocolType,
+            sender: args.sender,
             chainName: srcChainName,
-          });
+            multiProvider,
+          })) as Parameters<typeof fns.sendTransaction>[0]['tx'];
+          if (!isApproval && isTurkchainEthRoute(route.raw)) {
+            await requireTurkchainOperationalReadiness();
+          }
+          const sent = await fns.sendTransaction({ tx: preparedTx, chainName: srcChainName });
           // SDK routes include approval/revoke transactions in the route itself.
           // They must confirm before sending, without starting origin progress.
           if (isApproval) {

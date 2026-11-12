@@ -31,6 +31,17 @@ const requireSafe = (ok: unknown, reason: string) => {
   if (!ok) throw new Error(`Turkchain ETH: ${reason}`);
 };
 
+export function isTurkchainEthRoute(route: RouteResponse): boolean {
+  return (
+    route.connection?.warpRouteId === TURKCHAIN_ETH_ROUTE ||
+    getRouteTxs(route).some((tx) => {
+      const evm = toEvmRouteTx(tx);
+      return evm && Object.values(ROUTERS).some((r) => r === evm.to.toLowerCase());
+    }) ||
+    route.steps.some((s) => s.type === 'bridge' && s.warpRouteId === TURKCHAIN_ETH_ROUTE)
+  );
+}
+
 // Send-time preflight is independent of quoted source fees. A token balance can
 // include legacy supply that the isolated synthetic deliberately cannot redeem.
 // No approvals, wallet sends, claims or source-gas sponsorship are performed here.
@@ -49,12 +60,7 @@ export async function validateTurkchainEthTransfer({
   recipient: string;
   multiProvider: MultiProtocolProvider;
 }) {
-  const usesCanonicalRoute =
-    getRouteTxs(route).some((tx) => {
-      const evm = toEvmRouteTx(tx);
-      return evm && Object.values(ROUTERS).some((r) => r === evm.to.toLowerCase());
-    }) || route.steps.some((s) => s.type === 'bridge' && s.warpRouteId === TURKCHAIN_ETH_ROUTE);
-  if (!usesCanonicalRoute) return;
+  if (!isTurkchainEthRoute(route)) return;
   requireSafe(
     (source === 1 && destination === 1919) || (source === 1919 && destination === 1),
     'unsupported direction',
@@ -77,8 +83,13 @@ export async function validateTurkchainEthTransfer({
   );
   requireSafe(amount >= MINIMUM, 'amount below on-chain minimum');
   requireSafe(
-    route.steps[0].type === 'bridge' && BigInt(route.steps[0].amountIn) === amount,
-    'quoted amount differs from transaction',
+    route.steps[0].type === 'bridge' &&
+      route.steps[0].chain === source &&
+      route.steps[0].destChain === destination &&
+      (route.steps[0].warpRouteId === undefined ||
+        route.steps[0].warpRouteId === TURKCHAIN_ETH_ROUTE) &&
+      BigInt(route.steps[0].amountIn) === amount,
+    'quoted bridge step differs from transaction',
   );
   await requireTurkchainOperationalReadiness();
   const providers = Object.fromEntries(

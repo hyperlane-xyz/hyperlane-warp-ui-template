@@ -59,3 +59,34 @@ describe('signed Turkchain route readiness', () => {
     await expect(verifyTurkchainEvidence(e, now, publicDer)).rejects.toThrow();
   });
 });
+
+const booleanPaths = [
+  ...[
+    'running',
+    'deliveryEnabled',
+    'noUserAllowlist',
+    'ethereumToTurkchain',
+    'turkchainToEthereum',
+    'supervisorHealthy',
+    'credentialReady',
+    'kmsBindingsVerified',
+  ].map((k) => [k]),
+  ...[
+    'enforcementVerified',
+    'allRouterMessagesAccounted',
+    'inflightReconciled',
+    'destinationGasBudgetVerified',
+  ].map((k) => ['budget', k]),
+  ...[1, 1919].flatMap((id) =>
+    ['rpcHealthy', 'metricsFresh', 'checkpointVerified'].map((k) => ['chains', String(id), k]),
+  ),
+];
+for (const path of booleanPaths)
+  for (const invalid of ['true', 'false', false, 0, 1, null, undefined, {}, []])
+    it('rejects non-boolean ' + path.join('.') + ' = ' + JSON.stringify(invalid), async () => {
+      const p = payload();
+      let target = p as unknown as Record<string, unknown>;
+      for (const key of path.slice(0, -1)) target = target[key] as Record<string, unknown>;
+      target[path.at(-1)!] = invalid;
+      await expect(verifyTurkchainEvidence(envelope(p), now, publicDer)).rejects.toThrow();
+    });

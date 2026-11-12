@@ -26,6 +26,8 @@ import type { ApprovalPlan } from './approval';
 import { postCommitment } from './ccs';
 import { labelTransferMessages, type ParsedTransferMessage } from './messages';
 import { prepareRouteTransaction } from './routeTransactions';
+import { isTurkchainEthRoute, validateTurkchainEthTransfer } from './turkchainEth';
+import { requireTurkchainOperationalReadiness } from './turkchainEthEvidence';
 import { TransferStatus } from './types';
 import type { AugmentedRoute } from './types';
 
@@ -78,6 +80,14 @@ export function useTransfer() {
       try {
         const routeTxs = getRouteTxs(route.raw);
         if (!routeTxs.length) throw new Error('Route has no tx');
+        await validateTurkchainEthTransfer({
+          route: route.raw,
+          source: srcChainId,
+          destination: dstChainId,
+          sender: args.sender,
+          recipient: args.recipient,
+          multiProvider,
+        });
 
         // Store route for status polling and recovery (non-persisted, session only).
         setTransferRoute(transactionId, route.raw);
@@ -178,15 +188,16 @@ export function useTransfer() {
             transactionId,
             isApproval ? TransferStatus.SigningApprove : TransferStatus.SigningTransfer,
           );
-          const sent = await fns.sendTransaction({
-            tx: (await prepareRouteTransaction(routeTx, {
-              protocol: protocol as ProtocolType,
-              sender: args.sender,
-              chainName: srcChainName,
-              multiProvider,
-            })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
+          const preparedTx = (await prepareRouteTransaction(routeTx, {
+            protocol: protocol as ProtocolType,
+            sender: args.sender,
             chainName: srcChainName,
-          });
+            multiProvider,
+          })) as Parameters<typeof fns.sendTransaction>[0]['tx'];
+          if (!isApproval && isTurkchainEthRoute(route.raw)) {
+            await requireTurkchainOperationalReadiness();
+          }
+          const sent = await fns.sendTransaction({ tx: preparedTx, chainName: srcChainName });
           // SDK routes include approval/revoke transactions in the route itself.
           // They must confirm before sending, without starting origin progress.
           if (isApproval) {

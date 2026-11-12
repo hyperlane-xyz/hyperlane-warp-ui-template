@@ -59,6 +59,10 @@ interface MessageLifecycleProps {
   confirmed: boolean;
   confirming: boolean;
   originState: ProgressState;
+<<<<<<< HEAD
+=======
+  originIncluded?: boolean;
+>>>>>>> origin/main
   relaying: boolean;
   paused: boolean;
 }
@@ -69,16 +73,36 @@ function MessageLifecycleStages({
   confirmed,
   confirming,
   originState,
+<<<<<<< HEAD
   relaying,
   paused,
 }: MessageLifecycleProps) {
+=======
+  originIncluded,
+  relaying,
+  paused,
+}: MessageLifecycleProps) {
+  // Attempt phases can restart while a reveal waits for commit delivery, or
+  // when Auto switches reporters. Keep the message's validation milestone.
+  // Explicit origin rollback/failure invalidates that earlier work.
+  const [validationReached, setValidationReached] = useState(false);
+  const originInvalid = originIncluded === false || originState === ProgressState.Failed;
+  const validated =
+    !originInvalid && (validationReached || (state != null && phaseStage[state.phase] >= 2));
+  if (validated !== validationReached) setValidationReached(validated);
+
+>>>>>>> origin/main
   // Fast relayers can proceed before the metadata finality threshold.
   // Pickup does not prove origin finality or indexed delivery.
   const originCompletedByDelivery = delivered || confirmed;
   const pickedUp =
     !originCompletedByDelivery && relaying && originState !== ProgressState.Confirmed;
   const originReached =
+<<<<<<< HEAD
     originCompletedByDelivery || originState === ProgressState.Confirmed || pickedUp;
+=======
+    originCompletedByDelivery || originState === ProgressState.Confirmed || pickedUp || validated;
+>>>>>>> origin/main
   const originTitle = pickedUp
     ? 'Picked up by relayer. Origin confirmations remain available in Advanced.'
     : !originCompletedByDelivery && originState === ProgressState.Unavailable
@@ -88,11 +112,21 @@ function MessageLifecycleStages({
     ? 4
     : delivered
       ? 3
+<<<<<<< HEAD
       : (originState === ProgressState.Pending && !relaying) || originState === ProgressState.Failed
         ? 0
         : state
           ? (phaseStage[state.phase] ?? 1)
           : 1;
+=======
+      : originInvalid
+        ? 0
+        : validated
+          ? 2
+          : originState === ProgressState.Pending && !relaying
+            ? 0
+            : 1;
+>>>>>>> origin/main
   // Pausing an unfinished step must not give it a completed label.
   const pendingStage = delivered ? (confirming ? 4 : -1) : stage + 1;
   const currentStage = confirmed || paused ? -1 : pendingStage;

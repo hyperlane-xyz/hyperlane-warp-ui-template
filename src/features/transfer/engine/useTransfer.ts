@@ -26,6 +26,7 @@ import type { ApprovalPlan } from './approval';
 import { postCommitment } from './ccs';
 import { labelTransferMessages, type ParsedTransferMessage } from './messages';
 import { prepareRouteTransaction } from './routeTransactions';
+import { validateTurkchainEthTransfer } from './turkchainEth';
 import { TransferStatus } from './types';
 import type { AugmentedRoute } from './types';
 
@@ -78,6 +79,14 @@ export function useTransfer() {
       try {
         const routeTxs = getRouteTxs(route.raw);
         if (!routeTxs.length) throw new Error('Route has no tx');
+        await validateTurkchainEthTransfer({
+          route: route.raw,
+          source: srcChainId,
+          destination: dstChainId,
+          sender: args.sender,
+          recipient: args.recipient,
+          multiProvider,
+        });
 
         // Store route for status polling and recovery (non-persisted, session only).
         setTransferRoute(transactionId, route.raw);

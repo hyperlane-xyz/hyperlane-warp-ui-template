@@ -8,10 +8,10 @@ A public Ed25519 observation key verifies short-lived operational evidence serve
 
 Current enforced destination budgets:
 
-| Destination | Daily maximum | Per-message maximum | Max fee per gas | Finality |
-| --- | --- | --- | --- | --- |
-| Ethereum | 0.0005 ETH | 0.00025 ETH | 1 gwei | 64 blocks |
-| Turkchain | 0.03 TURK | 0.003 TURK | 5 gwei | 24 blocks |
+| Destination | Daily maximum | Per-message maximum | Max fee per gas | Finality  |
+| ----------- | ------------- | ------------------- | --------------- | --------- |
+| Ethereum    | 0.0005 ETH    | 0.00025 ETH         | 1 gwei          | 64 blocks |
+| Turkchain   | 0.03 TURK     | 0.003 TURK          | 5 gwei          | 24 blocks |
 
 The broadcast gate durably reserves worst-case signed costs before forwarding, reconciles canonical finalized receipts and counts reverted transactions. This UI does not replace that enforcement. The preflight fails when the remaining daily budget cannot reserve another maximum-cost message.
 
@@ -25,3 +25,5 @@ Tests use mocked RPC calls and RAM-only observation signing keys; no new mainnet
 ## Review hardening
 
 Canonical identification includes the connection ID, bridge-step ID and populated canonical-router target. The quoted bridge step must match source/destination chains, optional canonical route ID and transaction amount. Required signed operational flags use literal-`true` schema validation, rejecting strings, numbers and missing fields. The early preflight remains; after network prompts, approvals, CCS and transaction population, fresh evidence is fetched again immediately before canonical wallet submission. Negative hook tests establish that expired final readiness prevents the send handler from being called.
+
+The runtime binding now includes the agent's supported `maxMessageRetries=66` window. The earlier32-attempt setting could prevent rehydration of a budget-denied message before the next UTC budget reset. The pinned agent source defines66 as its default and supplies a roughly two-week normal retry window. This does not relax daily/message/fee caps or reset persistent retries. Canonical source, `delivered(messageId)` and nonce checks remain enforced; historical delivered messages are not resubmitted. This is pinned-source inspection plus mocked budget-reset testing, not a claim of running a new live transfer or the Rust test suite.

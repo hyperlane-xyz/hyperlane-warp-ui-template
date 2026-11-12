@@ -15,7 +15,7 @@
   "supervisorHealthy": true,
   "credentialReady": true,
   "kmsBindingsVerified": true,
-  "configSha256": "ea17108ece1dbe9aa9a12d4704333525f689f49da021af5e53b03ce78080c1ec",
+  "configSha256": "f82677e89fc245c80757cb735de120fff6f688669c48d9791e26b78229bfccfd",
   "container": {
     "id": "20765e28dd7063bba0f62574190d0fa04edb2ca3b4b86c14dd7985712522a18a",
     "image": "sha256:17d5f25c830e0996f1119c470f5c52a216cb510513fa42ad24f7e1e37ab7eb48",

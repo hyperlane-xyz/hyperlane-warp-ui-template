@@ -3,7 +3,7 @@ import { z } from 'zod';
 // This is the public observation verification key, never an EVM signing key.
 export const TURKCHAIN_OBSERVATION_PUBLIC_DER =
   'MCowBQYDK2VwAyEAe5/Y8a+NSwbPcBv8KCO5XYoYsxMApVbCS7cGGiEtQgQ=';
-const CONFIG_SHA = 'ea17108ece1dbe9aa9a12d4704333525f689f49da021af5e53b03ce78080c1ec';
+const CONFIG_SHA = 'f82677e89fc245c80757cb735de120fff6f688669c48d9791e26b78229bfccfd';
 const CONTAINER = '20765e28dd7063bba0f62574190d0fa04edb2ca3b4b86c14dd7985712522a18a';
 const POLICY: Record<
   number,

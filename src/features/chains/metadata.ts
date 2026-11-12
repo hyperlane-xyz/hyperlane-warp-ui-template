@@ -1,4 +1,4 @@
-import { IRegistry, chainMetadata as publishedChainMetadata } from '@hyperlane-xyz/registry';
+import { IRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -6,14 +6,9 @@ import {
   mergeChainMetadataMap,
   RpcUrlSchema,
 } from '@hyperlane-xyz/sdk';
-import {
-  objFilter,
-  objMap,
-  promiseObjAll,
-  ProtocolType,
-  tryParseJsonOrYaml,
-} from '@hyperlane-xyz/utils';
+import { objFilter, objMap, promiseObjAll, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
+
 import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
 import { config } from '../../consts/config.ts';
@@ -26,7 +21,7 @@ export async function assembleChainMetadata(
   storeMetadataOverrides?: ChainMap<Partial<ChainMetadata | undefined>>,
 ) {
   // Chains must include a cosmos chain or CosmosKit throws errors
-  const result = z.record(ChainMetadataSchema).safeParse({
+  const result = z.record(z.string(), ChainMetadataSchema).safeParse({
     ...ChainsYaml,
     ...ChainsTS,
   });
@@ -36,21 +31,32 @@ export async function assembleChainMetadata(
   }
   const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
 
-  let registryChainMetadata: ChainMap<ChainMetadata>;
+  let registryChainMetadata: ChainMap<ChainMetadata> | undefined;
   if (config.registryUrl) {
     try {
       logger.debug('Using custom registry chain metadata from:', config.registryUrl);
       registryChainMetadata = await registry.getMetadata();
+<<<<<<< HEAD
     } catch {
       logger.debug(
         'Failed fetching chain metadata from GH registry, using published registry',
         config.registryUrl,
       );
       registryChainMetadata = publishedChainMetadata;
+=======
+    } catch (error) {
+      logger.warn(
+        'Failed fetching chain metadata from GH registry, using published registry',
+        config.registryUrl,
+        error,
+      );
+>>>>>>> origin/main
     }
   } else {
     logger.debug('Using default published registry for chain metadata');
-    registryChainMetadata = publishedChainMetadata;
+  }
+  if (!registryChainMetadata) {
+    registryChainMetadata = (await import('@hyperlane-xyz/registry')).chainMetadata;
   }
 
   // Filter out chains that are not in the tokens config
@@ -60,19 +66,16 @@ export async function assembleChainMetadata(
 
   // TODO have the registry do this automatically
   registryChainMetadata = await promiseObjAll(
-    objMap(
-      registryChainMetadata,
-      async (chainName, metadata): Promise<ChainMetadata> => ({
-        ...metadata,
-        logoURI: `${links.imgPath}/chains/${chainName}/logo.svg`,
-      }),
-    ),
+    objMap(registryChainMetadata, async (chainName, metadata): Promise<ChainMetadata> => ({
+      ...metadata,
+      logoURI: `${links.imgPath}/chains/${chainName}/logo.svg`,
+    })),
   );
   const mergedChainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
 
   const parsedRpcOverridesResult = tryParseJsonOrYaml(config.rpcOverrides);
   const rpcOverrides = z
-    .record(RpcUrlSchema)
+    .record(z.string(), RpcUrlSchema)
     .safeParse(parsedRpcOverridesResult.success && parsedRpcOverridesResult.data);
   if (config.rpcOverrides && !rpcOverrides.success) {
     logger.warn('Invalid RPC overrides config', rpcOverrides.error);
@@ -86,11 +89,9 @@ export async function assembleChainMetadata(
 
     if (!overridesUrl) return metadata;
 
-    // Only EVM supports fallback transport, so we are putting the override at the end
-    const rpcUrls =
-      metadata.protocol === ProtocolType.Ethereum
-        ? [...metadata.rpcUrls, overridesUrl]
-        : [overridesUrl, ...metadata.rpcUrls];
+    // Prefer the override as the primary RPC (e.g. a keyed premium endpoint),
+    // keeping the registry's public URLs as fallback for EVM's fallback transport.
+    const rpcUrls = [overridesUrl, ...metadata.rpcUrls];
 
     return { ...metadata, rpcUrls };
   });

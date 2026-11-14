@@ -303,6 +303,7 @@ function MessageProgressRow({
     confirmed,
     confirming: delivered && !!destinationTx && destinationState === ProgressState.Pending,
     originState,
+    originIncluded: originConfirmation.data?.included,
     relaying,
     paused:
       deliveryMissing ||
@@ -450,8 +451,6 @@ function MessageProgressRow({
               '!'
             ) : status === 'Status unavailable' ? (
               '?'
-            ) : lifecycle.paused ? (
-              '…'
             ) : (
               <SpinnerIcon
                 width={14}

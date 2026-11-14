@@ -784,6 +784,9 @@ html[data-theme-mode='dark'] .relay-panel {
 .relay-stages [data-current='true'] {
   color: var(--color-primary-500, #9a0dff);
 }
+.relay-stages [data-current='true'] .relay-stage-label {
+  animation: relay-label-pulse 2s ease-in-out infinite;
+}
 .relay-stage-track {
   display: block;
   position: relative;
@@ -904,6 +907,15 @@ html[data-theme-mode='dark'] .relay-panel {
   height: 100%;
   background: var(--color-primary-500, #9a0dff);
   transition: width 450ms ease;
+}
+@keyframes relay-label-pulse {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 @keyframes relay-breathe {
   0%,

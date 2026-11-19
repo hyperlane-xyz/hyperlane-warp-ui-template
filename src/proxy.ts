@@ -30,7 +30,6 @@ const BLOCKED_COUNTRIES = [
   'YE', // Yemen
   'ZW', // Zimbabwe
   'MM', // Myanmar
-  'SY', // Syria
 ];
 
 const BLOCKED_REGIONS = [

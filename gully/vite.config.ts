@@ -42,7 +42,8 @@ export default defineConfig(({ mode }) => {
         },
       },
     ],
-    build: { outDir: env.VITE_OUT_DIR || 'dist', emptyOutDir: true, chunkSizeWarningLimit: 900 },
+    // BRIDGE_OUT_DIR (no VITE_ prefix): Vite inlines every VITE_* variable into the public bundle, and a build path must never ship
+    build: { outDir: env.BRIDGE_OUT_DIR || 'dist', emptyOutDir: true, chunkSizeWarningLimit: 900 },
     // Local only: the laptop cannot reach *.gullychain.xyz, so dev servers proxy GullyChain RPC to the SSH tunnel.
     server: {
       host: '127.0.0.1',

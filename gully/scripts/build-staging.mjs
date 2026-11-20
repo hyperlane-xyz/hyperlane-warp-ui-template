@@ -22,7 +22,7 @@ execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--mod
   env: {
     ...process.env,
     VITE_DIRECTION: 'c',
-    VITE_OUT_DIR: out,
+    BRIDGE_OUT_DIR: out,
     ...NET,
     // VITE_GULLY_RPC unset: same-origin /rpc, then the public fallback list in src/config/rpc.ts
     VITE_GULLY_RPC: '',
@@ -31,7 +31,7 @@ execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--mod
 });
 // the first screen in the first response, the service worker, then the gate: a page that fails it does not ship
 const buildEnv = { ...process.env, VITE_DIRECTION: 'c', ...NET, VITE_GULLY_RPC: '', VITE_ROBOTS: 'index, follow' };
-execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--mode', 'production', '--ssr', 'src/entry-server.tsx', '--outDir', '.ssr'], { stdio: 'inherit', env: { ...buildEnv, VITE_OUT_DIR: '.ssr' } });
+execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--mode', 'production', '--ssr', 'src/entry-server.tsx', '--outDir', '.ssr'], { stdio: 'inherit', env: { ...buildEnv, BRIDGE_OUT_DIR: '.ssr' } });
 execFileSync(process.execPath, ['scripts/prerender.mjs', out], { stdio: 'inherit', env: buildEnv });
 execFileSync(process.execPath, ['load/build-sw.mjs', out, '--prefix', 'gully-bridge', '--never', '/rpc,/rpc-arb,/mirrors.json,/api,/stats,/price', '--pages', '/'], { stdio: 'inherit' });
 execFileSync(process.execPath, ['load/first-load.mjs', out, '--budget-kb', '100'], { stdio: 'inherit' });

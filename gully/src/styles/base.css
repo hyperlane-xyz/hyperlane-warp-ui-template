@@ -16,6 +16,12 @@
   --gc-down: var(--gn-danger);
   --mono: var(--gn-font-mono);
   --r: var(--gn-r-lg);
+  /* one z-index scale: page < raised (step dots, swap flip) < sticky header < modal < toast < skip link */
+  --z-raised: 1;
+  --z-header: 40;
+  --z-modal: 1000;
+  --z-toast: 1100;
+  --z-skip: 1200;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -31,7 +37,7 @@ button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--gc-cyan); outline-offset: 3px; border-radius: 8px; }
 .sr { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 table.sr { display: block; }
-.skip { position: absolute; left: -999px; top: 8px; z-index: 100; background: var(--gc-cyan); color: var(--gn-on-cyan); padding: 10px 14px; border-radius: 999px; }
+.skip { position: absolute; left: -999px; top: 8px; z-index: var(--z-skip); background: var(--gc-cyan); color: var(--gn-on-cyan); padding: 10px 14px; border-radius: 999px; }
 .skip:focus { left: 8px; }
 .mono { font-family: var(--mono); font-weight: 500; }
 .muted { color: var(--gn-text-3); }
@@ -46,7 +52,7 @@ table.sr { display: block; }
 @keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--gn-green) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--gn-green) 0%, transparent); } }
 
 /* header */
-.top { position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--gn-night) 82%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--gc-line); }
+.top { position: sticky; top: 0; z-index: var(--z-header); background: color-mix(in srgb, var(--gn-night) 82%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--gc-line); }
 .top-in { max-width: 1280px; margin: 0 auto; padding: 0 16px; min-height: 64px; display: flex; align-items: center; gap: 16px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--gn-text); flex: none; min-height: 44px; }
 .brand img { height: 32px; width: auto; }
@@ -154,10 +160,10 @@ table.sr { display: block; }
 /* stepper */
 .stepper { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; counter-reset: s; }
 .step { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.step::before { content: ''; position: absolute; top: 13px; left: 30px; right: -2px; height: 2px; background: var(--gc-line); }
+.step::before { content: ''; position: absolute; top: 15px; left: 38px; right: -2px; height: 2px; background: var(--gc-line); }
 .step:last-child::before { display: none; }
 .step-done::before { background: var(--gc-chain-gradient); }
-.step-dot { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: var(--gc-night); border: 1px solid var(--gc-line-2); color: var(--gn-text-3); }
+.step-dot { position: relative; z-index: var(--z-raised); width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: var(--gc-night); border: 1px solid var(--gc-line-2); color: var(--gn-text-3); }
 .step-active .step-dot { border-color: var(--gn-link); color: var(--gn-link); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gn-cyan) 15%, transparent); }
 .step-done .step-dot { background: var(--gc-green); border-color: var(--gc-green); color: var(--gc-night); }
 .step-error .step-dot { background: var(--gc-down); border-color: var(--gc-down); color: var(--gn-on-cyan); }
@@ -191,20 +197,33 @@ table.sr { display: block; }
 .mine-delivered .mine-status, .mine-claimed .mine-status { color: var(--gc-green); }
 .mine-claimable .mine-status { color: var(--gc-cyan); }
 
-/* modal */
-.modal-bg { position: fixed; inset: 0; z-index: 60; background: color-mix(in srgb, var(--gn-night) 70%, transparent); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px; }
-.modal { width: min(420px, 100%); background: var(--gn-surface); border: 1px solid var(--gc-line-2); border-radius: var(--r); padding: 20px; display: grid; gap: 12px; animation: pop 0.2s ease; }
-@keyframes pop { from { transform: scale(0.96); opacity: 0; } }
-.modal-head { display: flex; justify-content: space-between; align-items: center; }
-.modal h2 { margin: 0; font-size: 20px; font-weight: 800; }
+/* modal: portal on <body> (ui/common/modal.tsx), above every page layer; bottom sheet on phones */
+.modal-bg { position: fixed; inset: 0; z-index: var(--z-modal); background: color-mix(in srgb, var(--gn-night) 72%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px; overflow-y: auto; overscroll-behavior: contain; animation: fadein 0.15s ease both; }
+.modal { width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--gn-surface); border: 1px solid var(--gc-line-2); border-radius: var(--r); padding: 20px; display: grid; gap: 16px; box-shadow: var(--gn-shadow); animation: pop 0.2s ease both; outline: 0; }
+.modal-grip { display: none; }
+@keyframes pop { from { transform: scale(0.97); opacity: 0; } }
+@keyframes fadein { from { opacity: 0; } }
+@keyframes sheet { from { transform: translateY(24px); opacity: 0; } }
+.modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.modal h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.modal .fine { padding-top: 12px; border-top: 1px solid var(--gc-line); line-height: 1.5; }
 .wallet-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.wallet-list button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 16px; border-radius: 16px; border: 1px solid var(--gc-line); background: var(--gc-night); cursor: pointer; }
-.wallet-list button:hover { border-color: var(--gc-cyan); }
+.wallet-list button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 16px; border-radius: 14px; border: 1px solid var(--gc-line); background: var(--gc-night); color: var(--gn-text); font: inherit; font-weight: 600; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.wallet-list button:hover { border-color: var(--gc-cyan); background: var(--gn-surface-2); }
+.wallet-list button:focus-visible, .icon-btn:focus-visible { outline: 2px solid var(--gn-link); outline-offset: 2px; }
 .wallet-list button span { flex: 1; text-align: left; }
+.chain-list .chain-on { border-color: var(--gn-green); background: color-mix(in srgb, var(--gn-green) 10%, var(--gc-night)); }
+.chain-list .sel-mark { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; color: var(--gn-green); }
+.chain-list .soon-tag { flex: none; font-size: 12px; padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--gn-warn) 45%, transparent); }
 .fine { margin: 0; font-size: 12px; color: var(--gn-text-3); }
+@media (max-width: 640px) {
+  .modal-bg { place-items: end center; padding: 0; }
+  .modal { width: 100%; max-height: 88dvh; border-radius: 20px 20px 0 0; border-bottom: 0; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); animation: sheet 0.25s ease both; }
+  .modal-grip { display: block; width: 40px; height: 4px; border-radius: 4px; background: var(--gc-line-2); justify-self: center; }
+}
 
 /* toasts */
-.toasts { position: fixed; right: 16px; bottom: 16px; z-index: 80; display: grid; gap: 10px; width: min(360px, calc(100vw - 32px)); }
+.toasts { position: fixed; right: 16px; bottom: 16px; z-index: var(--z-toast); display: grid; gap: 10px; width: min(360px, calc(100vw - 32px)); }
 .toast { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; padding: 14px 14px 16px; border-radius: var(--r); background: var(--gc-night); border: 1px solid var(--gc-line-2); box-shadow: var(--gn-shadow); animation: toastin 0.3s ease; }
 @keyframes toastin { from { transform: translateY(12px); opacity: 0; } }
 .toast-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--gn-info-bg); color: var(--gc-cyan); }

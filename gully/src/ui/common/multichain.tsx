@@ -13,6 +13,7 @@ import type { TransferRecord } from '../../bridge/types';
 import { connectSolana, disconnectSolana, startSolanaDiscovery, useSolanaWallet, type SolWalletInfo } from '../../solana/wallet';
 import type { BridgeState } from '../useBridge';
 import { Icon } from './icons';
+import { Modal } from './modal';
 import { TokenAmount } from './money';
 import { ChainMark, Ext } from './parts';
 
@@ -33,50 +34,34 @@ export function ChainPicker({ b, label }: { b: BridgeState; label: 'From' | 'To'
   );
 }
 
-function useEscape(onClose: () => void) {
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, [onClose]);
-}
-
 function ChainModal({ b, onClose }: { b: BridgeState; onClose: () => void }) {
-  useEscape(onClose);
   const chains = pickerChains();
   return (
-    <div className="modal-bg" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="cm-title" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-head">
-          <h2 id="cm-title">{b.direction === 'deposit' ? 'Bridge from' : 'Bridge to'}</h2>
-          <button className="icon-btn" aria-label="Close" onClick={onClose}>
-            <Icon name="x" />
-          </button>
-        </div>
-        <ul className="wallet-list chain-list">
-          {chains.map((c) => {
-            const st = chainStatus(c);
-            return (
-              <li key={c}>
-                <button
-                  onClick={() => {
-                    b.setRemote(c);
-                    onClose();
-                  }}
-                  aria-current={c === b.remote ? 'true' : undefined}
-                  className={c === b.remote ? 'chain-on' : ''}
-                >
-                  <ChainMark chain={c} size={28} />
-                  <span>{CHAINS[c].name}</span>
-                  {st === 'soon' ? <em className="soon-tag">Coming soon</em> : c === b.remote ? <Icon name="check" size={16} /> : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="fine">Every chain connects to GullyChain Testnet. Testnet tokens have no real value.</p>
-      </div>
-    </div>
+    <Modal title={b.direction === 'deposit' ? 'Bridge from' : 'Bridge to'} titleId="cm-title" onClose={onClose}>
+      <ul className="wallet-list chain-list">
+        {chains.map((c) => {
+          const st = chainStatus(c);
+          const soon = st === 'soon';
+          return (
+            <li key={c}>
+              <button
+                onClick={() => {
+                  b.setRemote(c);
+                  onClose();
+                }}
+                aria-current={c === b.remote ? 'true' : undefined}
+                className={c === b.remote ? 'chain-on' : ''}
+              >
+                <ChainMark chain={c} size={28} />
+                <span>{CHAINS[c].name}</span>
+                {soon ? <em className="soon-tag">Coming soon</em> : c === b.remote ? <span className="sel-mark"><Icon name="check" size={16} /> Selected</span> : null}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="fine">Every chain connects to GullyChain Testnet. Testnet tokens have no real value.</p>
+    </Modal>
   );
 }
 
@@ -222,7 +207,6 @@ export function GasDropNote({ b }: { b: BridgeState }) {
 
 export function SolanaWalletModal({ onClose }: { onClose: () => void }) {
   const w = useSolanaWallet();
-  useEscape(onClose);
   useEffect(() => startSolanaDiscovery(), []);
   const pick = async (x: SolWalletInfo) => {
     try {
@@ -233,14 +217,7 @@ export function SolanaWalletModal({ onClose }: { onClose: () => void }) {
     }
   };
   return (
-    <div className="modal-bg" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="sw-title" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-head">
-          <h2 id="sw-title">Connect a Solana wallet</h2>
-          <button className="icon-btn" aria-label="Close" onClick={onClose}>
-            <Icon name="x" />
-          </button>
-        </div>
+    <Modal title="Connect a Solana wallet" titleId="sw-title" onClose={onClose}>
         {w.wallets.length ? (
           <ul className="wallet-list">
             {w.wallets.map((x) => (
@@ -261,8 +238,7 @@ export function SolanaWalletModal({ onClose }: { onClose: () => void }) {
         )}
         {w.error && <p className="err">{w.error}</p>}
         <p className="fine">Use Solana Devnet in your wallet settings. Devnet SOL is free from the Solana faucet.</p>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

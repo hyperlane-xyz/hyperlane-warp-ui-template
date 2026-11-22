@@ -47,3 +47,4 @@ export const rollupAbi = parseAbi([
 export const assertionConfirmedEvent = parseAbiItem(
   'event AssertionConfirmed(bytes32 indexed assertionHash, bytes32 blockHash, bytes32 sendRoot)',
 );
+export const transferEvent = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)');

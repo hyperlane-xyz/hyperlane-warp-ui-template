@@ -4,6 +4,7 @@
 import { CHAINS, CHILD, PARENT, type ChainKey } from '../config/chains';
 import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, type FastRoute } from '../config/routes';
 import { MANIFEST_CHAINS, MC_ROUTES, REMOTE_CHAINS, type McRoute, type McToken } from '../config/multichain';
+import { USDC_GATEWAY, type UsdcGateway } from '../config/gateway';
 import type { Direction } from './types';
 
 export interface LaneToken extends McToken {
@@ -25,6 +26,8 @@ export interface TokenOption {
   live: boolean;
   /** a Cheapest lane exists for this token (the canonical Arbitrum bridge moves ETH only) */
   canonical: boolean;
+  /** USDC through the canonical Arbitrum token bridge (USDC gateways): approve, then deposit through the router */
+  gateway?: boolean;
 }
 
 export interface LaneSources {
@@ -33,6 +36,8 @@ export interface LaneSources {
   multichain: McRoute[];
   /** chains with a canonical bridge to Gully Chain (manifest `canonical: true`) */
   canonicalChains: ChainKey[];
+  /** the USDC gateway pair; offers USDC deposits from Arbitrum Sepolia while no Hyperlane USDC route is deployed */
+  usdcGateway?: UsdcGateway;
 }
 
 export const DEFAULT_SOURCES: LaneSources = {
@@ -45,6 +50,7 @@ export const DEFAULT_SOURCES: LaneSources = {
       .filter(([, c]) => c.canonical)
       .map(([k]) => k as ChainKey),
   ],
+  usdcGateway: USDC_GATEWAY,
 };
 
 export function endsOf(remote: ChainKey, direction: Direction): { from: ChainKey; to: ChainKey } {
@@ -67,6 +73,11 @@ export function tokenOptions(remote: ChainKey, direction: Direction, src: LaneSo
     const a = r.tokens[from];
     const b = r.tokens[to];
     if (!a || !b) continue;
+    const g = src.usdcGateway;
+    if (g && r.key === 'USDC' && !r.deployed && remote === PARENT && direction === 'deposit') {
+      out.push(gatewayOption(r, g, from, to, a));
+      continue;
+    }
     out.push({
       id: r.id,
       source: 'multichain',
@@ -81,6 +92,32 @@ export function tokenOptions(remote: ChainKey, direction: Direction, src: LaneSo
     });
   }
   return out;
+}
+
+/** USDC on Arbitrum Sepolia -> USDC.e on Gully Chain over the canonical token bridge (live: both gateways are deployed). */
+function gatewayOption(r: McRoute, g: UsdcGateway, from: ChainKey, to: ChainKey, a: McToken): TokenOption {
+  return {
+    id: r.id,
+    source: 'multichain',
+    remote: PARENT,
+    direction: 'deposit',
+    from,
+    to,
+    send: { ...a, chain: from, address: g.l1Router, tokenType: 'collateral', collateralAddress: g.parentUsdc, symbol: 'USDC', name: 'USD Coin', decimals: 6 },
+    receive: {
+      chain: to,
+      address: g.childUsdc,
+      standard: 'ArbitrumUsdcGateway',
+      tokenType: 'synthetic',
+      symbol: 'USDC.e',
+      name: 'Bridged USDC (Gully Chain)',
+      decimals: 6,
+      collateralAddress: null,
+    },
+    live: true,
+    canonical: false,
+    gateway: true,
+  };
 }
 
 /** The option to show: the wanted id when the chain has it, else the first live one, else the first. */

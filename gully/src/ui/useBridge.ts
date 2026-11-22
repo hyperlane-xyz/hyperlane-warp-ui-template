@@ -455,7 +455,7 @@ export function useBridge(url: UrlOptions) {
       if (rec.status === 'failed') toast({ kind: 'error', title: 'Transaction failed', body: rec.error || 'Reverted' });
       else {
         track('bridge', { lane: quote.req.kind });
-        toast({ kind: 'success', title: 'Sent', body: `${quote.req.kind === 'fast' ? 'Fast' : 'Cheapest'} transfer submitted` });
+        toast({ kind: 'success', title: 'Sent', body: quote.gateway ? 'USDC deposit submitted, USDC.e arrives in about 10 to 15 minutes' : `${quote.req.kind === 'fast' ? 'Fast' : 'Cheapest'} transfer submitted` });
       }
       setAmountText('');
     } catch (e) {

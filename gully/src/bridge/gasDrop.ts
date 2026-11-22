@@ -34,8 +34,9 @@ export function dropEligible(s: GasDropState): boolean {
  * Only deposits into GullyChain of something that is not gas there (USDC, USDT, BNB, SOL...), and the "Bridge back" of
  * a Gully Warp Mirror (the classic pair's option is native ETH, but the transfer delivers the coin, not gas).
  */
-export function dropApplies(o: { direction: 'deposit' | 'withdraw'; receive: { tokenType: string } }, mirror = false): boolean {
-  return o.direction === 'deposit' && (mirror || o.receive.tokenType !== 'native');
+export function dropApplies(o: { direction: 'deposit' | 'withdraw'; receive: { tokenType: string }; gateway?: boolean }, mirror = false): boolean {
+  // the canonical USDC gateway refunds unused delivery ETH to the sender on Gully Chain: no drop is promised there
+  return o.direction === 'deposit' && !o.gateway && (mirror || o.receive.tokenType !== 'native');
 }
 
 export async function readGasDrop(recipient: Address, address: string = GAS_DROP_ADDRESS): Promise<GasDropState | undefined> {

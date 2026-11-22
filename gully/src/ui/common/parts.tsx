@@ -655,6 +655,12 @@ function statusLabel(t: TransferRecord) {
 }
 
 function stepDefsOf(t: TransferRecord): StepDef[] {
+  if (t.gateway)
+    return [
+      { id: 'send', label: 'Deposited', hint: CHAINS[t.from].short, chain: t.from, user: true },
+      { id: 'relay', label: 'Confirming', hint: 'About 10 to 15 minutes', chain: t.to, user: false },
+      { id: 'deliver', label: 'USDC.e arrived', hint: CHAINS[t.to].short, chain: t.to, user: false },
+    ];
   if (t.kind === 'fast')
     return [
       { id: 'send', label: 'Sent', hint: CHAINS[t.from].short, chain: t.from, user: true },

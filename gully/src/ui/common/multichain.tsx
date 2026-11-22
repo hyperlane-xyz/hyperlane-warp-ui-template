@@ -8,6 +8,7 @@ import { short } from '../../bridge/format';
 import { arrivingSymbol } from '../../bridge/gasDrop';
 import { chainStatus, pickerChains } from '../../bridge/lanes';
 import { cheapestUnavailable, laneCopy } from '../../bridge/laneCopy';
+import { USDC_GATEWAY } from '../../config/gateway';
 import type { TransferRecord } from '../../bridge/types';
 import { connectSolana, disconnectSolana, startSolanaDiscovery, useSolanaWallet, type SolWalletInfo } from '../../solana/wallet';
 import type { BridgeState } from '../useBridge';
@@ -109,6 +110,7 @@ export function TokenPicker({ b }: { b: BridgeState }) {
 /** Fast / Cheapest, with time and fee in plain words. */
 export function LaneChoice({ b }: { b: BridgeState }) {
   const remoteName = CHAINS[b.remote].name;
+  if (b.option?.gateway) return <GatewayNote b={b} />;
   const copy = laneCopy({ kind: b.kind, direction: b.direction, remoteName, withdrawSeconds: b.quotes.canonical?.etaSeconds });
   return (
     <div className="lane-choice">
@@ -311,4 +313,22 @@ export function TransferLinks({ t }: { t: TransferRecord }) {
 
 export function chainLabel(c: ChainKey) {
   return CHAINS[c].name;
+}
+
+/** USDC deposits use the canonical token bridge: one lane, with the time, the fee and where to get testnet USDC. */
+function GatewayNote({ b }: { b: BridgeState }) {
+  return (
+    <div className="lane-choice gateway-note">
+      <p className="lane-copy">
+        USDC goes through the canonical Arbitrum bridge. It arrives as USDC.e on Gully Chain in about 10 to 15 minutes. You pay Arbitrum Sepolia gas and a small ETH delivery fee, no bridge fee.
+      </p>
+      <p className="lane-copy muted">
+        Need testnet USDC?{' '}
+        <a href={USDC_GATEWAY?.faucet} target="_blank" rel="noopener noreferrer">
+          Get testnet USDC
+        </a>{' '}
+        (choose Arbitrum Sepolia). {b.senderAddr ? '' : 'Connect a wallet to see your balance.'}
+      </p>
+    </div>
+  );
 }

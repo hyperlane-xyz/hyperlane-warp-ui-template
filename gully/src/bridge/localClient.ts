@@ -32,6 +32,7 @@ import {
   assertionConfirmedEvent,
   dispatchIdEvent,
   erc20Abi,
+  transferEvent,
   inboxAbi,
   inboxMessageDeliveredEvent,
   l2ToL1TxEvent,
@@ -45,6 +46,8 @@ import {
   warpRouterAbi,
 } from './abis';
 import { checkRecipient } from '../config/mirrors';
+import { USDC_GATEWAY, USDC_DEPOSIT_ETA } from '../config/gateway';
+import { depositArgs, gatewayRouterAbi, readGatewayState } from './usdcGateway';
 import { pub } from './clients';
 import { convertDecimals, endsOf } from './lanes';
 import type { ActivityItem, Quote, QuoteRequest, StepDef, StepUpdate, TransferRecord } from './types';
@@ -171,9 +174,109 @@ async function parentLocked(req: QuoteRequest): Promise<bigint | undefined> {
   }
 }
 
+/** USDC from Arbitrum Sepolia while no Hyperlane USDC route is deployed: the canonical token bridge's USDC gateways. */
+export function isGatewayReq(req: Pick<QuoteRequest, 'direction' | 'remote' | 'fastRouteId'>): boolean {
+  const r = mcRoute(req.fastRouteId);
+  return !!USDC_GATEWAY && !!r && r.key === 'USDC' && !r.deployed && (req.remote || PARENT) === PARENT && req.direction === 'deposit';
+}
+
+const GATEWAY_DUMMY_TO: Address = '0x000000000000000000000000000000000000dEaD';
+
+function gatewaySteps(): StepDef[] {
+  return [
+    { id: 'approve', label: 'Approve', hint: 'Allow the bridge to move your USDC', chain: PARENT, user: true },
+    { id: 'send', label: 'Deposit', hint: 'Sign on Arbitrum Sepolia', chain: PARENT, user: true },
+    { id: 'relay', label: 'Confirming', hint: 'Arbitrum Sepolia confirms, about 10 to 15 minutes', chain: CHILD, user: false },
+    { id: 'deliver', label: 'USDC.e arrived', hint: 'USDC.e on Gully Chain', chain: CHILD, user: false },
+  ];
+}
+
+async function gatewayQuote(req: QuoteRequest): Promise<Quote> {
+  const g = USDC_GATEWAY!;
+  const to = req.recipient && isAddress(req.recipient) ? (req.recipient as Address) : undefined;
+  const sender = req.sender && isAddress(req.sender) ? (req.sender as Address) : undefined;
+  const base = {
+    req,
+    from: PARENT,
+    to: CHILD,
+    sendSymbol: 'USDC',
+    receiveSymbol: 'USDC.e',
+    sendDecimals: 6,
+    receiveDecimals: 6,
+    gasSymbol: 'ETH',
+    receive: req.amount,
+    etaSeconds: USDC_DEPOSIT_ETA,
+    steps: gatewaySteps(),
+    needsApproval: true,
+    notes: [
+      'You receive USDC.e on Gully Chain, backed 1:1 by the USDC held in the bridge on Arbitrum Sepolia.',
+      'The small ETH fee pays for the delivery on Gully Chain; whatever is not used comes back to you as ETH on Gully Chain.',
+    ],
+  };
+  const closed = (reason: string): Quote => ({ ...base, value: 0n, fees: [], available: false, reason });
+  let st: Awaited<ReturnType<typeof readGatewayState>>;
+  try {
+    st = await readGatewayState(g, { sender: sender || GATEWAY_DUMMY_TO, to: to || sender || GATEWAY_DUMMY_TO, amount: req.amount });
+  } catch {
+    // fail closed: a path that cannot be read is never quoted as open
+    return closed('Could not check the USDC bridge. Try again in a minute.');
+  }
+  if (!st.open) return closed(st.reason);
+  const quote: Quote = {
+    ...base,
+    value: st.cost.value,
+    fees: [{ label: 'Delivery fee', amount: st.cost.value, symbol: 'ETH' }],
+    available: true,
+    gateway: { gasLimit: st.cost.gasLimit, maxFeePerGas: st.cost.maxFeePerGas, maxSubmissionCost: st.cost.maxSubmissionCost },
+  };
+  if (sender) {
+    const eth = await pub(PARENT).getBalance({ address: sender }).catch(() => undefined);
+    if (eth !== undefined && eth < st.cost.value)
+      return { ...quote, available: false, reason: `You need about ${Number(formatUnits(st.cost.value, 18)).toFixed(5)} ETH on Arbitrum Sepolia for the delivery fee` };
+  }
+  return quote;
+}
+
+/** USDC.e mints (Transfer from the zero address to `to`) of exactly `amount` since `fromBlock`: the deposit has arrived. */
+export async function gatewayArrival(to: Address, amount: bigint, fromBlock?: string): Promise<Hash | undefined> {
+  const g = USDC_GATEWAY;
+  if (!g) return undefined;
+  const c = pub(CHILD);
+  const head = await c.getBlockNumber();
+  let start = fromBlock ? BigInt(fromBlock) : head > 200_000n ? head - 200_000n : 0n;
+  if (start > head) start = head;
+  const logs = await c.getLogs({ address: g.childUsdc, event: transferEvent, args: { from: ZERO, to }, fromBlock: start, toBlock: head });
+  return logs.find((l) => l.args.value === amount)?.transactionHash ?? undefined;
+}
+
+/** The two wallet steps of a gateway deposit: approve the L1 USDC gateway, then the router deposit. */
+async function executeGateway(q: Quote, sender: Address, to: Address, onStep: (u: StepUpdate) => void): Promise<Hash> {
+  const g = USDC_GATEWAY!;
+  const cost = q.gateway;
+  if (!cost) throw new Error('Route unavailable');
+  const wc = walletClient(PARENT);
+  const client = pub(PARENT);
+  const amount = q.req.amount;
+  const bal = await client.readContract({ address: g.parentUsdc, abi: erc20Abi, functionName: 'balanceOf', args: [sender] });
+  if (bal < amount) throw new Error('Not enough testnet USDC on Arbitrum Sepolia');
+  const allowance = await client.readContract({ address: g.parentUsdc, abi: erc20Abi, functionName: 'allowance', args: [sender, g.l1Gateway] });
+  if (allowance < amount) {
+    onStep({ step: 'approve', state: 'active' });
+    const ah = await wc.writeContract({ address: g.parentUsdc, abi: erc20Abi, functionName: 'approve', args: [g.l1Gateway, amount], chain: wc.chain, account: sender });
+    await client.waitForTransactionReceipt({ hash: ah });
+  }
+  onStep({ step: 'approve', state: 'done' });
+  onStep({ step: 'send', state: 'active' });
+  const args = depositArgs(g, { refundTo: sender, to, amount, cost: { ...cost, value: q.value } });
+  // simulate first: a revert shows its reason before the wallet opens
+  await client.simulateContract({ address: g.l1Router, abi: gatewayRouterAbi, functionName: 'outboundTransferCustomRefund', args, value: q.value, account: sender });
+  return wc.writeContract({ address: g.l1Router, abi: gatewayRouterAbi, functionName: 'outboundTransferCustomRefund', args, value: q.value, chain: wc.chain, account: sender });
+}
+
 /** quote() with the network gates: lanes that are not deployed are closed, and the Phase 1 caps apply (mainnet). */
 async function quote(req: QuoteRequest): Promise<Quote> {
   // multi-chain routes: "Coming soon" until deployed (laneQuote), no Phase 1 caps (those are the classic mainnet lanes)
+  if (req.kind === 'fast' && isGatewayReq(req)) return gatewayQuote(req);
   if (req.kind === 'fast' && mcRoute(req.fastRouteId)) return laneQuote(req);
   if (req.kind === 'canonical' && !CANONICAL_READY) return closedQuote(req, 'Canonical bridge opens on launch day');
   if (req.kind === 'fast' && !routeReady(routeFor(req.direction, req.fastRouteId))) return closedQuote(req, 'Fast lane opens on launch day');
@@ -487,7 +590,10 @@ async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<T
   const client = pub(q.from);
   let hash: Hash;
   let destHead: bigint | undefined;
-  if (req.kind === 'fast') {
+  if (req.kind === 'fast' && q.gateway) {
+    destHead = await pub(CHILD).getBlockNumber().catch(() => undefined);
+    hash = await executeGateway(q, sender, recipient as Address, onStep);
+  } else if (req.kind === 'fast') {
     const lane = resolveLane(req);
     const t = { ...lane.t, address: lane.t.address as Address, collateralAddress: lane.t.collateralAddress as Address | null };
     if (!lane.t.address || !lane.dest.address) throw new Error('Coming soon');
@@ -553,7 +659,10 @@ async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<T
   rec.destFromBlock = destHead?.toString();
   if (receipt.status !== 'success') return { ...rec, status: 'failed', error: 'Transaction reverted' };
   onStep({ step: 'send', state: 'done', tx: hash });
-  if (req.kind === 'fast') {
+  if (req.kind === 'fast' && q.gateway) {
+    rec.gateway = true;
+    rec.status = 'relaying';
+  } else if (req.kind === 'fast') {
     rec.messageId = messageIdFromReceipt(receipt, q.from);
     rec.status = 'relaying';
   } else if (req.direction === 'deposit') {
@@ -576,6 +685,10 @@ async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<T
 async function track(rec: TransferRecord): Promise<TransferRecord> {
   const upd = (p: Partial<TransferRecord>) => ({ ...rec, ...p, updatedAt: Date.now() });
   if (['delivered', 'claimed', 'failed'].includes(rec.status)) return rec;
+  if (rec.gateway) {
+    const tx = await gatewayArrival(getAddress(rec.recipient), BigInt(rec.amount), rec.destFromBlock).catch(() => undefined);
+    return tx ? upd({ status: 'delivered', destTx: tx }) : rec;
+  }
   if (rec.kind === 'fast' && !rec.messageId && !isEvm(rec.from)) {
     // Solana origin whose dispatch log was not readable yet when it was sent
     const sol = await import('../solana/sealevelClient');

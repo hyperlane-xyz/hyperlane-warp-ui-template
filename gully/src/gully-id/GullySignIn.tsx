@@ -27,12 +27,10 @@ function GullySignInInner({ place, config }: { place: Place; config: GullyIdConf
   useEffect(() => {
     if (!client || !el.current) return;
     try {
-      return client.renderButton(el.current, {
-        theme: 'dark',
-        size: 's',
-        passkey: place === 'menu',
-        onError: (e) => console.warn('[gully-id] sign-in failed', e),
-      });
+      const onError = (e: unknown) => console.warn('[gully-id] sign-in failed', e);
+      // SDK 1.7+: the shared entry ("Gully ID | Sign in", the same chip as every Gully product). Older SDKs keep the kit button.
+      if (client.renderSignIn) return client.renderSignIn(el.current, { style: 'chip', theme: 'dark', onError });
+      return client.renderButton(el.current, { theme: 'dark', size: 's', passkey: place === 'menu', onError });
     } catch (e) {
       console.warn('[gully-id] renderButton failed', e);
     }

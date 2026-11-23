@@ -70,6 +70,31 @@ describe('<GullySignIn>', () => {
     expect(renders[0]).toMatchObject({ passkey: true });
     await act(async () => root.unmount());
   });
+  it('draws the shared Gully ID chip when the SDK has renderSignIn (1.7+)', async () => {
+    const chips: unknown[] = [];
+    const w = window as unknown as Win;
+    const base = w.GullyID!;
+    w.GullyID = {
+      init(o) {
+        const c = base.init(o);
+        return {
+          ...c,
+          renderSignIn(el: HTMLElement, opts?: unknown) {
+            chips.push(opts);
+            const b = document.createElement('button');
+            b.textContent = 'Gully ID | Sign in';
+            el.appendChild(b);
+            return () => b.remove();
+          },
+        };
+      },
+    };
+    const { host, root } = await mount(<GullySignIn config={CFG} />);
+    expect(host.querySelector('button')?.textContent).toBe('Gully ID | Sign in');
+    expect(chips[0]).toMatchObject({ style: 'chip', theme: 'dark' });
+    expect(renders).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
   it('renders nothing when VITE_GULLY_ID_SIGNIN=off', async () => {
     const { host, root } = await mount(<GullySignIn config={null} />);
     expect(host.innerHTML).toBe('');

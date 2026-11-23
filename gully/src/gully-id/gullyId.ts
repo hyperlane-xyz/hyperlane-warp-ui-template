@@ -31,6 +31,8 @@ export interface GullyClient {
   session(): GullySession | null;
   signOut(): Promise<void>;
   onChange(cb: (s: GullySession | null) => void): () => void;
+  /** SDK 1.7+: the shared "Gully ID | Sign in" entry (chip), the wallet chip once signed in, the shared modal and its failure states. */
+  renderSignIn?(el: HTMLElement, o?: { style?: 'chip' | 'promise' | 'pill'; theme?: 'dark' | 'light' | 'auto'; icon?: boolean; onSignIn?: (s: GullySession) => void; onError?: (e: unknown) => void }): () => void;
   renderButton(
     el: HTMLElement,
     o?: {
@@ -80,8 +82,9 @@ export function markGullyId(cfg: GullyIdConfig | null, doc: Pick<Document, 'docu
   if (cfg) d.gullyIdClient = cfg.clientId;
 }
 
-/** SDK URLs, best first: the 1.x channel, then the legacy all-majors URL (while /sdk/v1.js is not live yet). */
-export const sdkUrls = (issuer: string) => [`${issuer}/sdk/v1.js`, `${issuer}/sdk.js`];
+/** SDK URLs, best first: the pinned release (shared sign-in entry, 1.7), the 1.x channel, then the legacy all-majors URL (while /sdk/v1.js is not live yet). */
+export const SDK_PINNED = '1.7.1';
+export const sdkUrls = (issuer: string) => [`${issuer}/sdk/v${SDK_PINNED}.js`, `${issuer}/sdk/v1.js`, `${issuer}/sdk.js`];
 
 type LoaderEnv = {
   win: { GullyID?: GullyIDGlobal };

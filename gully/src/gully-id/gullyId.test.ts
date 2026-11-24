@@ -26,7 +26,7 @@ function fakeEnv(sdk?: GullyIDGlobal, outcome: 'load' | 'error' | 'hang' | 'v1-m
         scripts.push(s);
         queueMicrotask(() => {
           if (outcome === 'v1-missing') {
-            if (s.src.endsWith('/sdk/v1.js')) return s.onerror?.();
+            if (/\/sdk\/v1(.7.2)?\.js$/.test(s.src)) return s.onerror?.();
             if (sdk) win.GullyID = sdk;
             return s.onload?.();
           }
@@ -87,7 +87,7 @@ describe('loadGullyIdSdk (fail soft)', () => {
     const sdk = { init: () => fakeClient() };
     const { env, scripts } = fakeEnv(sdk, 'v1-missing');
     expect(await loadGullyIdSdk(DEFAULT_ISSUER, env)).toBe(sdk);
-    expect(scripts.map((s) => s.src)).toEqual(['https://gullyid.xyz/sdk/v1.js', 'https://gullyid.xyz/sdk.js']);
+    expect(scripts.map((s) => s.src)).toEqual(['https://gullyid.xyz/sdk/v1.7.2.js', 'https://gullyid.xyz/sdk/v1.js', 'https://gullyid.xyz/sdk.js']);
   });
   it('loads the 1.x SDK from the issuer once', async () => {
     const sdk = { init: () => fakeClient() };
@@ -96,7 +96,7 @@ describe('loadGullyIdSdk (fail soft)', () => {
     expect(a).toBe(sdk);
     expect(b).toBe(sdk);
     expect(scripts).toHaveLength(1);
-    expect(scripts[0].src).toBe('https://gullyid.xyz/sdk/v1.js');
+    expect(scripts[0].src).toBe('https://gullyid.xyz/sdk/v1.7.2.js');
   });
   it('resolves null when the script errors', async () => {
     expect(await loadGullyIdSdk(DEFAULT_ISSUER, fakeEnv(undefined, 'error').env)).toBeNull();

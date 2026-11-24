@@ -83,7 +83,7 @@ export function markGullyId(cfg: GullyIdConfig | null, doc: Pick<Document, 'docu
 }
 
 /** SDK URLs, best first: the pinned release (shared sign-in entry, 1.7), the 1.x channel, then the legacy all-majors URL (while /sdk/v1.js is not live yet). */
-export const SDK_PINNED = '1.7.1';
+export const SDK_PINNED = '1.7.2';
 export const sdkUrls = (issuer: string) => [`${issuer}/sdk/v${SDK_PINNED}.js`, `${issuer}/sdk/v1.js`, `${issuer}/sdk.js`];
 
 type LoaderEnv = {

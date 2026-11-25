@@ -10,6 +10,8 @@
 //   { "type": "chains", "file": "<json>", "select": "a.b[]", "id": "<key>", "where": {"<key>": ["v1",..]}, "expect": "<rule>" }
 //        expect: "product" (this product's chains with status in `statuses`, default live|beta|testnet), "rule:<name>" (snapshot.rules)
 //   { "type": "value", "file": "<path>", "regex": "<re with one group>" | "json": "a.b", "equals": "<snapshot path>" | "kit:<id>.version" }
+//   { "type": "addresses", "file": "<json>", "chain": "<id>", "select": "contracts", "complete": true }  every name -> address
+//        in the file equals the registry address book for that chain (records in gully-ops); complete = no contract missing either
 //   { "type": "hosts", "file": "<path>", "domains": ["gullycore.xyz", ...] }  every https host of those domains is a registry host
 // Exceptions live in the registry (kits.json `accept`, with an expiry date), never in this file or in checks.json.
 import crypto from 'node:crypto';
@@ -105,6 +107,16 @@ export function run({ root, snapshot, checks, selfBytes, now = new Date() }) {
         const e = head.startsWith('kit:') ? dig(kitOf(head.slice(4)) || {}, rest.join('.')) : dig(snapshot, c.equals);
         if (v !== undefined && String(v) === String(e)) pass(`${label}: ${v}`);
         else fail(`${label}: ${v === undefined ? 'value not found' : JSON.stringify(v)} != registry ${c.equals} = ${JSON.stringify(e)}`);
+      } else if (c.type === 'addresses') {
+        const book = snapshot.addressBook?.[c.chain];
+        if (!book) { fail(`${label}: no address book for chain ${c.chain}`); continue; }
+        const map = dig(JSON.parse(fs.readFileSync(file(c.file), 'utf8')), c.select || 'contracts') || {};
+        const addr = (v) => String(typeof v === 'string' ? v : v?.address ?? '');
+        const norm = (a) => (/^0x/i.test(a) ? a.toLowerCase() : a);
+        const wrong = Object.entries(map).filter(([k, v]) => addr(v) && norm(addr(v)) !== norm(book[k] || '')).map(([k]) => k);
+        const missing = c.complete ? Object.keys(book).filter((k) => !(k in map)) : [];
+        if (!wrong.length && !missing.length) pass(`${label}: ${Object.keys(map).length} address(es) = registry ${c.chain}`);
+        else fail(`${label}: ${wrong.length ? `differs or unknown: ${wrong.slice(0, 8).join(',')} ` : ''}${missing.length ? `missing: ${missing.slice(0, 8).join(',')}` : ''}`.trim());
       } else if (c.type === 'hosts') {
         const txt = fs.readFileSync(file(c.file), 'utf8');
         const known = new Set(snapshot.products.flatMap((p) => p.hosts.map((h) => new URL(h.url).host)));

@@ -16,7 +16,7 @@ if (!pair) {
 }
 
 const walletScript = ({ account }) => {
-  const rpcs = { 421614: 'https://sepolia-rollup.arbitrum.io/rpc', 485590: 'https://rpc.gullychain.xyz' };
+  const rpcs = { 421614: 'https://sepolia-rollup.arbitrum.io/rpc', 485590: 'https://testnet-rpc.gullychain.xyz' };
   let chainId = 421614;
   const rpc = async (method, params) => {
     const r = await fetch(rpcs[chainId], { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
